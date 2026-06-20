@@ -1,0 +1,38 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.log
+
+# Packages and build output
+node_modules/
+dist/
+storybook-static/
+.svelte-kit/
+.vite/
+.npm/
+package-lock.json
+
+# Runtime and Local Database
+.deno-cache/
+cov_profile/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+
+# Test
+playwright-report/
+test-results/
+coverage/
+.vitest/
+
+# Secret
+.env
+.env.local
+.env.*.local
+!.env.example
