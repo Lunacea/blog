@@ -9,7 +9,7 @@ if [ -z "$STAGED_FILES" ]; then
 fi
 
 # Deno 2.x が自動フォーマット可能な拡張子をフィルタリング
-FMT_FILES=$(echo "$STAGED_FILES" | grep -E '\.(js|ts|jsx|tsx|svelte|json|css|html|md)$')
+FMT_FILES=$(echo "$STAGED_FILES" | grep -E '\.(js|ts|jsx|tsx|svelte|json|css|html|md|yml|yaml)$')
 
 # 2. 自動フォーマットを実行
 if [ -n "$FMT_FILES" ]; then

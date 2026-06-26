@@ -1,0 +1,37 @@
+name: PR Governance
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  pr-management:
+    name: タイトル検証およびラベル自動付与
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Validate Title and Auto-Label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const labels = [];
+
+            if (title.startsWith('feat:')) labels.push('feat');
+            else if (title.startsWith('fix:')) labels.push('bug');
+            else if (title.startsWith('chore:')) labels.push('chore');
+            else if (title.startsWith('refactor:')) labels.push('refactor');
+            else if (title.startsWith('docs:')) labels.push('docs');
+            else if (title.startsWith('style:')) labels.push('ui');
+
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: labels
+              });
+            } else {
+              core.setFailed('PRのタイトルは指定の接頭辞（feat:, fix:, chore:, refactor:, docs:, style:）で始めてください。');
+            }

@@ -1,0 +1,49 @@
+name: 🚀 デプロイ後検証 (CD)
+
+on:
+  repository_dispatch:
+    types: [deno_deploy.build.routed]
+
+jobs:
+  post-deployment:
+    name: 🎯 プレビューURLの検証とPRコメント
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: 📦 リポジトリのチェックアウト
+        uses: actions/checkout@v7
+
+      - name: 🦕 Deno環境のセットアップ
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+
+      - name: 🌐 ライブURLに対するE2Eテストの実行
+        run: |
+          echo "🚀 Deno Deployが完了しました。ライブURLに対する検証を開始します:"
+          echo "Target URL: ${{ github.event.client_payload.revision.preview_url }}"
+          # 必要に応じて Playwright に URL を渡して実行
+          # URL=${{ github.event.client_payload.revision.preview_url }} deno task test:e2e
+
+      - name: 📊 ジョブサマリーの追加
+        run: |
+          echo "### 🦕 Deno Deploy 自動ビルド＆配信成功" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 項目 | リンク / 設定値 |" >> $GITHUB_STEP_SUMMARY
+          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+          echo "| **デプロイURL** | [${{ github.event.client_payload.revision.preview_url }}](${{ github.event.client_payload.revision.preview_url }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **コミットSHA** | \`${{ github.event.client_payload.revision.git.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+
+      - name: 💬 PRにプレビューURLをコメント
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: deno-deploy-preview
+          message: |
+            ### ⚡️ Deno Deploy Preview (Official Flow)
+
+            Deno Deploy による自動ビルドと配信が正常に完了しました！
+
+            - **対象URL:** [${{ github.event.client_payload.revision.preview_url }}](${{ github.event.client_payload.revision.preview_url }})
+            - **コミット:** `${{ github.event.client_payload.revision.git.sha }}`

@@ -1,0 +1,33 @@
+name: 🔍 コード品質チェック (CI)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  static-analysis:
+    name: 🧪 静的解析とテストの実行
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 リポジトリのチェックアウト
+        uses: actions/checkout@v7
+
+      - name: 🦕 Deno環境のセットアップ
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+
+      - name: 🎨 コードフォーマットのチェック
+        run: deno fmt --check
+
+      - name: 🚨 Linterによる構文チェック
+        run: deno lint
+
+      - name: 📝 CMSテストの実行
+        run: |
+          if find packages/cms/ -name "*_test.ts" -o -name "*.test.ts" | grep -q .; then
+            deno task test:cms
+          fi
