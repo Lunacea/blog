@@ -1,0 +1,24 @@
+name: タスク (Task)
+description: リファクタ、環境構築、ドキュメント修正などの作業を管理します
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ※タイトル接頭辞: `chore:`, `refactor:`, `docs:`, `style:`
+        ※対応するLabelsを手動で付与してください。
+  - type: textarea
+    id: overview
+    attributes:
+      label: 作業内容
+      description: 実施する作業とその目的を記述してください。
+    validations:
+      required: true
+  - type: textarea
+    id: dod
+    attributes:
+      label: 完了条件 (DoD)
+      placeholder: |
+        - [ ] 〇〇の共通化
+        - [ ] テストの通過確認
+    validations:
+      required: true

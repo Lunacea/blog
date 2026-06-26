@@ -1,0 +1,19 @@
+name: 機能提案 (Feature Request)
+description: 新機能や改善案を起票します
+title: "feat: "
+labels: ["feat"]
+body:
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景・課題
+      description: なぜこの機能が必要か、何を解決したいかを記述してください。
+    validations:
+      required: true
+  - type: textarea
+    id: specifications
+    attributes:
+      label: 提案内容・理想の挙動
+      description: 期待する仕様や動作を具体的に記述してください。
+    validations:
+      required: true

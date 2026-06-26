@@ -1,0 +1,27 @@
+name: 不具合報告 (Bug Report)
+description: バグや異常挙動を報告します
+title: "fix: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 問題の概要
+      description: どのような異常が発生しているかを記述してください。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      placeholder: |
+        1. 〇〇を開く
+        2. △△を押す
+        3. エラーが発生する
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログ・スクリーンショット (任意)
+      description: エラーログや画面キャプチャがあれば添付してください。
