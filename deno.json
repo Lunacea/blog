@@ -1,0 +1,54 @@
+{
+  "workspace": [
+    "./packages/api",
+    "./packages/cms",
+    "./packages/components",
+    "./packages/web"
+  ],
+  "unstable": ["kv"],
+  "nodeModulesDir": "auto",
+  "deploy": {
+    "install": "deno install",
+    "build": "deno task build",
+    "runtime": {
+      "entrypoint": "packages/api/main.ts"
+    }
+  },
+  "tasks": {
+    "dev": "deno task dev:api & deno task dev:web",
+    "dev:api": "deno run -A --unstable-kv packages/api/main.ts",
+    "dev:web": "deno task --cwd packages/web dev",
+    "build": "deno task --cwd packages/web build",
+    "start": "deno run -A --unstable-kv packages/api/main.ts",
+    "storybook": "deno task --cwd packages/web storybook",
+    "test:cms": "deno test -A packages/cms/",
+    "test:unit": "deno task --cwd packages/web test:unit",
+    "test:e2e": "deno task --cwd packages/web test:e2e",
+    "lint": "deno lint",
+    "fmt": "deno fmt"
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "singleQuote": false,
+    "exclude": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.svelte-kit/**",
+      "**/storybook-static/**"
+    ]
+  },
+  "lint": {
+    "rules": {
+      "tags": [
+        "recommended"
+      ]
+    },
+    "exclude": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/.svelte-kit/**"
+    ]
+  }
+}

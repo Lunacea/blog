@@ -1,0 +1,8 @@
+{
+  "name": "@lunacea/cms",
+  "version": "0.1.0",
+  "exports": "./mod.ts",
+  "imports": {
+    "yaml": "jsr:@std/yaml@^1.1.1"
+  }
+}

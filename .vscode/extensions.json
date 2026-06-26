@@ -1,0 +1,19 @@
+{
+  "recommendations": [
+    // コンテナ・ホスト連携用の必須拡張機能
+    "ms-vscode-remote.remote-wsl",
+    "ms-vscode-remote.remote-containers",
+    "ms-azuretools.vscode-docker",
+    "ms-vsliveshare.vsliveshare",
+    // 汎用ツール・図面作成
+    "austenc.tailwind-docs",
+    "bourhaouta.tailwindshades",
+    "stivo.tailwind-fold",
+    "mikestead.dotenv",
+    "lokalise.i18n-ally",
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    "hediet.vscode-drawio",
+    "cweijan.vscode-office"
+  ]
+}

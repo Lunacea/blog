@@ -1,0 +1,8 @@
+{
+  "name": "@lunacea/api",
+  "version": "0.1.0",
+  "exports": "./main.ts",
+  "imports": {
+    "hono": "jsr:@hono/hono@^4.12.26"
+  }
+}

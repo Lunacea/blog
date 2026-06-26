@@ -1,0 +1,145 @@
+{
+  // 🦕 Deno 2.x 設定
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.suggest.imports.hosts": {
+    "https://deno.land": true,
+    "https://esm.sh": true
+  },
+  // 統合ターミナル設定（コンテナ内の fish シェルをデフォルトに固定）
+  "terminal.integrated.profiles.linux": {
+    "fish": {
+      "path": "fish"
+    },
+    "bash": {
+      "path": "bash"
+    }
+  },
+  "terminal.integrated.defaultProfile.linux": "fish",
+  // エディタ基本設定
+  "editor.tabSize": 2,
+  "files.insertFinalNewline": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  // 言語別フォーマッタ
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+  },
+  "markdownlint.config": {
+    "MD033": {
+      "allowed_elements": ["br"]
+    }
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  // ESLint (フロントエンド Svelte 用)
+  "eslint.enable": true,
+  "eslint.workingDirectories": [
+    "./packages/web"
+  ],
+  // Better Todo Tree
+  "better-todo-tree.general.tags": [
+    "WARNING",
+    "BUG",
+    "HACK",
+    "FIXME",
+    "TODO",
+    "REVIEW",
+    "NOTE",
+    "[ ]",
+    "[x]"
+  ],
+  "better-todo-tree.highlights.customHighlight": {
+    "WARNING": {
+      "icon": "alert",
+      "foreground": "#B45460"
+    },
+    "BUG": {
+      "foreground": "#F0566E"
+    },
+    "HACK": {
+      "foreground": "#B455A0"
+    },
+    "FIXME": {
+      "foreground": "#FCAF17"
+    },
+    "TODO": {
+      "foreground": "#00B379"
+    },
+    "REVIEW": {
+      "icon": "code-review",
+      "foreground": "#21A0DB"
+    },
+    "NOTE": {
+      "icon": "pencil",
+      "foreground": "#A4D5BD"
+    }
+  },
+  "better-todo-tree.highlights.backgroundColourScheme": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "blue",
+    "indigo",
+    "violet"
+  ],
+  "better-todo-tree.regex.regex": "(// |# |<!-- |; |/\\* |^[ \\t]*(- |\\d+\\. ))\\s*($TAGS):",
+  // Better Comments
+  "better-comments.tags": [
+    {
+      "tag": "WARNING",
+      "strikethrough": false,
+      "backgroundColor": "transparent",
+      "color": "#B45460"
+    },
+    {
+      "tag": "BUG",
+      "strikethrough": false,
+      "backgroundColor": "transparent",
+      "color": "#F0566E"
+    },
+    {
+      "tag": "HACK",
+      "strikethrough": false,
+      "backgroundColor": "transparent",
+      "color": "#B455A0"
+    },
+    {
+      "tag": "FIXME",
+      "strikethrough": false,
+      "backgroundColor": "transparent",
+      "color": "#A3A649"
+    },
+    {
+      "tag": "TODO",
+      "strikethrough": false,
+      "backgroundColor": "transparent",
+      "color": "#00B379"
+    },
+    {
+      "tag": "REVIEW",
+      "strikethrough": false,
+      "backgroundColor": "transparent",
+      "color": "#21A0DB"
+    },
+    {
+      "tag": "NOTE",
+      "strikethrough": false,
+      "backgroundColor": "transparent",
+      "color": "#A4D5BD"
+    }
+  ]
+}

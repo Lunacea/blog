@@ -1,0 +1,45 @@
+{
+  "name": "Deno Deploy Blog CMS Devcontainer",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached",
+  "workspaceFolder": "/app",
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-node_modules,target=/app/node_modules,type=volume"
+  ],
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "denoland.vscode-deno",
+        "svelte.svelte-vscode",
+        "bradlc.vscode-tailwindcss",
+        "dbaeumer.vscode-eslint",
+        "yoavbls.pretty-ts-errors",
+        "formulahendry.auto-close-tag",
+        "formulahendry.auto-rename-tag",
+        "oderwat.indent-rainbow",
+        "aaron-bond.better-comments",
+        "fanaticpythoner.better-todo-tree",
+        "donjayamanne.githistory",
+        "codezombiech.gitignore",
+        "mhutchie.git-graph",
+        "alefragnani.project-manager",
+        "github.codespaces",
+        "github.vscode-pull-request-github",
+        "ziyasal.vscode-open-in-github",
+        "github.vscode-github-actions"
+      ]
+    }
+  },
+  "forwardPorts": [
+    8000, // Hono API
+    5173, // Svelte/Vite
+    6006, // Storybook
+    8787, // Local Playground
+    9323, // Playwright Test UI
+    51204 // Vitest UI
+  ],
+  "postCreateCommand": "deno install && chmod +x .githooks/pre-commit && git config core.hooksPath .githooks",
+  "remoteUser": "deno"
+}
