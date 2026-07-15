@@ -1,0 +1,36 @@
+---
+slug: edge-reaction-design
+type: article
+title: 匿名リアクションを小さく安全に設計する
+summary: ログインを要求しないリアクションで、重複制御とプライバシーを両立する最小構成を考える。
+publishedAt: 2026-04-08
+category: engineering
+tags:
+  - Deno KV
+  - Security
+  - API
+status: growing
+featured: false
+draft: false
+sample: true
+targetVersions:
+  - Deno KV
+testedAt: 2026-07-08
+related:
+  - article:resilient-content-pipeline
+revisions: []
+---
+
+## 個人を識別しない
+
+署名付きの匿名Cookieを使い、メール、アカウント、IPアドレスを保存しない。
+Cookieの消去まで完全に防ぐことは目的にせず、通常利用での重複だけを穏やかに抑える。
+
+## 書き込みを冪等にする
+
+操作は「増やす」ではなく「この種類を選択済みにする」という状態として送る。
+再送が起きても集計値が二重に増えない。
+
+## 境界で検証する
+
+種類、記事ID、Origin、本文サイズをAPI境界で確認し、短時間の連続操作はKVの期限付きキーで抑制する。

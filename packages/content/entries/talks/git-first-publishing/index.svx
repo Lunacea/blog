@@ -1,0 +1,30 @@
+---
+slug: git-first-publishing
+type: talk
+title: Git-first Publishing on the Edge
+summary: Git管理コンテンツ、プリレンダリング、エッジ上の動的機能を一つの公開経路へまとめる。
+publishedAt: 2026-04-22
+tags:
+  - Deno
+  - SvelteKit
+  - Content
+status: growing
+featured: false
+draft: false
+sample: true
+event: Sample Engineering Session
+venue: Online
+format: workshop
+links: {}
+related:
+  - article:resilient-content-pipeline
+revisions: []
+---
+
+## セッション構成
+
+frontmatter検証、プレビューデプロイ、静的ページとAPIの境界を順に組み立てた。
+
+## 補足
+
+公開記事をデータベースへ複製しないことで、復旧経路とレビュー対象を単純に保った。

@@ -1,11 +1,4 @@
 {
-  // 🦕 Deno 2.x 設定
-  "deno.enable": true,
-  "deno.lint": true,
-  "deno.suggest.imports.hosts": {
-    "https://deno.land": true,
-    "https://esm.sh": true
-  },
   // 統合ターミナル設定（コンテナ内の fish シェルをデフォルトに固定）
   "terminal.integrated.profiles.linux": {
     "fish": {
@@ -23,6 +16,10 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit"
   },
+  // 🦕 Deno 2.x 設定
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.path": "/usr/bin/deno",
   // 言語別フォーマッタ
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
@@ -38,18 +35,15 @@
   },
   "markdownlint.config": {
     "MD033": {
-      "allowed_elements": ["br"]
+      "allowed_elements": [
+        "br"
+      ]
     },
     "MD041": false
   },
   "files.associations": {
     "*.css": "tailwindcss"
   },
-  // ESLint (フロントエンド Svelte 用)
-  "eslint.enable": true,
-  "eslint.workingDirectories": [
-    "./packages/web"
-  ],
   // Better Todo Tree
   "better-todo-tree.general.tags": [
     "WARNING",

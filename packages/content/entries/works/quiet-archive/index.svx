@@ -1,0 +1,51 @@
+---
+slug: quiet-archive
+type: work
+title: Quiet Archive
+summary: 技術記事、制作物、個人的記録を同じ時間軸へ配置する、静かな個人アーカイブの設計。
+publishedAt: 2026-07-12
+updatedAt: 2026-07-14
+tags:
+  - SvelteKit
+  - Deno
+  - Information Architecture
+status: growing
+featured: true
+draft: false
+sample: true
+period: 2026
+role: 情報設計、UI設計、フルスタック実装
+stack:
+  - SvelteKit
+  - Deno
+  - Hono
+  - Deno KV
+links:
+  github: https://github.com/Lunacea/blog
+related:
+  - article:resilient-content-pipeline
+revisions:
+  - date: 2026-07-14
+    summary: モジュラーモノリスとして再設計
+---
+
+## 問題
+
+記事、作品、写真を別々のサービスへ置くと、時間のつながりと設計判断が失われる。
+
+## 利用者
+
+採用担当者、技術者、研究者、そして将来の自分を想定した。
+
+## 設計
+
+情報を資料種別として分けながら、タグ、検索、関連記事で横断できるようにした。
+演出はトップへ集約し、本文では可読性を優先する。
+
+## 検証
+
+キーボード、モバイル、JavaScript無効時の閲覧をE2Eで確認し、コンテンツはビルド前に型検証する。
+
+## 今後
+
+実際の運用を観察した後に、コメントとブラウザ下書きを独立した段階として追加する。

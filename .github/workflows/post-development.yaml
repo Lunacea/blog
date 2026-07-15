@@ -12,7 +12,7 @@ jobs:
       pull-requests: write
     steps:
       - name: 📦 リポジトリのチェックアウト
-        uses: actions/checkout@v7
+        uses: actions/checkout@v6
 
       - name: 🦕 Deno環境のセットアップ
         uses: denoland/setup-deno@v2
@@ -21,11 +21,12 @@ jobs:
           cache: true
 
       - name: 🌐 ライブURLに対するE2Eテストの実行
+        env:
+          E2E_BASE_URL: ${{ github.event.client_payload.revision.preview_url }}
         run: |
-          echo "🚀 Deno Deployが完了しました。ライブURLに対する検証を開始します:"
-          echo "Target URL: ${{ github.event.client_payload.revision.preview_url }}"
-          # 必要に応じて Playwright に URL を渡して実行
-          # URL=${{ github.event.client_payload.revision.preview_url }} deno task test:e2e
+          deno install --frozen --allow-scripts=npm:sharp
+          deno run -A npm:playwright@1.61.1 install --with-deps chromium
+          deno task test:e2e
 
       - name: 📊 ジョブサマリーの追加
         run: |

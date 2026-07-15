@@ -1,0 +1,30 @@
+---
+slug: quiet-interfaces
+type: talk
+title: Quiet Interfaces — 読むための演出
+summary: 情報を隠さず、必要な瞬間だけ反応するインターフェースの設計原則を紹介した発表。
+publishedAt: 2026-06-01
+tags:
+  - Design
+  - Accessibility
+  - Motion
+status: stable
+featured: true
+draft: false
+sample: true
+event: Sample Design Meetup
+venue: 盛岡
+format: talk
+links: {}
+related:
+  - article:motion-as-information
+revisions: []
+---
+
+## 概要
+
+モーション設定、フォーカス表現、環境レイヤーの分離を、実装例とともに説明した。
+
+## 持ち帰ってほしいこと
+
+演出を減らすことではなく、演出が伝える状態を明確にすることが静けさにつながる。

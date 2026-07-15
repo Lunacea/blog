@@ -1,0 +1,84 @@
+---
+slug: resilient-content-pipeline
+type: article
+title: 壊れにくいコンテンツパイプラインを設計する
+summary: Gitを正本にした記事を、検証可能な型と静的生成へ接続するための設計判断をまとめる。
+publishedAt: 2026-06-18
+updatedAt: 2026-07-10
+category: engineering
+tags:
+  - SvelteKit
+  - Deno
+  - Content
+status: growing
+featured: true
+draft: false
+sample: true
+targetVersions:
+  - Svelte 5
+  - Deno 2
+testedAt: 2026-07-10
+related:
+  - work:quiet-archive
+revisions:
+  - date: 2026-07-10
+    summary: 検証境界と失敗時の扱いを追記
+---
+
+<script>
+  import LinkCard from "@lunacea/ui/LinkCard.svelte";
+</script>
+
+## 正本を一つにする
+
+公開記事はGitに置き、データベースには閲覧者によって生まれる情報だけを保存する。
+この境界を決めると、ビルド、プレビュー、復旧の経路が同じになる。
+
+> コンテンツは表示の材料ではなく、長期的に保全する資料である。
+
+<aside class="annotation" aria-label="設計上の注釈">
+  <strong>注釈</strong>
+  <p>ここでいう正本は公開本文を指す。リアクションのような閲覧者由来データはDeno KVに分離する。</p>
+</aside>
+
+## 型で公開前に止める
+
+frontmatter は実行時に推測せず、ビルド時に検証する。
+
+~~~ts title="content.ts" {2,5}
+const article = articleSchema.parse(metadata);
+const id = `article:${article.slug}`;
+
+if (article.updatedAt < article.publishedAt) {
+  throw new Error("更新日は公開日以後である必要があります");
+}
+~~~
+
+## 処理の流れ
+
+~~~mermaid
+flowchart LR
+  Source[svx source] --> Validate[Zod validation]
+  Validate --> Build[SvelteKit build]
+  Build --> Preview[Preview timeline]
+  Preview --> Publish[Production]
+~~~
+
+## 数式を必要な記事だけに読み込む
+
+読了時間の概算は、単語数を \(w\)、一分あたりの処理量を \(r\) とすると、
+\(t = \\max(1, \\lceil w / r \\rceil)\) と表せる。数式を含まない記事にはKaTeXのCSS以外を配らない。
+
+## 失敗を公開経路に含める
+
+検証エラーは黙って補完しない。該当ファイルとフィールドを示してCIを失敗させることで、
+壊れた一覧やOGPが本番へ到達する前に修正できる。
+
+<LinkCard
+  href="https://docs.deno.com/deploy/reference/frameworks/"
+  site="docs.deno.com"
+  title="Frameworks — Deno Deploy"
+  description="SvelteKitのネイティブ対応を確認するための公式資料。表示内容はfrontmatterと同様に執筆者が手動で管理する。"
+/>
+
+<p class="source-note"><sup>1</sup> 参照: <cite><a href="https://docs.deno.com/deploy/reference/builds/">Deno Deploy Builds</a></cite>（2026-07-10確認）。</p>

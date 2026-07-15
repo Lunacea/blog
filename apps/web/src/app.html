@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja" data-theme="auto" data-motion="full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (() => {
+        try {
+          const theme = localStorage.getItem("lunacea-theme") || "auto";
+          const storedMotion = localStorage.getItem("lunacea-motion");
+          const motion = storedMotion ||
+            (matchMedia("(prefers-reduced-motion: reduce)").matches ? "reduced" : "full");
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.dataset.motion = motion;
+        } catch {
+          document.documentElement.dataset.motion = "reduced";
+        }
+      })();
+    </script>
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

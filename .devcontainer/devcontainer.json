@@ -14,7 +14,6 @@
         "denoland.vscode-deno",
         "svelte.svelte-vscode",
         "bradlc.vscode-tailwindcss",
-        "dbaeumer.vscode-eslint",
         "yoavbls.pretty-ts-errors",
         "formulahendry.auto-close-tag",
         "formulahendry.auto-rename-tag",
@@ -38,7 +37,8 @@
     6006, // Storybook
     8787, // Local Playground
     9323, // Playwright Test UI
-    51204 // Vitest UI
+    51204, // Vitest UI
+    51205 // Vitest UI
   ],
   "postCreateCommand": "deno install && chmod +x .githooks/pre-commit && git config core.hooksPath .githooks",
   "remoteUser": "deno"

@@ -1,0 +1,25 @@
+---
+slug: hill-observatory
+type: place
+title: 丘の観測所跡
+summary: 市街地の光から少し離れた丘に残る、小さな観測施設と風の強い草地の記録。
+publishedAt: 2026-03-02
+tags:
+  - Place
+  - Night
+  - Architecture
+status: fragment
+featured: false
+draft: false
+sample: true
+location: 岩手県
+cover:
+  src: /images/archive/hill-observatory.webp
+  alt: 夜の丘に残る小さなコンクリート観測所
+  width: 1600
+  height: 1067
+related: []
+revisions: []
+---
+
+入口は閉じていたが、壁面の測定目盛と錆びた金具が、ここで続いていた観測を示していた。

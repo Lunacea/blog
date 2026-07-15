@@ -1,0 +1,29 @@
+---
+slug: research-notes-as-archive
+type: article
+title: 研究メモを完成品にしないための記録法
+summary: 仮説、観察、失敗を時間の順序とともに残し、後から再利用できる研究アーカイブを設計する。
+publishedAt: 2026-02-02
+category: research
+tags:
+  - Research
+  - Archive
+  - Knowledge
+status: stable
+featured: false
+draft: false
+sample: true
+targetVersions: []
+related:
+  - work:field-note-index
+revisions: []
+---
+
+## 結論だけを残さない
+
+判断の根拠を再利用するには、成功した手順だけでなく、棄却した案と観察条件も必要になる。
+
+## 状態を明示する
+
+Stable、Growing、Fragment、Deprecatedを使い、読む人が現在の確度を判断できるようにする。
+更新履歴には文章全体の差分ではなく、判断が変わった理由を短く書く。

@@ -1,110 +1,72 @@
-# blog.lunacea.jp
+# Lunacea Archive
 
-![Deno](https://img.shields.io/badge/Deno-2.x-000000?style=flat-square&logo=deno&logoColor=white)
-![Svelte 5](https://img.shields.io/badge/Svelte-5.x-FF3E00?style=flat-square&logo=svelte&logoColor=white)
-![Hono](https://img.shields.io/badge/Hono-4.x-E36002?style=flat-square&logo=hono&logoColor=white)<br>
-![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=flat-square&logo=cloudflare&logoColor=white)
-![Deno Deploy](https://img.shields.io/badge/Deno_Deploy-Next--gen-000000?style=flat-square&logo=deno&logoColor=00E8C6)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-OIDC_Deploy-2088FF?style=flat-square&logo=github-actions&logoColor=white)
+ブログ、作品、登壇、写真・場所・ワイン・Momentを一つの情報設計で扱う、Lunacea名義の個人アーカイブです。SvelteKitを唯一のデプロイ単位にし、Hono
+APIを同じアプリの`/api/v1`へ組み込んでいます。
 
-本プロジェクトは、 Deno 2.x および Svelte 5 を基盤とし、<br> Hono サーバーサイド配信と Deno KV
-データベースを<br> 単一の Deno Deploy エッジクラウド環境で完結させた<br>
-個人用のブログシステムです。
+現在同梱している18件は交換用サンプルです。`sampleMode`が有効な間は全ページにバナーと`noindex`を出し、RSS・Atom・Sitemapからサンプルを除外します。
 
-## 1. セットアップ手順
+## はじめる
 
-VS Code の **Devcontainer** の利用を標準開発環境（推奨）としています。<br>
-コンテナに入ることで自動的にすべての環境が整います。
-
-### 開発環境の起動手順
-
-1. **コンテナでプロジェクトを開く**:
-   - プロジェクトフォルダを VS Code で開き、<br> コマンドパレットから
-     `Dev Containers: Reopen in Container` を選択します。
-   - `devcontainer.json` の `postCreateCommand` に定義されたタスクによって<br> Deno
-     のパッケージ解決と Git Hooks の設定が自動で実行されます。
-2. **アプリケーションの同時起動**:
-   - 以下のタスクを実行することで、API サーバーとフロントエンドが連動して起動します。
-   ```bash
-   # Hono API (Port 8000) & Vite Frontend (Port 5173) の同時起動
-   deno task dev
-   ```
-3. **プレビューの確認**:
-   - **Frontend**: [http://localhost:5173](http://localhost:5173)
-   - **Backend Health Check**: [http://localhost:8000/api/health](http://localhost:8000/api/health)
-   - Svelte 側の通信は自動的に Vite Proxy を経由して<br> Hono API サーバー（Port
-     8000）にバイパスされるため、<br> 開発モードでも CORS 制限を受けずに動的な開発が可能です。
-
-### コマンド一覧
-
-ルートの deno.json に定義されている統合タスクの一覧です。
+必要なものはDeno 2.xです。初回だけ依存関係とPlaywrightを準備します。
 
 ```bash
-# アプリケーション全体の起動（API + フロントエンド）
+deno install --frozen --allow-scripts=npm:sharp
+deno run -A npm:playwright@1.61.1 install chromium
+cp .env.example .env
 deno task dev
-
-# 各個別モジュールの開発・テスト
-deno task dev:api       # APIサーバー単体起動
-deno task dev:web       # フロントエンド単体起動
-deno task test:cms      # CMSパーサーのテスト実行
-deno task test:unit     # フロントエンドのユニットテスト実行（Vitest）
-deno task test:e2e      # フロントエンドのE2Eテスト実行（Playwright）
-
-# コード品質管理
-deno task lint          # 静的解析チェック
-deno task fmt           # コード自動整形
 ```
 
-## 2. ディレクトリ構成
+開発サーバーは通常`http://localhost:5173`で起動します。APIも同じoriginです。
 
-Deno 2.x workspaces を利用したマルチパッケージモノレポ構成を採用しています。
-
-```txt
-.
-├── .devcontainer/         # 開発コンテナ構成定義
-│   ├── devcontainer.json  # ポートフォワード・拡張機能・自動初期化タスク
-│   └── Dockerfile         # Deno 2.x, fishシェル, Playwrightのキャッシュ
-├── .github/
-│   └── workflows/
-│       └── ci.yml         # CI/CD パイプライン
-├── .githooks/
-│   └── pre-commit         # プレコミットフック
-├── .vscode/
-│   └── settings.json      # LSP, Linter, Auto-Formatter, シェル定義
-├── packages/
-│   ├── api/               # Hono Webサーバー / API [Deno 2.x]
-│   ├── cms/               # MDX解析 / Markdownパーサー / テスト [Deno 2.x]
-│   ├── components/        # 記事内で動作するSvelte UI
-│   └── web/               # Svelte 5 フロントエンドアプリ / テスト / UIカタログ
-├── shared/
-│   └── types.ts           # フロント・バックエンド共有の型定義
-├── deno.json              # モノレポ・ワークスペース設定および統合タスク定義
-└── README.md              # 本ドキュメント
+```bash
+deno task dev                 # SvelteKit + /api
+deno task build               # 本番ビルド
+deno task preview             # ビルド結果の確認
+deno task check               # frontmatter・リンク・svelte-check
+deno task test                # Deno Test + Vitest
+deno task test:e2e            # Playwright + axe
+deno task storybook           # UIカタログ :6006
+deno task content:validate    # コンテンツだけを検証
+deno task budget:check        # build後の初期JS上限を検証
+deno task fmt
+deno task lint
 ```
 
-## 4. インフラ・デプロイ構成詳細
+## 構成
 
-Deno Deploy の **Next-genデプロイメント・アーキテクチャ** を採用しています。
-
-### システムネットワークトポロジー
-
-```mermaid
-flowchart TD
-    User([閲覧者 / 管理者]) -->|blog.lunacea.jp| CF[Cloudflare DNS / Edge]
-    
-    subgraph Cloudflare Edge
-        CF --> Access{Cloudflare Access}
-        Access -->|認証成功| Admin[管理者用管理画面 /admin]
-        CF --> Turnstile[Turnstile WAF]
-        Turnstile -->|スパム判定パス| Comments[コメント投稿 /api/comments]
-    end
-    
-    CF -->|プロキシ転送| DD[Deno Deploy - 単一プロジェクト]
-    
-    subgraph Deno Deploy
-        DD --> Hono[Hono Web Server]
-        Hono -->|serveStatic| Static[Svelte 5 静的アセット / packages/web/dist]
-        Hono -->|APIルーター| API[API エンドポイント / Webhook同期]
-        API <--> KV[(Deno KV Database)]
-    end
+```text
+apps/web/                SvelteKitアプリ、ルート、SSR APIアダプター、E2E設定
+packages/api/            Hono API、Cookie、Deno KV/メモリrepository、天候service
+packages/config/         サイト名、ナビゲーション、既定地点、sampleMode、素材slot
+packages/content/        .svx正本、ビルド時registry、検索文書、validator
+packages/core/           検索、関連資料、天候変換、リアクションの純粋ロジック
+packages/schemas/        Zodによる共通・種別固有スキーマ
+packages/tokens/         semantic color、書体、余白、ガラス、motionのCSS token
+packages/ui/             共通Svelte UIとStorybook
+e2e/                     Playwright + axe
+docs/                    設計、執筆、公開runbook
 ```
+
+公開URLは`/articles/[slug]`、`/works/[slug]`、`/talks/[slug]`、`/archive/{photos|places|wines|moments}/[slug]`です。タグ、GET検索、About、RSS、Atom、Sitemap、OGP、限定APIも同じアプリから配信します。
+
+## コンテンツを入れ替える
+
+正本は[packages/content/entries](/app/packages/content/entries)の`.svx`です。サンプルを実績として公開しないでください。
+
+1. サンプルディレクトリを実コンテンツに置き換える。
+2. frontmatterの`sample`を`false`にし、coverは所有するAVIF/WebPを`apps/web/static/images`へ置く。
+3. [packages/config/mod.ts](/app/packages/config/mod.ts)の著者情報を確認し、全件を置換した後だけ`sampleMode: false`へ変更する。
+4. `deno task check && deno task test && deno task build && deno task budget:check`を通す。
+
+frontmatterとMarkdown機能の詳細は[執筆ガイド](/app/docs/content-authoring.md)、依存方向とランタイム境界は[アーキテクチャ](/app/docs/architecture.md)にあります。視覚設計、ホームのワイヤーフレーム、素材差し替え契約は[デザイン監査](/app/docs/design-audit.md)にまとめています。
+
+プロフィール写真、ロゴ、植物などの有機的な素材はコード生成しません。`packages/config/mod.ts`の`visualAssets`へ所有するAVIF/WebPとalt、crop位置を設定すると、`MediaSlot`が画面ごとの比率と読み込み方を維持して差し替えます。
+
+## 公開
+
+Deno
+DeployのSvelteKitプリセットを利用します。独自サーバー、Deno用アダプター、Classic、`deployctl`は使いません。GitHub連携、Preview/Production
+Timeline、KV、署名秘密鍵、Cloudflare
+DNSの具体的な手順と復旧方法は[公開runbook](/app/docs/deployment.md)を参照してください。
+
+秘密情報はリポジトリに保存しません。最低限`REACTION_SIGNING_SECRET`を各ランタイムcontextへ登録します。

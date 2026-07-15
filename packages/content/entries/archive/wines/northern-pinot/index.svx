@@ -1,0 +1,31 @@
+---
+slug: northern-pinot
+type: wine
+title: Northern Pinot 2022
+summary: 赤い果実の軽さと湿った土の香りが残る、冷涼な夜にゆっくり変化した一本の記録。
+publishedAt: 2026-04-14
+tags:
+  - Wine
+  - Pinot Noir
+  - Evening
+status: stable
+featured: false
+draft: false
+sample: true
+location: 自宅
+producer: Sample Cellars
+vintage: 2022
+region: Northern Region
+grapes:
+  - Pinot Noir
+cover:
+  src: /images/archive/northern-pinot.webp
+  alt: 暗いテーブルに置かれた赤ワインのグラスと無地のボトル
+  width: 1600
+  height: 1067
+related: []
+revisions: []
+---
+
+開けた直後は硬かったが、温度が上がると赤い果実と紅茶のような香りが現れた。
+料理よりも、雨音を聞きながら単独で飲んだ時間がよく似合った。

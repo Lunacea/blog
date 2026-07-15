@@ -1,0 +1,27 @@
+---
+slug: glasshouse-snow
+type: photo
+title: 雪の温室
+summary: 使われなくなった温室のガラス越しに、細い枝と積雪が同じ白さへ溶けていく朝。
+publishedAt: 2026-01-18
+tags:
+  - Photograph
+  - Snow
+  - Glass
+status: fragment
+featured: true
+draft: false
+sample: true
+location: 岩手県
+camera: Sample Camera
+lens: 50mm
+cover:
+  src: /images/archive/glasshouse-snow.webp
+  alt: 雪に覆われた古い温室と曇ったガラス
+  width: 1600
+  height: 1067
+related: []
+revisions: []
+---
+
+曇ったガラスは外と内の距離を消し、枯れた蔓だけが温室の形を残していた。

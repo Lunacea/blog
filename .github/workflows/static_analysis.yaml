@@ -1,4 +1,4 @@
-name: 🔍 コード品質チェック (CI)
+name: Quality gate
 
 on:
   push:
@@ -6,28 +6,61 @@ on:
   pull_request:
     branches: [main, develop]
 
-jobs:
-  static-analysis:
-    name: 🧪 静的解析とテストの実行
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📦 リポジトリのチェックアウト
-        uses: actions/checkout@v7
+permissions:
+  contents: read
 
-      - name: 🦕 Deno環境のセットアップ
+jobs:
+  quality:
+    name: Format, lint, test, build, E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
           cache: true
 
-      - name: 🎨 コードフォーマットのチェック
-        run: deno fmt --check
+      - name: Install locked dependencies
+        run: deno install --frozen --allow-scripts=npm:sharp
 
-      - name: 🚨 Linterによる構文チェック
-        run: deno lint
+      - name: Check formatting
+        run: deno task fmt:check
 
-      - name: 📝 CMSテストの実行
-        run: |
-          if find packages/cms/ -name "*_test.ts" -o -name "*.test.ts" | grep -q .; then
-            deno task test:cms
-          fi
+      - name: Lint
+        run: deno task lint
+
+      - name: Validate content and Svelte types
+        run: deno task check
+
+      - name: Run Deno and component tests
+        run: deno task test
+
+      - name: Build application
+        run: deno task build
+
+      - name: Check article JavaScript budget
+        run: deno task budget:check
+
+      - name: Build Storybook
+        run: deno task --cwd packages/ui build
+
+      - name: Install Chromium
+        run: deno run -A npm:playwright@1.61.1 install --with-deps chromium
+
+      - name: Run Playwright and axe
+        run: deno task test:e2e
+
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          if-no-files-found: ignore
+          retention-days: 7

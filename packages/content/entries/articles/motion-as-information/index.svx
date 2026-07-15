@@ -1,0 +1,32 @@
+---
+slug: motion-as-information
+type: article
+title: 動きを装飾ではなく情報として扱う
+summary: 静かな画面に置くモーションを、状態変化と空間の手掛かりに限定するための原則を整理する。
+publishedAt: 2026-05-24
+category: design
+tags:
+  - Accessibility
+  - Motion
+  - Design
+status: stable
+featured: true
+draft: false
+sample: true
+targetVersions: []
+related:
+  - work:spatial-interface-lab
+revisions: []
+---
+
+## 通常状態を静かに保つ
+
+常時動くノイズは本文の競合相手になる。反射や植物の揺れは、操作や状態変化が起きた短い時間だけ使う。
+
+## 三つの設定
+
+- Full: 環境演出を含めて表示する
+- Reduced: 奥行き移動と点滅を止める
+- Off: 必要な状態遷移以外を止める
+
+設定名だけでなく、実際に何が変わるかを画面上で説明することが大切である。

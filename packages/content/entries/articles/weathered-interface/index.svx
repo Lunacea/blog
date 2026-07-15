@@ -1,0 +1,29 @@
+---
+slug: weathered-interface
+type: article
+title: 天候をインターフェースの環境情報にする
+summary: 天気を飾りとして消費せず、可読性を変えない環境レイヤーとして扱う方法を考察する。
+publishedAt: 2026-03-15
+category: essay
+tags:
+  - Weather
+  - Interface
+  - Design
+status: fragment
+featured: false
+draft: false
+sample: true
+targetVersions: []
+related: []
+revisions: []
+---
+
+## 同じ場所を共有する
+
+初期地点を盛岡に固定すると、閲覧者の現在地を求めずにサイトの「今」を共有できる。
+場所の変更は明示的な操作にし、選択は端末だけへ保存する。
+
+## 変えてよいもの
+
+光、影、背景の湿度、植物の彩度は変えられる。一方で本文色、フォントサイズ、操作位置、
+コンテンツの有無は天候に左右させない。

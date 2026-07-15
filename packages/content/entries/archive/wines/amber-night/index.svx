@@ -1,0 +1,30 @@
+---
+slug: amber-night
+type: wine
+title: Amber Night 2021
+summary: 柑橘の皮、乾いた花、わずかな渋みが長く残った、琥珀色のワインについての短い記録。
+publishedAt: 2026-02-21
+tags:
+  - Wine
+  - Orange Wine
+  - Memory
+status: fragment
+featured: false
+draft: false
+sample: true
+location: 盛岡
+producer: Sample Vineyard
+vintage: 2021
+region: Mountain Region
+grapes:
+  - White Blend
+cover:
+  src: /images/archive/amber-night.webp
+  alt: 窓辺の淡い灯りに照らされた琥珀色のワイン
+  width: 1600
+  height: 1067
+related: []
+revisions: []
+---
+
+香りの強さより、飲み終わった後に残る渋みが夜の記憶と結びついている。

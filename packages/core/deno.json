@@ -1,0 +1,10 @@
+{
+  "name": "@lunacea/core",
+  "version": "0.1.0",
+  "exports": {
+    "./search": "./search.ts",
+    "./related": "./related.ts",
+    "./weather": "./weather.ts",
+    "./reactions": "./reactions.ts"
+  }
+}

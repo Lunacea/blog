@@ -1,0 +1,26 @@
+---
+slug: last-train
+type: moment
+title: 最終列車のあと
+summary: 列車が去ったホームに黄色い照明だけが残り、遠くの川音が戻ってきた数分間。
+publishedAt: 2025-09-19
+tags:
+  - Moment
+  - Night
+  - Transit
+status: fragment
+featured: true
+draft: false
+sample: true
+location: 盛岡
+cover:
+  src: /images/archive/last-train.webp
+  alt: 最終列車後の無人ホームと黄色い照明
+  width: 1600
+  height: 1067
+related:
+  - place:morioka-riverside
+revisions: []
+---
+
+案内表示が消えると、ホームは移動のための場所ではなく、川沿いの細長い空地になった。

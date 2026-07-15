@@ -1,0 +1,45 @@
+{
+  "deploy": {
+    "framework": "sveltekit",
+    "install": "deno install --frozen --allow-scripts=npm:sharp",
+    "build": "deno task build"
+  },
+  "tasks": {
+    "dev": "deno run --unstable-kv -A npm:vite@8.1.3 dev",
+    "build": "deno run -A npm:vite@8.1.3 build",
+    "preview": "deno run --unstable-kv -A npm:vite@8.1.3 preview",
+    "check": "deno run -A npm:@sveltejs/kit@2.69.2 sync && deno run -A npm:svelte-check@4.4.6 --tsconfig ./tsconfig.json",
+    "test:unit": "deno run -A npm:vitest@4.1.9 run",
+    "test:e2e": "deno run -A npm:playwright@1.61.1 test"
+  },
+  "imports": {
+    "@axe-core/playwright": "npm:@axe-core/playwright@4.12.1",
+    "@playwright/test": "npm:@playwright/test@1.61.1",
+    "@shikijs/transformers": "npm:@shikijs/transformers@4.3.1",
+    "@sveltejs/adapter-auto": "npm:@sveltejs/adapter-auto@7.0.1",
+    "@sveltejs/kit": "npm:@sveltejs/kit@2.69.2",
+    "@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte@7.1.2",
+    "@tailwindcss/vite": "npm:@tailwindcss/vite@4.3.1",
+    "@testing-library/svelte": "npm:@testing-library/svelte@5.4.2",
+    "@threlte/core": "npm:@threlte/core@8.5.16",
+    "@types/node": "npm:@types/node@24.10.1",
+    "@types/three": "npm:@types/three@0.185.0",
+    "jsdom": "npm:jsdom@29.1.1",
+    "katex": "npm:katex@0.16.47",
+    "mdsvex": "npm:mdsvex@0.12.7",
+    "mermaid": "npm:mermaid@11.16.0",
+    "rehype-autolink-headings": "npm:rehype-autolink-headings@7.1.0",
+    "rehype-katex": "npm:rehype-katex@7.0.1",
+    "rehype-slug": "npm:rehype-slug@6.0.0",
+    "remark-gfm": "npm:remark-gfm@4.0.1",
+    "remark-math": "npm:remark-math@6.0.0",
+    "shiki": "npm:shiki@4.3.1",
+    "sharp": "npm:sharp@0.34.5",
+    "svelte": "npm:svelte@5.56.4",
+    "tailwindcss": "npm:tailwindcss@4.3.1",
+    "three": "npm:three@0.185.1",
+    "vite": "npm:vite@8.1.3",
+    "vitest": "npm:vitest@4.1.9",
+    "vitest/": "npm:vitest@4.1.9/"
+  }
+}

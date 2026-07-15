@@ -1,0 +1,125 @@
+:root {
+  color-scheme: light;
+
+  /* Semantic color roles */
+  --color-background: #d7dbd5;
+  --color-surface: #eef0eb;
+  --color-foreground: #151a17;
+  --color-primary: #173d2d;
+  --color-secondary: #466451;
+  --color-accent: #705800;
+  --color-muted: #46524c;
+  --color-line: rgb(21 26 23 / 24%);
+  --color-glass: rgb(244 247 242 / 72%);
+  --color-positive: #245d40;
+  --color-negative: #8a343c;
+
+  /* Material colors are reserved for artwork and environmental layers. */
+  --color-concrete: #adb5ae;
+  --color-forest: #102f23;
+  --color-moss: #587460;
+  --color-neon: #c3a92f;
+  --color-white: #f7f8f4;
+  --color-black: #090c0a;
+
+  /* Typography */
+  --font-sans: "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-serif: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --text-display: clamp(3.75rem, 8.1vw, 7.5rem);
+  --text-h1: clamp(2.625rem, 6.5vw, 6rem);
+  --text-h2: clamp(1.75rem, 3.6vw, 3.25rem);
+  --text-h3: clamp(1.25rem, 2vw, 1.625rem);
+  --text-body: clamp(1.0625rem, 0.25vw + 1rem, 1.125rem);
+  --text-small: 0.875rem;
+  --text-caption: 0.75rem;
+  --leading-display: 0.88;
+  --leading-heading: 1.25;
+  --leading-body: 1.86;
+  --tracking-display: -0.055em;
+  --tracking-heading: -0.045em;
+  --tracking-prose-heading: -0.025em;
+  --tracking-label: 0.1em;
+  --tracking-ui: 0.035em;
+
+  /* Spacing and layout */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --layout-gutter: clamp(1.125rem, 4vw, 3.75rem);
+  --section-space: clamp(4rem, 9vw, 8rem);
+  --content-width: 78rem;
+  --prose-width: 72ch;
+  --control-size: 2.75rem;
+  --site-header-block: 4.3125rem;
+  --sample-banner-block: 2.5625rem;
+
+  /* Shape, depth, and glass */
+  --radius-none: 0;
+  --radius-small: 0.1875rem;
+  --radius-round: 999px;
+  --shadow-overlay: 0 0.75rem 2.5rem rgb(16 47 35 / 14%);
+  --glass-blur: 0.625rem;
+  --focus-ring: 0 0 0 0.1875rem rgb(112 88 0 / 36%);
+
+  /* Motion */
+  --motion-duration-fast: 140ms;
+  --motion-duration-base: 360ms;
+  --motion-duration-slow: 760ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-background: #0c110f;
+  --color-surface: #151b18;
+  --color-foreground: #e7ede8;
+  --color-primary: #a1c9b2;
+  --color-secondary: #83a58f;
+  --color-accent: #e2c654;
+  --color-muted: #aab5ae;
+  --color-line: rgb(231 237 232 / 20%);
+  --color-glass: rgb(20 31 26 / 76%);
+  --color-positive: #8bc6a1;
+  --color-negative: #e69aa0;
+  --color-concrete: #68726c;
+  --color-forest: #173e2d;
+  --color-moss: #739880;
+  --color-neon: #e2c654;
+  --shadow-overlay: 0 0.75rem 2.5rem rgb(0 0 0 / 34%);
+  --focus-ring: 0 0 0 0.1875rem rgb(226 198 84 / 38%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
+    --color-background: #0c110f;
+    --color-surface: #151b18;
+    --color-foreground: #e7ede8;
+    --color-primary: #a1c9b2;
+    --color-secondary: #83a58f;
+    --color-accent: #e2c654;
+    --color-muted: #aab5ae;
+    --color-line: rgb(231 237 232 / 20%);
+    --color-glass: rgb(20 31 26 / 76%);
+    --color-positive: #8bc6a1;
+    --color-negative: #e69aa0;
+    --color-concrete: #68726c;
+    --color-forest: #173e2d;
+    --color-moss: #739880;
+    --color-neon: #e2c654;
+    --shadow-overlay: 0 0.75rem 2.5rem rgb(0 0 0 / 34%);
+    --focus-ring: 0 0 0 0.1875rem rgb(226 198 84 / 38%);
+  }
+}
