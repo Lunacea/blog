@@ -1,6 +1,7 @@
 ---
 slug: git-first-publishing
-type: talk
+type: article
+category: talk
 title: Git-first Publishing on the Edge
 summary: Git管理コンテンツ、プリレンダリング、エッジ上の動的機能を一つの公開経路へまとめる。
 publishedAt: 2026-04-22
@@ -12,10 +13,16 @@ status: growing
 featured: false
 draft: false
 sample: true
-event: Sample Engineering Session
-venue: Online
-format: workshop
-links: {}
+event:
+  name: Sample Engineering Session
+  heldAt: 2026-04-22
+  mode: online
+  presentationType: workshop
+targetVersions: []
+legacyIds:
+  - talk:git-first-publishing
+legacyPaths:
+  - /talks/git-first-publishing
 related:
   - article:resilient-content-pipeline
 revisions: []

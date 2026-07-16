@@ -14,6 +14,7 @@ draft: false
 sample: true
 location: 岩手県
 cover:
+  kind: image
   src: /images/archive/first-frost.webp
   alt: 朝日を受ける霜のついた草と金属の手すり
   width: 1600

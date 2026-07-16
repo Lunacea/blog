@@ -2,16 +2,13 @@
 
 import type { Component } from "svelte";
 import { type Content, contentSchema, type ContentType } from "@lunacea/schemas";
+import { metadataModules } from "./.generated/metadata.ts";
 
 export type ContentModule = {
   default: Component;
   metadata: unknown;
+  headings: Array<{ id: string; text: string; level: number }>;
 };
-
-const metadataModules = import.meta.glob("./entries/**/*.svx", {
-  eager: true,
-  import: "metadata",
-}) as Record<string, unknown>;
 
 const contentModules = import.meta.glob("./entries/**/*.svx") as Record<
   string,
@@ -39,6 +36,32 @@ export function findContent(type: ContentType, slug: string): Content | undefine
   return allContent.find((entry) => entry.type === type && entry.slug === slug);
 }
 
+export function findContentById(id: string): Content | undefined {
+  return allContent.find((entry) =>
+    `${entry.type}:${entry.slug}` === id || entry.legacyIds.includes(id)
+  );
+}
+
+export function findContentByPath(path: string): Content | undefined {
+  return allContent.find((entry) =>
+    hrefForContent(entry) === path || entry.legacyPaths.includes(path)
+  );
+}
+
+export function canonicalContentId(id: string): string | undefined {
+  const content = findContentById(id);
+  return content ? `${content.type}:${content.slug}` : undefined;
+}
+
+/**
+ * A migrated target keeps writing to its pre-migration KV key. This is injected
+ * into the API boundary; no KV records or anonymous actor IDs are copied.
+ */
+export function resolveReactionTarget(id: string): string {
+  const content = findContentById(id);
+  return content?.legacyIds.find((legacyId) => legacyId.startsWith("talk:")) ?? id;
+}
+
 export async function loadContentModule(type: ContentType, slug: string): Promise<ContentModule> {
   const key = Object.keys(contentModules).find((path) =>
     path.endsWith(`/${type}s/${slug}/index.svx`) ||
@@ -51,7 +74,6 @@ export async function loadContentModule(type: ContentType, slug: string): Promis
 export function hrefForContent(content: Content): string {
   if (content.type === "article") return `/articles/${content.slug}`;
   if (content.type === "work") return `/works/${content.slug}`;
-  if (content.type === "talk") return `/talks/${content.slug}`;
   return `/archive/${content.type}s/${content.slug}`;
 }
 

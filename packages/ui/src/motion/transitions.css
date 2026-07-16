@@ -73,3 +73,22 @@ html[data-motion="reduced"]::view-transition-group(*),
 html[data-motion="off"]::view-transition-group(*) {
   animation-duration: var(--motion-duration-immediate);
 }
+
+html[data-smooth-anchor="true"] {
+  scroll-behavior: smooth;
+}
+
+html[data-home-opening="true"][data-motion="full"] [data-home-opening] {
+  animation: home-opening var(--motion-duration-opening) var(--motion-ease-enter) both;
+}
+
+@keyframes home-opening {
+  from {
+    opacity: 0;
+    clip-path: inset(0 0 10% 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0);
+  }
+}

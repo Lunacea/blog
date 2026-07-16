@@ -65,3 +65,30 @@ if (detail?.dynamicImports?.some((path) => path.includes("HeroScene"))) {
 console.log(
   `Article initial JavaScript: ${(gzipBytes / 1024).toFixed(1)} KiB gzip (${files.size} files).`,
 );
+
+const webglFiles = new Set<string>();
+function collectWebgl(key: string): void {
+  const entry = manifest[key];
+  if (!entry || webglFiles.has(entry.file)) return;
+  webglFiles.add(entry.file);
+  for (const imported of entry.imports ?? []) collectWebgl(imported);
+}
+collectWebgl("../../packages/ui/src/visuals/HeroScene.svelte");
+let webglGzipBytes = 0;
+for (const file of webglFiles) {
+  if (!file.endsWith(".js")) continue;
+  const bytes = await Deno.readFile(new URL(file, client));
+  const compressed = new Response(
+    new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip")),
+  );
+  webglGzipBytes += (await compressed.arrayBuffer()).byteLength;
+}
+const webglLimit = 230 * 1024;
+if (webglGzipBytes > webglLimit) {
+  throw new Error(`Home WebGL graph is ${webglGzipBytes} gzip bytes; limit is ${webglLimit}.`);
+}
+console.log(
+  `Home WebGL JavaScript: ${
+    (webglGzipBytes / 1024).toFixed(1)
+  } KiB gzip (${webglFiles.size} files).`,
+);

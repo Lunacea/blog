@@ -16,6 +16,17 @@
   let primaryProbe: HTMLSpanElement;
   let accentProbe: HTMLSpanElement;
   let inViewport = $state(true);
+  let scrubPhase = $state<number | null>(null);
+  let yaw = $state(0);
+  let pitch = $state(0);
+  let scale = $state(1);
+  let offsetY = $state(0);
+  let dragging = $state(false);
+  let interactionOwned = $state(false);
+  let pointerX = 0;
+  let pointerY = 0;
+  let resumeTimer = 0;
+  let alignTimer = 0;
   let generation = 0;
 
   function readPalette(): HeroPalette {
@@ -79,6 +90,54 @@
     enabled = false;
   }
 
+  function scheduleAutoResume() {
+    clearTimeout(resumeTimer);
+    clearTimeout(alignTimer);
+    resumeTimer = window.setTimeout(() => {
+      if (scrubPhase !== null) scrubPhase = Math.round(scrubPhase) % 3;
+      alignTimer = window.setTimeout(() => {
+        scrubPhase = null;
+        interactionOwned = false;
+      }, 180);
+    }, 1500);
+  }
+
+  function handleScroll() {
+    const rect = ambientHost.getBoundingClientRect();
+    const distance = Math.max(1, rect.height - innerHeight);
+    const progress = Math.max(0, Math.min(1, -rect.top / distance));
+    interactionOwned = true;
+    scrubPhase = progress * 2.999;
+    scale = .9 + progress * .18;
+    offsetY = (progress - .5) * .38;
+    scheduleAutoResume();
+  }
+
+  function startDrag(event: PointerEvent) {
+    dragging = true;
+    interactionOwned = true;
+    clearTimeout(resumeTimer);
+    clearTimeout(alignTimer);
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+    ambientHost.setPointerCapture(event.pointerId);
+  }
+
+  function moveDrag(event: PointerEvent) {
+    if (!dragging) return;
+    yaw += (event.clientX - pointerX) * .006;
+    pitch = Math.max(-.65, Math.min(.65, pitch + (event.clientY - pointerY) * .004));
+    pointerX = event.clientX;
+    pointerY = event.clientY;
+  }
+
+  function stopDrag(event: PointerEvent) {
+    if (!dragging) return;
+    dragging = false;
+    if (ambientHost.hasPointerCapture(event.pointerId)) ambientHost.releasePointerCapture(event.pointerId);
+    scheduleAutoResume();
+  }
+
   onMount(() => {
     const intersectionObserver = new IntersectionObserver(([entry]) => {
       inViewport = entry?.isIntersecting ?? false;
@@ -95,13 +154,17 @@
     };
     window.addEventListener("lunacea:motion", motionListener);
     window.addEventListener("lunacea:theme", themeListener);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       generation += 1;
+      clearTimeout(resumeTimer);
+      clearTimeout(alignTimer);
       intersectionObserver.disconnect();
       if (useIdle) window.cancelIdleCallback(idle);
       else window.clearTimeout(idle);
       window.removeEventListener("lunacea:motion", motionListener);
       window.removeEventListener("lunacea:theme", themeListener);
+      window.removeEventListener("scroll", handleScroll);
     };
   });
 </script>
@@ -112,6 +175,14 @@
   aria-hidden="true"
   data-webgl={enabled}
   data-quality={quality}
+  data-interaction-owned={interactionOwned}
+  data-yaw={yaw}
+  data-pitch={pitch}
+  data-cursor={dragging ? "drag" : "webgl"}
+  onpointerdown={startDrag}
+  onpointermove={moveDrag}
+  onpointerup={stopDrag}
+  onpointercancel={stopDrag}
 >
   <span class="palette-probe foreground" bind:this={foregroundProbe}></span>
   <span class="palette-probe primary" bind:this={primaryProbe}></span>
@@ -147,7 +218,7 @@
     <circle class="signal" cx="520" cy="255" r="112" fill="url(#hero-signal)" />
   </svg>
   <div class="canvas" bind:this={canvasHost}>
-    {#if Scene && palette}<Scene {quality} {palette} />{/if}
+    {#if Scene && palette}<Scene {quality} {palette} {scrubPhase} {yaw} {pitch} {scale} {offsetY} paused={interactionOwned} />{/if}
   </div>
 </div>
 
@@ -158,7 +229,7 @@
     inset: 0 -4% 0 42%;
     overflow: hidden;
     color: var(--color-secondary);
-    pointer-events: none;
+    touch-action: pan-y;
   }
 
   .fallback,

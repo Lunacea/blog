@@ -5,14 +5,17 @@
   import { StatusBadge, TagLabel } from "$ui/components";
   import { ContentList, ReadingSurface } from "$ui/patterns";
   import ReactionBar from "./ReactionBar.svelte";
+  import ResponsiveImage from "./ResponsiveImage.svelte";
 
   let {
     metadata,
     component,
+    headings = [],
     related = []
   }: {
     metadata: Content;
     component: Component;
+    headings?: Array<{ id: string; text: string; level: number }>;
     related?: Content[];
   } = $props();
   let ContentComponent = $derived(component);
@@ -22,8 +25,6 @@
       ? "/articles/"
       : metadata.type === "work"
       ? "/works/"
-      : metadata.type === "talk"
-      ? "/talks/"
       : "/archive/" + metadata.type + "s/") +
     metadata.slug);
 
@@ -66,6 +67,26 @@
     </div>
     <h1 style:view-transition-name={transitionName}>{metadata.title}</h1>
     <p class="lead">{metadata.summary}</p>
+    {#if metadata.type === "work"}
+      <dl class="work-meta">
+        <div><dt>Role</dt><dd>{metadata.role}</dd></div>
+        <div><dt>Period</dt><dd>{metadata.period}</dd></div>
+        <div><dt>Stack</dt><dd>{metadata.stack.join(" / ")}</dd></div>
+      </dl>
+      {#if metadata.links.github || metadata.links.site}
+        <nav class="work-links" aria-label="制作物の外部リンク">
+          {#if metadata.links.github}<a href={metadata.links.github} rel="noreferrer">GitHub</a>{/if}
+          {#if metadata.links.site}<a href={metadata.links.site} rel="noreferrer">Site</a>{/if}
+        </nav>
+      {/if}
+    {:else if metadata.type === "article" && metadata.event}
+      <dl class="event-meta">
+        <div><dt>Event</dt><dd>{metadata.event.name}</dd></div>
+        <div><dt>Held</dt><dd>{metadata.event.heldAt} / {metadata.event.mode}</dd></div>
+        <div><dt>Format</dt><dd>{metadata.event.presentationType}</dd></div>
+        {#if metadata.event.venue}<div><dt>Venue</dt><dd>{metadata.event.venue}</dd></div>{/if}
+      </dl>
+    {/if}
     <ul class="tag-list" aria-label="タグ">
       {#each metadata.tags as tag}
         <li><TagLabel {tag} href={"/tags/" + encodeURIComponent(tag)} /></li>
@@ -73,19 +94,26 @@
     </ul>
   </header>
 
-  {#if metadata.cover}
+  {#if metadata.cover?.kind === "image" || metadata.cover?.kind === "og"}
     <figure class="cover shell" data-reveal="image">
-      <img
-        src={metadata.cover.src}
-        alt={metadata.cover.alt}
-        width={metadata.cover.width}
-        height={metadata.cover.height}
-        style:view-transition-name={`record-media-${metadata.type}-${metadata.slug}`}
-      />
+      <ResponsiveImage cover={{ ...metadata.cover, kind: "image" }} eager />
+      {#if metadata.cover.kind === "image" && metadata.cover.caption}
+        <figcaption>{metadata.cover.caption}</figcaption>
+      {/if}
     </figure>
+  {:else if metadata.cover?.kind === "placeholder"}
+    <div
+      class="cover-placeholder shell"
+      style:aspect-ratio={metadata.cover.aspectRatio}
+      data-asset-id={metadata.cover.assetId}
+      aria-label="制作物画像は未設定です"
+      role="img"
+    >
+      <span>Asset placeholder / {metadata.cover.assetId}</span>
+    </div>
   {/if}
 
-  <ReadingSurface component={ContentComponent} />
+  <ReadingSurface component={ContentComponent} {headings} />
 
   <div class="shell article-tail">
     {#if metadata.revisions.length}
@@ -129,7 +157,10 @@
   }
 
   .article-header .lead,
-  .article-header .tag-list {
+  .article-header .tag-list,
+  .article-header .work-meta,
+  .article-header .work-links,
+  .article-header .event-meta {
     grid-column: 2;
   }
 
@@ -141,10 +172,33 @@
     margin-bottom: var(--section-space);
   }
 
-  .cover img {
+  .work-meta, .event-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin: 0; }
+  .work-meta div, .event-meta div { border-top: 1px solid var(--color-line); padding-top: var(--space-2); }
+  .work-meta dt, .event-meta dt { color: var(--color-muted); font-family: var(--font-mono); font-size: var(--text-caption); }
+  .work-meta dd, .event-meta dd { margin: var(--space-1) 0 0; }
+  .work-links { display: flex; gap: var(--space-4); }
+
+  .cover :global(img) {
     width: 100%;
     max-height: 72svh;
     object-fit: cover;
+  }
+
+  .cover figcaption {
+    margin-top: var(--space-2);
+    color: var(--color-muted);
+    font-size: var(--text-caption);
+  }
+
+  .cover-placeholder {
+    display: grid;
+    place-items: center;
+    max-height: 72svh;
+    border: 1px solid var(--color-line);
+    background: var(--color-surface);
+    color: var(--color-muted);
+    font-family: var(--font-mono);
+    font-size: var(--text-caption);
   }
 
   .article-tail {

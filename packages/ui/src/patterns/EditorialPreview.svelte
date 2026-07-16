@@ -1,5 +1,5 @@
 <script lang="ts">
-  import EditorialSample from "./fixtures/EditorialSample.svx";
+  import EditorialSample, { headings } from "./fixtures/EditorialSample.svx";
   import ReadingSurface from "./ReadingSurface.svelte";
 </script>
 
@@ -9,7 +9,7 @@
   <span>TOC, annotation, quote, code, Mermaid, and math</span>
 </header>
 
-<ReadingSurface component={EditorialSample} />
+<ReadingSurface component={EditorialSample} {headings} />
 
 <style>
   .editorial-header {

@@ -17,6 +17,10 @@ role: Researcher / Developer
 stack:
   - TypeScript
   - Indexed Search
+cover:
+  kind: placeholder
+  assetId: work-field-note-index
+  aspectRatio: 16 / 10
 links: {}
 research:
   question: 異なる形式の観察記録を、文脈を失わずに再発見できるか

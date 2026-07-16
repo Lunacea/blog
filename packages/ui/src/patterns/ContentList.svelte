@@ -25,7 +25,6 @@
   function href(entry: Pick<Content, "type" | "slug">): string {
     if (entry.type === "article") return "/articles/" + entry.slug;
     if (entry.type === "work") return "/works/" + entry.slug;
-    if (entry.type === "talk") return "/talks/" + entry.slug;
     return "/archive/" + entry.type + "s/" + entry.slug;
   }
 </script>

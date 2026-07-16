@@ -1,5 +1,6 @@
 import { allContent, hrefForContent } from "@lunacea/content";
 import { siteConfig } from "@lunacea/config";
+import { stableFeedPath } from "@lunacea/core/feed.ts";
 
 export const publishedFeedContent = allContent.filter((entry) => !entry.sample && !entry.draft);
 
@@ -14,4 +15,8 @@ export function xml(value: string): string {
 
 export function absoluteHref(content: (typeof allContent)[number]): string {
   return siteConfig.url + hrefForContent(content);
+}
+
+export function stableFeedId(content: (typeof allContent)[number]): string {
+  return siteConfig.url + stableFeedPath(hrefForContent(content), content.legacyPaths);
 }

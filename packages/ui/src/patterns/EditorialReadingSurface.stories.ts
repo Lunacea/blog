@@ -16,3 +16,7 @@ export const CompleteDocument: Story = {};
 export const Dark: Story = {
   globals: { theme: "dark" },
 };
+
+export const MobileTableOfContents: Story = {
+  globals: { viewport: { value: "mobile", isRotated: false }, motion: "reduced" },
+};

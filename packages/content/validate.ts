@@ -19,13 +19,13 @@ function frontmatter(source: string, path: string): unknown {
 
 const files = await collectFiles(new URL("./entries", import.meta.url).pathname);
 const ids = new Set<string>();
+const paths = new Set<string>();
 const errors: string[] = [];
 const records: Array<{ path: string; source: string; content: Content }> = [];
 
 function href(content: Content): string {
   if (content.type === "article") return `/articles/${content.slug}`;
   if (content.type === "work") return `/works/${content.slug}`;
-  if (content.type === "talk") return `/talks/${content.slug}`;
   return `/archive/${content.type}s/${content.slug}`;
 }
 
@@ -39,11 +39,22 @@ for (const path of files) {
     const id = contentId(parsed);
     if (ids.has(id)) errors.push(`${path}: duplicate content id ${id}`);
     ids.add(id);
+    for (const alias of parsed.legacyIds) {
+      if (ids.has(alias)) errors.push(`${path}: duplicate content id or alias ${alias}`);
+      ids.add(alias);
+    }
+    const canonicalPath = href(parsed);
+    if (paths.has(canonicalPath)) errors.push(`${path}: duplicate content path ${canonicalPath}`);
+    paths.add(canonicalPath);
+    for (const alias of parsed.legacyPaths) {
+      if (paths.has(alias)) errors.push(`${path}: duplicate content path or alias ${alias}`);
+      paths.add(alias);
+    }
     if (!path.endsWith(`/${parsed.slug}/index.svx`)) {
       errors.push(`${path}: slug must match its directory name`);
     }
     records.push({ path, source, content: parsed });
-    if (parsed.cover) {
+    if (parsed.cover && parsed.cover.kind !== "placeholder") {
       if (!/\.(?:avif|webp)$/u.test(parsed.cover.src)) {
         errors.push(`${path}: cover must use a local AVIF or WebP asset`);
       }
@@ -63,10 +74,7 @@ const knownRoutes = new Set([
   "/",
   "/articles",
   "/works",
-  "/talks",
   "/archive",
-  "/about",
-  "/search",
   "/rss.xml",
   "/atom.xml",
   "/sitemap.xml",

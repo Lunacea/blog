@@ -1,28 +1,13 @@
-import { allContent, tags } from "@lunacea/content";
-import { searchDocuments } from "@lunacea/content/search.ts";
-import { searchContent } from "@lunacea/core/search.ts";
-import { contentStatusSchema, contentTypeSchema } from "@lunacea/schemas";
+import { redirect } from "@sveltejs/kit";
 
 export const prerender = false;
 
 export function load({ url }) {
-  const query = (url.searchParams.get("q") ?? "").slice(0, 120);
-  const parsedType = contentTypeSchema.safeParse(url.searchParams.get("type"));
-  const parsedStatus = contentStatusSchema.safeParse(url.searchParams.get("status"));
-  const yearValue = Number(url.searchParams.get("year"));
-  const filters = {
-    type: parsedType.success ? parsedType.data : undefined,
-    tag: url.searchParams.get("tag") || undefined,
-    year: Number.isInteger(yearValue) && yearValue > 1900 ? yearValue : undefined,
-    status: parsedStatus.success ? parsedStatus.data : undefined,
-  };
-  const results = searchContent(searchDocuments, query, filters);
-  return {
-    query,
-    filters,
-    results,
-    tags,
-    years: [...new Set(allContent.map((entry) => Number(entry.publishedAt.slice(0, 4))))]
-      .sort((left, right) => right - left),
-  };
+  const query = new URLSearchParams();
+  const q = (url.searchParams.get("q") ?? "").trim().slice(0, 120);
+  const tag = url.searchParams.get("tag")?.trim();
+  if (q) query.set("q", q);
+  if (tag) query.set("tag", tag);
+  if (url.searchParams.get("type") === "talk") query.set("category", "talk");
+  redirect(308, `/articles${query.size ? `?${query}` : ""}`);
 }

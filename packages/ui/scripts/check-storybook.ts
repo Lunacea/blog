@@ -3,6 +3,8 @@
 import { AxeBuilder } from "@axe-core/playwright";
 import { chromium, type ConsoleMessage, type Page } from "playwright";
 
+const browserHeadless = Deno.env.get("STORYBOOK_HEADED") !== "true";
+
 const outputDirectory = new URL("../storybook-static/", import.meta.url);
 const requiredGroups = [
   "Components/",
@@ -54,6 +56,7 @@ async function analyzeAccessibility(page: Page) {
 
 async function serveStatic(request: Request): Promise<Response> {
   const pathname = decodeURIComponent(new URL(request.url).pathname);
+  if (pathname === "/favicon.ico") return new Response(null, { status: 204 });
   const relativePath = pathname === "/" ? "index.html" : pathname.slice(1);
   if (relativePath.split("/").includes("..")) return new Response("Bad request", { status: 400 });
 
@@ -81,7 +84,9 @@ async function assertStory(
     const browserDriverWarning = message.type() === "warning" &&
       /GL Driver Message.*GPU stall due to ReadPixels/.test(message.text());
     if (["error", "warning"].includes(message.type()) && !browserDriverWarning) {
-      runtimeErrors.push(message.text());
+      const location = message.location();
+      const source = location.url ? ` (${location.url}:${location.lineNumber})` : "";
+      runtimeErrors.push(`${message.text()}${source}`);
     }
   };
   page.on("pageerror", onPageError);
@@ -244,6 +249,12 @@ async function checkEditorialRendering(
   });
   const page = await context.newPage();
   await openStory(page, baseUrl, "patterns-editorial-reading-surface--complete-document");
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: () => Promise.resolve() },
+    });
+  });
   await page.locator(".mermaid-diagram svg").waitFor({ timeout: 10_000 });
   const requiredSelectors = [
     ".prose blockquote",
@@ -305,58 +316,97 @@ async function checkMotionStories(
   await fallbackContext.close();
 }
 
-async function checkVisualFallbacks(
-  baseUrl: string,
-  browser: Awaited<ReturnType<typeof chromium.launch>>,
-) {
-  const fallbackCases = [
-    {
-      name: "save-data",
-      init: `Object.defineProperty(navigator, "connection", {
+async function checkVisualFallbacks(baseUrl: string) {
+  // The all-story pass creates and destroys several WebGL contexts. Use a fresh GPU process here
+  // so context-loss behavior is deterministic instead of depending on Chromium's context quota.
+  const browser = await chromium.launch({ headless: browserHeadless });
+  try {
+    const fallbackCases = [
+      {
+        name: "save-data",
+        init: `Object.defineProperty(navigator, "connection", {
         configurable: true,
         value: { saveData: true, addEventListener() {}, removeEventListener() {} }
       });`,
-    },
-    {
-      name: "low capability",
-      init: `Object.defineProperty(navigator, "deviceMemory", { configurable: true, value: 2 });
+      },
+      {
+        name: "low capability",
+        init: `Object.defineProperty(navigator, "deviceMemory", { configurable: true, value: 2 });
         Object.defineProperty(navigator, "hardwareConcurrency", { configurable: true, value: 2 });`,
-    },
-    {
-      name: "no WebGL2",
-      init: `const originalGetContext = HTMLCanvasElement.prototype.getContext;
+      },
+      {
+        name: "no WebGL2",
+        init: `const originalGetContext = HTMLCanvasElement.prototype.getContext;
         HTMLCanvasElement.prototype.getContext = function (type, ...args) {
           if (type === "webgl2") return null;
           return originalGetContext.call(this, type, ...args);
         };`,
-    },
-  ];
+      },
+    ];
 
-  for (const fallback of fallbackCases) {
+    for (const fallback of fallbackCases) {
+      const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      await context.addInitScript(fallback.init);
+      const page = await context.newPage();
+      await openStory(page, baseUrl, "visuals-ambienthero--enhanced-when-capable");
+      await page.waitForTimeout(300);
+      const webgl = await page.locator("[data-webgl]").getAttribute("data-webgl");
+      if (webgl !== "false" || await page.locator("canvas").count()) {
+        throw new Error(`${fallback.name}: WebGL fallback did not remain active`);
+      }
+      await context.close();
+    }
+
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    await context.addInitScript(fallback.init);
     const page = await context.newPage();
     await openStory(page, baseUrl, "visuals-ambienthero--enhanced-when-capable");
-    await page.waitForTimeout(300);
-    const webgl = await page.locator("[data-webgl]").getAttribute("data-webgl");
-    if (webgl !== "false" || await page.locator("canvas").count()) {
-      throw new Error(`${fallback.name}: WebGL fallback did not remain active`);
+    const supportsWebGL2 = await page.evaluate(() =>
+      Boolean(document.createElement("canvas").getContext("webgl2"))
+    );
+    if (!supportsWebGL2) {
+      if (await page.locator("[data-webgl]").getAttribute("data-webgl") !== "false") {
+        throw new Error("Missing WebGL2 did not preserve the static fallback");
+      }
+      console.log("Storybook context-loss check skipped: this browser exposes no WebGL2.");
+      await context.close();
+      return;
+    }
+    const visual = page.locator('[data-webgl="true"]');
+    const canvas = visual.locator("canvas");
+    await canvas.waitFor({ timeout: 20_000 });
+    if (await visual.evaluate((element) => getComputedStyle(element).touchAction) !== "pan-y") {
+      throw new Error("WebGL interaction does not preserve vertical touch scrolling");
+    }
+    const bounds = await visual.boundingBox();
+    if (!bounds) throw new Error("WebGL interaction surface has no bounds");
+    const initialYaw = Number(await visual.getAttribute("data-yaw"));
+    await page.mouse.move(bounds.x + bounds.width * .5, bounds.y + bounds.height * .5);
+    await page.mouse.down();
+    await page.mouse.move(bounds.x + bounds.width * .65, bounds.y + bounds.height * .55);
+    if (await visual.getAttribute("data-interaction-owned") !== "true") {
+      throw new Error("Dragging did not acquire the WebGL timeline");
+    }
+    if (Number(await visual.getAttribute("data-yaw")) === initialYaw) {
+      throw new Error("Dragging did not update WebGL rotation");
+    }
+    await page.mouse.up();
+    await page.waitForFunction(
+      () =>
+        document.querySelector("[data-webgl]")?.getAttribute("data-interaction-owned") === "false",
+      undefined,
+      { timeout: 2_500 },
+    );
+    await canvas.dispatchEvent("webglcontextlost");
+    await page.waitForFunction(() =>
+      document.querySelector("[data-webgl]")?.getAttribute("data-webgl") === "false"
+    );
+    if (await page.locator("canvas").count()) {
+      throw new Error("WebGL context loss did not remove the failed canvas");
     }
     await context.close();
+  } finally {
+    await browser.close();
   }
-
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  const page = await context.newPage();
-  await openStory(page, baseUrl, "visuals-ambienthero--enhanced-when-capable");
-  await page.locator('[data-webgl="true"] canvas').waitFor({ timeout: 10_000 });
-  await page.locator('[data-webgl="true"] canvas').dispatchEvent("webglcontextlost");
-  await page.waitForFunction(() =>
-    document.querySelector("[data-webgl]")?.getAttribute("data-webgl") === "false"
-  );
-  if (await page.locator("canvas").count()) {
-    throw new Error("WebGL context loss did not remove the failed canvas");
-  }
-  await context.close();
 }
 
 const abortController = new AbortController();
@@ -385,7 +435,7 @@ try {
   }
   if (!docs.length) throw new Error("Storybook autodocs entries were not generated");
 
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: browserHeadless });
   try {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const page = await context.newPage();
@@ -404,7 +454,7 @@ try {
     await checkMotionCaps(baseUrl, browser);
     await checkEditorialRendering(baseUrl, browser);
     await checkMotionStories(baseUrl, browser);
-    await checkVisualFallbacks(baseUrl, browser);
+    await checkVisualFallbacks(baseUrl);
   } finally {
     await browser.close();
   }

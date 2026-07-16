@@ -1,4 +1,5 @@
 export { default as LinkCard } from "./LinkCard.svelte";
+export { default as FontPreloads } from "./FontPreloads.svelte";
 export { default as SampleBanner } from "./SampleBanner.svelte";
 export { default as SettingsPanel } from "./SettingsPanel.svelte";
 export { default as SiteFooter } from "./SiteFooter.svelte";

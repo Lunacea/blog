@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
+  import type { Snippet } from "svelte";
   import { visualAssets } from "@lunacea/config";
   import * as Collapsible from "../primitives/collapsible";
   import Icon from "../icons/Icon.svelte";
@@ -8,10 +9,12 @@
 
   let {
     navigation,
-    pathname
+    pathname,
+    environment
   }: {
     navigation: ReadonlyArray<{ href: string; label: string }>;
     pathname: string;
+    environment?: Snippet;
   } = $props();
 
   let open = $state(false);
@@ -64,10 +67,12 @@
           {item.label}
         </a>
       {/each}
-      <a class="search" href="/search" aria-current={pathname === "/search" ? "page" : undefined}>
+      <a class="search" href="/articles" aria-current={pathname === "/articles" ? "page" : undefined}>
         <Icon name={interfaceIcons.search} />Search
       </a>
     </nav>
+
+    {#if environment}<div class="header-environment">{@render environment()}</div>{/if}
 
     <Collapsible.Root class="mobile-nav" bind:open>
       <Collapsible.Trigger
@@ -91,8 +96,8 @@
           </a>
         {/each}
         <a
-          href="/search"
-          aria-current={pathname === "/search" ? "page" : undefined}
+          href="/articles"
+          aria-current={pathname === "/articles" ? "page" : undefined}
           onclick={() => void dismissMenu()}
         >
           <span>06</span><Icon name={interfaceIcons.search} />Search
@@ -170,6 +175,8 @@
     padding-left: var(--space-5);
   }
 
+  .header-environment { margin-left: auto; }
+
   .search :global(svg),
   :global(.mobile-panel svg) {
     flex: none;
@@ -190,8 +197,11 @@
     }
 
     .inner {
+      flex-wrap: wrap;
       gap: var(--space-2);
     }
+
+    .header-environment { margin-left: auto; }
 
     :global(.menu-trigger) {
       display: flex;

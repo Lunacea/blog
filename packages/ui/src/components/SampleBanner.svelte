@@ -19,7 +19,7 @@
   }
 
   span {
-    font-family: var(--font-mono);
+    font-family: var(--font-accent);
     font-size: var(--text-caption);
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;

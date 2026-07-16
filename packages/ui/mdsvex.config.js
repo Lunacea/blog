@@ -7,6 +7,7 @@ import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import { codeToHtml } from "shiki";
+import GithubSlugger from "github-slugger";
 
 function escapeHtml(value) {
   return value
@@ -79,7 +80,7 @@ function rehypeDollarMath() {
 }
 
 export function createEditorialPreprocessor() {
-  return mdsvex({
+  const processor = mdsvex({
     extensions: [".svx"],
     remarkPlugins: [remarkGfm, remarkMath],
     rehypePlugins: [
@@ -109,4 +110,26 @@ export function createEditorialPreprocessor() {
       },
     },
   });
+  return {
+    async markup(options) {
+      const result = await processor.markup(options);
+      if (!result || !options.filename?.endsWith(".svx")) return result;
+      const slugger = new GithubSlugger();
+      const headings = [...options.content.matchAll(/^(#{2,3})\s+(.+)$/gmu)].map((match) => {
+        const text = match[2].replace(/\[([^\]]+)\]\([^)]+\)/gu, "$1").replace(/[*_`]/gu, "")
+          .trim();
+        return { id: slugger.slug(text), text, level: match[1].length };
+      });
+      const headingExport = `export const headings = ${JSON.stringify(headings)};`;
+      if (result.code.includes('<script context="module">')) {
+        result.code = result.code.replace(
+          '<script context="module">',
+          `<script context="module">\n  ${headingExport}`,
+        );
+      } else {
+        result.code = `<script module>${headingExport}</script>\n${result.code}`;
+      }
+      return result;
+    },
+  };
 }

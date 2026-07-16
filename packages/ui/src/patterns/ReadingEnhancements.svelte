@@ -3,36 +3,50 @@
 
   type Heading = { id: string; text: string; level: number };
 
-  let { root }: { root?: HTMLElement | null } = $props();
-  let headings = $state<Heading[]>([]);
+  let {
+    root,
+    headings: suppliedHeadings = []
+  }: {
+    root?: HTMLElement | null;
+    headings?: Heading[];
+  } = $props();
+  let discoveredHeadings = $state<Heading[]>([]);
+  const headings = $derived(suppliedHeadings.length ? suppliedHeadings : discoveredHeadings);
   let active = $state("");
   let progress = $state(0);
   let copyStatus = $state("");
 
   function statusDuration(): number {
-    return Number.parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue("--motion-duration-status"),
-    ) || 0;
+    const value = getComputedStyle(document.documentElement)
+      .getPropertyValue("--motion-duration-status")
+      .trim();
+    const duration = Number.parseFloat(value);
+    if (!Number.isFinite(duration)) return 0;
+    return value.endsWith("ms") ? duration : value.endsWith("s") ? duration * 1000 : duration;
   }
 
   onMount(() => {
     const prose = root ?? document.querySelector<HTMLElement>(".prose");
     if (!prose) return;
     const headingElements = [...prose.querySelectorAll<HTMLElement>("h2[id], h3[id]")];
-    headings = headingElements.map((heading) => ({
-      id: heading.id,
-      text: heading.textContent?.replace("#", "").trim() ?? "",
-      level: Number(heading.tagName.slice(1)),
-    }));
+    if (!headings.length) {
+      discoveredHeadings = headingElements.map((heading) => ({
+        id: heading.id,
+        text: heading.textContent?.replace("#", "").trim() ?? "",
+        level: Number(heading.tagName.slice(1)),
+      }));
+    }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.find((entry) => entry.isIntersecting);
-        if (visible) active = visible.target.id;
-      },
-      { rootMargin: "-20% 0px -70% 0px" },
-    );
-    headingElements.forEach((heading) => observer.observe(heading));
+    const observer = typeof IntersectionObserver === "undefined"
+      ? null
+      : new IntersectionObserver(
+        (entries) => {
+          const visible = entries.find((entry) => entry.isIntersecting);
+          if (visible) active = visible.target.id;
+        },
+        { rootMargin: "-20% 0px -70% 0px" },
+      );
+    headingElements.forEach((heading) => observer?.observe(heading));
 
     const buttons: HTMLButtonElement[] = [];
     prose.querySelectorAll<HTMLElement>(".code-block").forEach((block) => {
@@ -118,7 +132,7 @@
     addEventListener("resize", updateProgress);
 
     return () => {
-      observer.disconnect();
+      observer?.disconnect();
       buttons.forEach((button) => button.remove());
       removeEventListener("scroll", updateProgress);
       removeEventListener("resize", updateProgress);
@@ -140,7 +154,7 @@
 <p class="copy-status" aria-live="polite">{copyStatus}</p>
 
 {#if headings.length}
-  <aside aria-label="目次">
+  <aside class="desktop-toc" aria-label="目次">
     <p>On this page</p>
     <ol>
       {#each headings as heading}
@@ -152,6 +166,20 @@
       {/each}
     </ol>
   </aside>
+  <details class="mobile-toc">
+    <summary>On this page</summary>
+    <nav aria-label="目次">
+      <ol>
+        {#each headings as heading}
+          <li class:sub={heading.level === 3}>
+            <a href={"#" + heading.id} aria-current={active === heading.id ? "location" : undefined}>
+              {heading.text}
+            </a>
+          </li>
+        {/each}
+      </ol>
+    </nav>
+  </details>
 {/if}
 
 <style>
@@ -189,6 +217,8 @@
     border-left: 1px solid var(--color-line);
     padding-left: var(--space-5);
   }
+
+  .mobile-toc { display: none; }
 
   aside p {
     margin: 0 0 var(--space-4);
@@ -259,19 +289,18 @@
   }
 
   @media (max-width: 60rem) {
-    aside {
-      position: static;
+    .desktop-toc { display: none; }
+    .mobile-toc {
+      display: block;
       grid-row: 1;
-      max-height: 12rem;
-      overflow: auto;
       border: 1px solid var(--color-line);
       padding: var(--space-4);
     }
+    .mobile-toc summary { cursor: pointer; font-family: var(--font-mono); font-size: var(--text-caption); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+    .mobile-toc nav { margin-top: var(--space-4); }
   }
 
   @media (max-width: 44rem) {
-    aside {
-      max-height: 10rem;
-    }
+    .mobile-toc { padding: var(--space-3); }
   }
 </style>

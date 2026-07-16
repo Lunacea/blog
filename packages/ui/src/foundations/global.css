@@ -10,7 +10,6 @@
 }
 
 html {
-  scroll-behavior: smooth;
   scrollbar-color: var(--color-muted) var(--color-background);
   background: var(--color-background);
 }
@@ -35,6 +34,7 @@ html[data-motion="reduced"] * {
 }
 
 body {
+  font-synthesis: none;
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0;

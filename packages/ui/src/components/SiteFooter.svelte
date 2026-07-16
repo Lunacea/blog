@@ -10,7 +10,11 @@
       <p>コード、研究、写真、土地の記憶を、時間とともに残す。</p>
     </div>
     <nav aria-label="外部リンク">
-      <a href={siteConfig.author.github} rel="me"><GithubIcon /> GitHub</a>
+      {#if siteConfig.author.github}
+        <a href={siteConfig.author.github} rel="me"><GithubIcon /> GitHub</a>
+      {:else}
+        <span><GithubIcon /> GitHub 未設定</span>
+      {/if}
       <a href="/rss.xml">RSS</a>
       <a href="/sitemap.xml">Sitemap</a>
     </nav>
@@ -54,7 +58,8 @@
     flex-direction: column;
   }
 
-  nav a {
+  nav a,
+  nav span {
     display: inline-flex;
     min-height: var(--control-size);
     align-items: center;

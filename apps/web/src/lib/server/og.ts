@@ -1,4 +1,6 @@
 import { Buffer } from "node:buffer";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import sharp from "sharp";
 import themeCss from "@lunacea/ui/foundations/theme.css?raw";
 
@@ -66,6 +68,33 @@ export function renderOgSvg({
 
 export async function ogPngResponse(svg: string): Promise<Response> {
   const png = await sharp(Buffer.from(svg)).png().toBuffer();
+  return new Response(new Uint8Array(png), {
+    headers: {
+      "content-type": "image/png",
+      "cache-control": "public, max-age=31536000, immutable",
+    },
+  });
+}
+
+export async function coverOgPngResponse(
+  src: string,
+  title: string,
+  eyebrow: string,
+): Promise<Response> {
+  const input = await readFile(resolve(process.cwd(), "static", src.replace(/^\//u, "")));
+  const overlay = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+    <defs><linearGradient id="shade" x1="0" y1="0" x2="1" y2="0"><stop stop-color="${palette.background}" stop-opacity=".9"/><stop offset=".72" stop-color="${palette.background}" stop-opacity=".18"/></linearGradient></defs>
+    <rect width="1200" height="630" fill="url(#shade)"/>
+    <text x="84" y="104" fill="${palette.accent}" font-family="sans-serif" font-size="22" letter-spacing="4">${
+    escapeXml(eyebrow)
+  }</text>
+    <foreignObject x="84" y="172" width="760" height="330"><div xmlns="http://www.w3.org/1999/xhtml" style="color:${palette.foreground};font:600 62px/1.25 sans-serif;letter-spacing:-2px">${
+    escapeXml(title)
+  }</div></foreignObject>
+    <text x="84" y="560" fill="${palette.muted}" font-family="monospace" font-size="22">blog.lunacea.jp</text>
+  </svg>`;
+  const png = await sharp(input).resize(1200, 630, { fit: "cover", withoutEnlargement: false })
+    .composite([{ input: Buffer.from(overlay) }]).png().toBuffer();
   return new Response(new Uint8Array(png), {
     headers: {
       "content-type": "image/png",

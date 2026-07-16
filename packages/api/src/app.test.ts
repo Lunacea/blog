@@ -45,3 +45,28 @@ Deno.test("API exposes health and validates reaction origin", async () => {
   });
   assertEquals(limited.status, 429);
 });
+
+Deno.test("reaction API resolves migrated storage targets", async () => {
+  const reactions = createMemoryReactionRepository(3);
+  const app = createApi({
+    reactions,
+    signingSecret: "test-secret",
+    resolveReactionTarget: (id) => id === "article:quiet-interfaces" ? "talk:quiet-interfaces" : id,
+  });
+
+  const response = await app.request(
+    "http://localhost/api/v1/reactions/article/quiet-interfaces/useful",
+    {
+      method: "PUT",
+      headers: {
+        origin: "http://localhost",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ active: true }),
+    },
+  );
+
+  assertEquals(response.status, 200);
+  const stored = await reactions.get("talk:quiet-interfaces", "different-actor");
+  assertEquals(stored.counts.useful, 1);
+});

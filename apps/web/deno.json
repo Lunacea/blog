@@ -5,12 +5,13 @@
     "build": "deno task build"
   },
   "tasks": {
-    "dev": "deno run --unstable-kv -A npm:vite@8.1.3 dev",
-    "build": "deno run -A npm:vite@8.1.3 build",
+    "dev": "deno task --cwd ../.. fonts:generate && deno task --cwd ../.. images:generate && deno task --cwd ../.. content:generate && deno run --unstable-kv -A npm:vite@8.1.3 dev",
+    "build": "deno task --cwd ../.. fonts:generate && deno task --cwd ../.. images:generate && deno task --cwd ../.. content:generate && deno run -A npm:vite@8.1.3 build",
     "preview": "deno run --unstable-kv -A npm:vite@8.1.3 preview",
     "check": "deno run -A npm:@sveltejs/kit@2.69.2 sync && deno run -A npm:svelte-check@4.4.6 --tsconfig ./tsconfig.json",
     "test:unit": "deno run -A npm:vitest@4.1.9 run",
-    "test:e2e": "deno run -A npm:playwright@1.61.1 test"
+    "test:e2e": "deno run -A npm:playwright@1.61.1 test",
+    "preview:audit": "deno run -A scripts/audit-preview.ts"
   },
   "imports": {
     "@axe-core/playwright": "npm:@axe-core/playwright@4.12.1",

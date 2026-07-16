@@ -14,6 +14,7 @@ draft: false
 sample: true
 location: 岩手県
 cover:
+  kind: image
   src: /images/archive/hill-observatory.webp
   alt: 夜の丘に残る小さなコンクリート観測所
   width: 1600

@@ -1,5 +1,5 @@
 import { siteConfig } from "@lunacea/config";
-import { absoluteHref, publishedFeedContent, xml } from "$lib/server/feed.ts";
+import { absoluteHref, publishedFeedContent, stableFeedId, xml } from "$lib/server/feed.ts";
 
 export const prerender = true;
 export function GET() {
@@ -7,7 +7,7 @@ export function GET() {
     publishedFeedContent[0]?.publishedAt ??
     "2026-07-14";
   const entries = publishedFeedContent.map((entry) =>
-    "<entry><title>" + xml(entry.title) + "</title><id>" + absoluteHref(entry) +
+    "<entry><title>" + xml(entry.title) + "</title><id>" + stableFeedId(entry) +
     '</id><link href="' + absoluteHref(entry) + '"/><updated>' +
     new Date(entry.updatedAt ?? entry.publishedAt).toISOString() +
     "</updated><summary>" + xml(entry.summary) + "</summary></entry>"

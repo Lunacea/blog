@@ -7,14 +7,7 @@ export function GET() {
     "/",
     "/articles",
     "/works",
-    "/talks",
     "/archive",
-    "/archive/photos",
-    "/archive/places",
-    "/archive/wines",
-    "/archive/moments",
-    "/about",
-    "/search",
   ];
   const publishedTags = [...new Set(publishedFeedContent.flatMap((entry) => entry.tags))];
   const urls = [

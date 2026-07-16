@@ -3,20 +3,20 @@
   import AmbientHero from "$ui/visuals/AmbientHero.svelte";
   import { MediaSlot } from "$ui/visuals";
   import PageHead from "$lib/components/PageHead.svelte";
-  import WeatherWidget from "$lib/components/WeatherWidget.svelte";
 
   const portals = [
     { href: "/articles", label: "Articles", note: "Writing & research" },
     { href: "/works", label: "Works", note: "Selected practice" },
     { href: "/archive", label: "Archive", note: "Places & fragments" },
-    { href: "/about", label: "About", note: "Profile & focus" },
+    { href: "#about", label: "About", note: "Profile & focus" },
   ];
 </script>
 
 <PageHead title={siteConfig.title} description={siteConfig.description} path="/" />
 
-<section class:sample={siteConfig.sampleMode} class="home-frame">
+<div class="home-continuum">
   <AmbientHero />
+<section class:sample={siteConfig.sampleMode} class="home-frame" data-home-opening>
   {#if visualAssets.heroOrganic.src}
     <MediaSlot asset={visualAssets.heroOrganic} class="organic-slot" />
   {/if}
@@ -48,8 +48,43 @@
       {/each}
     </nav>
 
-    <WeatherWidget />
   </div>
+</section>
+
+<section id="about" class="about shell" aria-labelledby="about-title">
+  <header class="about-header" data-reveal>
+    <p class="eyebrow">Profile / Sample</p>
+    <h2 id="about-title" class="page-title">About</h2>
+    <p class="lead">計算機と空間の間にあるインターフェースを研究し、長く読めるソフトウェアと記録の形を作ります。</p>
+  </header>
+  <div class="about-grid">
+    <MediaSlot asset={visualAssets.profile} showPlaceholder={siteConfig.sampleMode} label="Portrait / replace" class="profile-slot" />
+    <section class="about-statement" data-reveal>
+      <p class="eyebrow">Statement</p>
+      <h3>技術は、内容を隠すためではなく、残すために使う。</h3>
+      <p>Svelte、Deno、可視化、アクセシビリティを中心に、情報構造と実装を往復しています。このページは交換可能なサンプルであり、公開前に実際のプロフィールへ差し替えます。</p>
+    </section>
+    <section class="focus" data-reveal>
+      <p class="eyebrow">Focus</p>
+      <dl>
+        <div><dt>Research</dt><dd>Human–Computer Interaction / Visualization</dd></div>
+        <div><dt>Engineering</dt><dd>TypeScript / SvelteKit / Deno</dd></div>
+        <div><dt>Design</dt><dd>Information Architecture / Accessibility</dd></div>
+        <div><dt>Location</dt><dd>Morioka, Iwate</dd></div>
+      </dl>
+    </section>
+  </div>
+</section>
+</div>
+
+<section class="contact shell" aria-labelledby="contact-title">
+  <p class="eyebrow">Contact / Social</p>
+  <h2 id="contact-title">Contact</h2>
+  <ul>
+    <li><span>GitHub</span>{#if siteConfig.author.github}<a href={siteConfig.author.github} rel="me">Open</a>{:else}<span>未設定</span>{/if}</li>
+    <li><span>X</span>{#if siteConfig.author.x}<a href={siteConfig.author.x} rel="me">Open</a>{:else}<span>未設定</span>{/if}</li>
+    <li><span>Email</span>{#if siteConfig.author.email}<a href={`mailto:${siteConfig.author.email}`}>Send</a>{:else}<span>未設定</span>{/if}</li>
+  </ul>
 </section>
 
 <style>
@@ -60,6 +95,27 @@
     overflow: hidden;
     border-bottom: 1px solid var(--color-line);
   }
+
+  .home-continuum { position: relative; overflow: clip; }
+  .about { position: relative; z-index: var(--z-visual); }
+
+  .about, .contact { scroll-margin-top: calc(var(--site-header-block) + var(--space-6)); padding-block: var(--section-space); }
+  .about-header { display: grid; grid-template-columns: 1.2fr 1fr; margin-bottom: var(--section-space); }
+  .about-header .eyebrow { grid-column: 1 / -1; }
+  .about-header .lead { align-self: end; }
+  .about-grid { display: grid; grid-template-columns: minmax(13rem, .65fr) minmax(18rem, 1.2fr) minmax(16rem, .85fr); align-items: start; gap: clamp(var(--space-8), 6vw, var(--space-20)); }
+  :global(.profile-slot) { max-width: 22rem; }
+  .about-statement h3 { max-width: 18ch; margin: 0 0 var(--space-8); font-family: var(--font-serif); font-size: var(--text-h2); font-weight: var(--weight-regular); line-height: var(--leading-profile); }
+  .about-statement > p:last-child { max-width: 40rem; color: var(--color-muted); }
+  dl, dl div { margin: 0; }
+  dl div { border-top: 1px solid var(--color-line); padding-block: var(--space-4); }
+  dt { color: var(--color-muted); font-family: var(--font-mono); font-size: var(--text-caption); }
+  dd { margin: var(--space-1) 0 0; }
+  .contact { border-top: 1px solid var(--color-line); }
+  .contact h2 { margin: 0 0 var(--space-8); font-size: var(--text-h2); }
+  .contact ul { margin: 0; padding: 0; list-style: none; }
+  .contact li { display: grid; grid-template-columns: 1fr auto; border-top: 1px solid var(--color-line); padding-block: var(--space-3); }
+  .contact li > span:last-child { color: var(--color-muted); }
 
   .home-frame.sample {
     height: calc(100dvh - var(--site-header-block) - var(--sample-banner-block));
@@ -95,7 +151,7 @@
     z-index: var(--z-visual);
     display: grid;
     height: 100%;
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-rows: auto minmax(0, 1fr) auto;
     padding-block: clamp(var(--space-5), 4vh, var(--space-10));
   }
 
@@ -201,11 +257,6 @@
     line-height: var(--leading-compact);
   }
 
-  .home-frame :global(.weather) {
-    width: min(100%, 31rem);
-    margin-top: var(--space-4);
-  }
-
   :global(.organic-slot) {
     position: absolute !important;
     z-index: var(--z-content);
@@ -252,7 +303,7 @@
 
     .home-grid {
       min-height: inherit;
-      grid-template-rows: auto 1fr auto auto;
+      grid-template-rows: auto 1fr auto;
       gap: var(--space-8);
       padding-block: var(--space-6) var(--space-20);
     }
@@ -277,9 +328,15 @@
     .portals a:nth-child(n + 3) {
       border-top: 1px solid var(--color-line);
     }
+    .about-grid { grid-template-columns: minmax(12rem, .7fr) 1.3fr; }
+    .focus { grid-column: 2; }
   }
 
   @media (max-width: 34rem) {
+    .about-header, .about-grid { grid-template-columns: 1fr; }
+    .about-header .lead { margin-top: var(--space-8); }
+    .focus { grid-column: 1; }
+    :global(.profile-slot) { max-width: 100%; aspect-ratio: 4 / 3; }
     .coordinates {
       align-items: flex-end;
       flex-direction: column;

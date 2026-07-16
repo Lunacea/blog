@@ -1,3 +1,5 @@
+@import "../../.generated/fonts/fonts.css";
+
 @theme inline {
   --color-canvas: var(--color-background);
   --color-panel: var(--color-surface);
@@ -40,8 +42,9 @@
   --color-print-background: #fff;
   --color-print-foreground: #000;
 
-  --font-sans: "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
-  --font-serif: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+  --font-sans: "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-serif: "Hina Mincho", "Hina Mincho Fallback", "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+  --font-accent: "DotGothic16", "MS Gothic", "Japanese gothic", monospace;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --text-display: clamp(3.75rem, 8.1vw, 7.5rem);
   --text-h1: clamp(2.625rem, 6.5vw, 6rem);
@@ -51,13 +54,13 @@
   --text-small: 0.875rem;
   --text-caption: 0.75rem;
   --weight-regular: 400;
-  --weight-quiet: 450;
-  --weight-display: 480;
-  --weight-component: 520;
-  --weight-title: 540;
-  --weight-emphasis: 560;
-  --weight-strong: 600;
-  --weight-label: 650;
+  --weight-quiet: 400;
+  --weight-display: 500;
+  --weight-component: 500;
+  --weight-title: 500;
+  --weight-emphasis: 500;
+  --weight-strong: 700;
+  --weight-label: 700;
   --leading-none: 1;
   --leading-display: 0.88;
   --leading-title: 0.96;
@@ -118,6 +121,8 @@
   --motion-duration-base: 360ms;
   --motion-duration-slow: 760ms;
   --motion-duration-status: 1500ms;
+  --motion-duration-opening: 1200ms;
+  --motion-duration-resume: 1500ms;
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);

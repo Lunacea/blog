@@ -10,6 +10,9 @@ const documents: SearchDocument[] = [
     summary: "盛岡の空模様を穏やかに反映します。",
     tags: ["Weather", "Design"],
     publishedAt: "2026-05-01",
+    updatedAt: "2026-05-02",
+    category: "design",
+    legacyIds: [],
     status: "stable",
     body: "Open-Meteoから得た値は情報配置を変えません。",
     href: "/articles/weather-design",
@@ -22,6 +25,7 @@ const documents: SearchDocument[] = [
     summary: "断片を長く保つための作品です。",
     tags: ["Archive"],
     publishedAt: "2025-01-01",
+    legacyIds: [],
     status: "growing",
     body: "写真と場所を記録します。",
     href: "/works/archive",
@@ -44,4 +48,8 @@ Deno.test("search weights title and applies filters", () => {
     "work:archive",
   );
   assertEquals(searchContent(documents, "", { tag: "missing" }), []);
+  assertEquals(
+    searchContent(documents, "", { category: "design" }, "updated").map((entry) => entry.id),
+    ["article:weather-design"],
+  );
 });

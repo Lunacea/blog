@@ -4,6 +4,7 @@ import { relatedContent } from "@lunacea/core/related.ts";
 import type { ContentType } from "@lunacea/schemas";
 
 const kinds: Record<string, ContentType> = {
+  diaries: "diary",
   photos: "photo",
   places: "place",
   wines: "wine",
@@ -21,5 +22,10 @@ export async function load({ params }) {
   const metadata = findContent(type, params.slug);
   if (!metadata) error(404, "Archive record not found");
   const module = await loadContentModule(type, params.slug);
-  return { metadata, component: module.default, related: relatedContent(metadata, allContent) };
+  return {
+    metadata,
+    component: module.default,
+    headings: module.headings,
+    related: relatedContent(metadata, allContent),
+  };
 }

@@ -13,8 +13,14 @@ semantic color, typography, spacing, layout, shape, depth, motion, breakpoint, a
 must consume those tokens rather than define a second scale.
 
 The light and dark themes retain the same semantic roles. System preference is used when the stored
-preference is `auto`. Japanese-capable sans-serif and serif stacks are required; monospace is
-reserved for dates, coordinates, status, and code.
+preference is `auto`. Zen Kaku Gothic New 400/500/700 is the sans role, Hina Mincho 400 is the
+editorial serif role, and DotGothic16 400 is limited to named accents. System monospace remains the
+role for dates, coordinates, status, and code.
+
+These fonts are self-hosted from repository-pinned OFL sources. The build derives hashed WOFF2
+subsets from public content, UI strings, and configuration, emits the same generated CSS for Web and
+Storybook, and never contacts Google Fonts at runtime. Zen 400 and Hina 400 are the only preloads;
+the preload budget is 350 KiB and the total initial-route custom-font budget is 500 KiB.
 
 ## Components and behavior
 
@@ -50,10 +56,16 @@ and transparency need.
 
 Motion clarifies state and hierarchy. The effective motion mode never exceeds OS reduced-motion,
 save-data, or forced-colors constraints. Page transitions do not apply a root fade and must preserve
-navigation, focus, scroll restoration, and no-JavaScript access.
+navigation, focus, scroll restoration, and no-JavaScript access. Smooth scrolling is enabled only
+for a user-clicked same-document anchor. The custom cursor is available only for fine, hovering
+pointers in full motion and never replaces native input/selection behavior.
 
 WebGL remains a Home-only optional enhancement loaded dynamically after capability checks. Static
-geometry, primary text, and navigation exist before it loads and remain when it fails.
+geometry, primary text, and navigation exist before it loads and remain when it fails. The scene
+morphs equal-size deterministic point sets through a Möbius strip, a sphere/point cloud, and a
+regular octahedron. Low quality uses at most 900 points and DPR 1.2; high quality uses at most 2400
+points and DPR 1.5. Scroll and drag temporarily own the shared timeline, which aligns to a hold
+state before automatic motion resumes.
 
 ## Storybook
 

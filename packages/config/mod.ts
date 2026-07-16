@@ -7,8 +7,11 @@ export const siteConfig = {
   sampleMode: true,
   author: {
     name: "Lunacea",
-    github: "https://github.com/Lunacea",
+    github: null,
+    x: null,
+    email: null,
   },
+  featuredArticleTags: [],
   defaultLocation: {
     id: "morioka-jp",
     name: "盛岡",
@@ -28,9 +31,8 @@ export const siteConfig = {
 export const primaryNavigation = [
   { href: "/articles", label: "Articles" },
   { href: "/works", label: "Works" },
-  { href: "/talks", label: "Talks" },
   { href: "/archive", label: "Archive" },
-  { href: "/about", label: "About" },
+  { href: "/#about", label: "About" },
 ] as const;
 
 export type AuthoredMedia = {

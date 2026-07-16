@@ -1,7 +1,37 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { siteConfig } from "@lunacea/config";
+  import { parseFilterQuery, updateFilterQuery } from "@lunacea/core/filter-query.ts";
   import PageHead from "$lib/components/PageHead.svelte";
+  import ResponsiveImage from "$lib/components/ResponsiveImage.svelte";
   let { data } = $props();
+  const entries = $derived(data.groups.flatMap((group) =>
+    group.entries.map((entry) => ({ ...entry, kind: group.kind }))
+  ));
+  const kinds = $derived(data.groups.map((group) => group.kind));
+  const years = $derived([...new Set(entries.map((entry) => entry.publishedAt.slice(0, 4)))]);
+  const tags = $derived([...new Set(entries.flatMap((entry) => entry.tags))].sort());
+  let enhanced = $state(false);
+  let filters = $state({ kind: "", year: "", tag: "" });
+
+  function readLocation() {
+    const parsed = parseFilterQuery(location.search, { kind: kinds, year: years, tag: tags });
+    filters = { kind: parsed.kind ?? "", year: parsed.year ?? "", tag: parsed.tag ?? "" };
+  }
+
+  function apply(event: SubmitEvent) {
+    event.preventDefault();
+    const values = Object.fromEntries(new FormData(event.currentTarget as HTMLFormElement)) as Record<string, string>;
+    filters = { kind: values.kind ?? "", year: values.year ?? "", tag: values.tag ?? "" };
+    history.pushState({}, "", updateFilterQuery(location.search, filters));
+  }
+
+  onMount(() => {
+    enhanced = true;
+    readLocation();
+    addEventListener("popstate", readLocation);
+    return () => removeEventListener("popstate", readLocation);
+  });
 </script>
 
 <PageHead
@@ -15,42 +45,29 @@
     <p class="eyebrow">Fragments / Personal records</p>
     <h1 class="page-title">Archive</h1>
     <p class="lead">
-      写真、場所、ワイン、瞬間。日記になる前の断片を、時間と場所の手掛かりとともに残します。
+      日記、写真、場所、ワイン、瞬間を、時間と場所の手掛かりとともに残します。
     </p>
   </header>
-  <div class="groups">
-    {#each data.groups as group, groupIndex}
-      <section aria-labelledby={`group-${group.kind}`}>
-        <div class="section-heading" data-reveal="line">
-          <span class="section-number">{String(groupIndex + 1).padStart(2, "0")}</span>
-          <h2 id={`group-${group.kind}`}>{group.label}</h2>
-          <a href={"/archive/" + group.kind}>{group.entries.length} records</a>
-        </div>
-        <div class="preview-grid">
-          {#each group.entries.slice(0, 2) as entry, index}
-            <a
-              class:shift={(groupIndex + index) % 2 === 1}
-              href={"/archive/" + group.kind + "/" + entry.slug}
-            >
-              {#if entry.cover}
-                <figure data-reveal="image" data-ratio={(groupIndex + index) % 3}>
-                  <img
-                    src={entry.cover.src}
-                    alt={entry.cover.alt}
-                    width={entry.cover.width}
-                    height={entry.cover.height}
-                    loading="lazy"
-                    style:view-transition-name={`record-media-${entry.type}-${entry.slug}`}
-                  />
-                </figure>
-              {/if}
-              <span class="date">{entry.publishedAt}</span>
-              <h3 style:view-transition-name={`record-${entry.type}-${entry.slug}`}>{entry.title}</h3>
-              <p>{entry.summary}</p>
-            </a>
-          {/each}
-        </div>
-      </section>
+  <form method="GET" onsubmit={apply} aria-label="アーカイブを絞り込む">
+    <label>種類<select name="kind" bind:value={filters.kind}><option value="">すべて</option>{#each kinds as kind}<option value={kind}>{kind}</option>{/each}</select></label>
+    <label>年<select name="year" bind:value={filters.year}><option value="">すべて</option>{#each years as year}<option value={year}>{year}</option>{/each}</select></label>
+    <label>タグ<select name="tag" bind:value={filters.tag}><option value="">すべて</option>{#each tags as tag}<option value={tag}>{tag}</option>{/each}</select></label>
+    <button type="submit">適用</button>
+    {#if filters.kind || filters.year || filters.tag}<a href="/archive">解除</a>{/if}
+  </form>
+  <div class="preview-grid">
+    {#each entries as entry, index}
+      {@const visible = !enhanced || ((!filters.kind || entry.kind === filters.kind) && (!filters.year || entry.publishedAt.startsWith(filters.year)) && (!filters.tag || entry.tags.includes(filters.tag)))}
+      <a class:hidden={!visible} href={"/archive/" + entry.kind + "/" + entry.slug}>
+        {#if entry.cover}
+          <figure data-reveal="image" data-ratio={index % 3}>
+            <ResponsiveImage cover={entry.cover} />
+          </figure>
+        {/if}
+        <span class="date">{entry.kind} / {entry.publishedAt}</span>
+        <h2 style:view-transition-name={`record-${entry.type}-${entry.slug}`}>{entry.title}</h2>
+        <p>{entry.summary}</p>
+      </a>
     {/each}
   </div>
 </div>
@@ -70,25 +87,14 @@
     align-self: end;
   }
 
-  .groups {
-    display: grid;
-    gap: clamp(var(--space-20), 12vw, var(--space-40));
-  }
-
-  .section-heading {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-  }
-
-  .section-number {
-    color: var(--color-muted);
-    font-family: var(--font-mono);
-    font-size: var(--text-caption);
-  }
+  form { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: end; margin-bottom: var(--space-16); border-block: 1px solid var(--color-line); padding-block: var(--space-5); }
+  label { display: grid; gap: var(--space-1); color: var(--color-muted); font-size: var(--text-caption); }
+  select, button { min-height: var(--control-size); border: 1px solid var(--color-line); border-radius: var(--radius-small); background: var(--color-background); color: var(--color-foreground); padding-inline: var(--space-3); font: inherit; }
+  button { background: var(--color-foreground); color: var(--color-background); }
 
   .preview-grid {
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: clamp(var(--space-4), 6vw, var(--space-20));
   }
 
@@ -98,9 +104,7 @@
     text-decoration: none;
   }
 
-  .preview-grid a.shift {
-    margin-top: var(--space-20);
-  }
+  .preview-grid a.hidden { display: none; }
 
   figure {
     overflow: hidden;
@@ -117,12 +121,6 @@
     aspect-ratio: 16 / 10;
   }
 
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
   .date {
     display: block;
     margin-top: var(--space-4);
@@ -131,7 +129,7 @@
     font-size: var(--text-caption);
   }
 
-  h3 {
+  h2 {
     margin: var(--space-1) 0;
     font-family: var(--font-serif);
     font-size: var(--text-h3);
@@ -145,17 +143,12 @@
   }
 
   @media (max-width: 52rem) {
-    .archive-header,
-    .preview-grid {
+    .archive-header, .preview-grid {
       grid-template-columns: 1fr;
     }
 
     .archive-header .lead {
       margin-top: var(--space-8);
-    }
-
-    .preview-grid a.shift {
-      margin-top: 0;
     }
 
     figure,

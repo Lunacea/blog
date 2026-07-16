@@ -16,6 +16,7 @@ location: 岩手県
 camera: Sample Camera
 lens: 50mm
 cover:
+  kind: image
   src: /images/archive/glasshouse-snow.webp
   alt: 雪に覆われた古い温室と曇ったガラス
   width: 1600

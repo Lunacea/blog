@@ -1,148 +1,125 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount, untrack } from "svelte";
   import { T, useTask } from "@threlte/core";
-  import {
-    AdditiveBlending,
-    Color,
-    DoubleSide,
-    type Mesh,
-    type ShaderMaterial,
-    Vector2,
-  } from "three";
+  import { AdditiveBlending, BufferGeometry, Color, Float32BufferAttribute, type Points, type ShaderMaterial } from "three";
+  import { createHeroShapePositions } from "./hero-geometry.ts";
 
-  let {
-    quality,
-    palette,
-  }: {
+  let { quality, palette, scrubPhase = null, yaw = 0, pitch = 0, scale = 1, offsetY = 0, paused = false }: {
     quality: "low" | "high";
     palette: { foreground: string; primary: string; accent: string };
+    scrubPhase?: number | null;
+    yaw?: number;
+    pitch?: number;
+    scale?: number;
+    offsetY?: number;
+    paused?: boolean;
   } = $props();
 
-  const outerProfile = [
-    new Vector2(0.08, -1.72),
-    new Vector2(0.58, -1.5),
-    new Vector2(1.02, -0.82),
-    new Vector2(0.76, -0.08),
-    new Vector2(1.08, 0.68),
-    new Vector2(0.62, 1.38),
-    new Vector2(0.08, 1.7),
-  ];
-  const innerProfile = [
-    new Vector2(0.06, -1.34),
-    new Vector2(0.42, -1.16),
-    new Vector2(0.68, -0.42),
-    new Vector2(0.55, 0.3),
-    new Vector2(0.7, 0.86),
-    new Vector2(0.35, 1.22),
-    new Vector2(0.06, 1.34),
-  ];
+  const count = untrack(() => quality === "high" ? 2400 : 900);
+  const positions = createHeroShapePositions(count);
+  const geometry = new BufferGeometry();
+  geometry.setAttribute("position", new Float32BufferAttribute(positions.mobius, 3));
+  geometry.setAttribute("aSphere", new Float32BufferAttribute(positions.sphere, 3));
+  geometry.setAttribute("aOctahedron", new Float32BufferAttribute(positions.octahedron, 3));
+  geometry.setAttribute("aSeed", new Float32BufferAttribute(positions.seeds, 1));
 
   const vertexShader = `
+    uniform float uShape;
+    uniform float uMorph;
+    uniform float uSeparate;
     uniform float uTime;
-    varying vec3 vNormal;
-    varying vec3 vViewPosition;
-    varying float vWave;
-
+    attribute vec3 aSphere;
+    attribute vec3 aOctahedron;
+    attribute float aSeed;
+    varying float vSeed;
+    vec3 shape(float index) {
+      if (index < 0.5) return position;
+      if (index < 1.5) return aSphere;
+      return aOctahedron;
+    }
     void main() {
-      float waveA = sin(position.y * 3.7 + uTime * 0.17);
-      float waveB = sin(position.y * 7.1 - uTime * 0.113 + position.x * 1.9);
-      float waveC = sin(position.y * 11.3 + uTime * 0.071 + position.z * 2.3);
-      float wave = (waveA * 0.5 + waveB * 0.3 + waveC * 0.2);
-      vec3 transformed = position + normal * wave * 0.035;
-      vec4 viewPosition = modelViewMatrix * vec4(transformed, 1.0);
-      vNormal = normalize(normalMatrix * normal);
-      vViewPosition = -viewPosition.xyz;
-      vWave = wave;
-      gl_Position = projectionMatrix * viewPosition;
+      vec3 from = shape(uShape);
+      vec3 to = shape(mod(uShape + 1.0, 3.0));
+      vec3 transformed = mix(from, to, smoothstep(0.0, 1.0, uMorph));
+      vec3 direction = normalize(transformed + vec3(aSeed - .5, .25 - aSeed, aSeed * .5));
+      transformed += direction * uSeparate * (.22 + aSeed * .62);
+      transformed += direction * sin(uTime * .7 + aSeed * 18.0) * .012;
+      vec4 view = modelViewMatrix * vec4(transformed, 1.0);
+      gl_Position = projectionMatrix * view;
+      gl_PointSize = (2.2 + aSeed * 2.0) * (5.0 / max(2.0, -view.z));
+      vSeed = aSeed;
     }
   `;
-
   const fragmentShader = `
     uniform vec3 uColor;
     uniform vec3 uSignal;
-    varying vec3 vNormal;
-    varying vec3 vViewPosition;
-    varying float vWave;
-
+    varying float vSeed;
     void main() {
-      float fresnel = pow(1.0 - abs(dot(normalize(vNormal), normalize(vViewPosition))), 2.4);
-      float grain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
-      vec3 color = mix(uColor * 0.62, uSignal, fresnel * 0.24 + max(vWave, 0.0) * 0.05);
-      float alpha = 0.1 + fresnel * 0.4 + grain * 0.025;
-      gl_FragColor = vec4(color, alpha);
+      vec2 point = gl_PointCoord - .5;
+      if (dot(point, point) > .25) discard;
+      vec3 color = mix(uColor, uSignal, step(.82, vSeed));
+      gl_FragColor = vec4(color, .34 + vSeed * .46);
     }
   `;
 
-  let outer = $state<Mesh>();
-  let inner = $state<Mesh>();
+  let points = $state<Points>();
   let material = $state<ShaderMaterial>();
   let running = $state(true);
   let elapsed = 0;
+  const hold = 3.2;
+  const separate = 0.6;
+  const recompose = 1.6;
+  const interval = hold + separate + recompose;
+  let wasPaused = false;
 
-  useTask(
-    (delta) => {
-      elapsed += Math.min(delta, 0.05);
-      if (material) material.uniforms.uTime.value = elapsed;
-      if (outer) {
-        outer.rotation.y += delta * (0.027 + Math.sin(elapsed * 0.13) * 0.004);
-        outer.rotation.z = Math.sin(elapsed * 0.071) * 0.055 + Math.sin(elapsed * 0.041) * 0.02;
-        const breath = 1 + Math.sin(elapsed * 0.17) * 0.012 + Math.sin(elapsed * 0.113) * 0.007;
-        outer.scale.setScalar(breath);
+  $effect(() => {
+    if (wasPaused && !paused) elapsed = Math.round(elapsed / interval) * interval;
+    wasPaused = paused;
+  });
+
+  useTask((delta) => {
+    if (!material) return;
+    if (!paused) elapsed += Math.min(delta, .05);
+    let shape = 0;
+    let morph = 0;
+    let separation = 0;
+    if (scrubPhase !== null) {
+      const phase = Math.max(0, Math.min(2.999, scrubPhase));
+      shape = Math.floor(phase);
+      morph = phase - shape;
+      separation = Math.sin(morph * Math.PI) * .45;
+    } else {
+      const cycleIndex = Math.floor(elapsed / interval);
+      const local = elapsed % interval;
+      shape = cycleIndex % 3;
+      if (local >= hold && local < hold + separate) separation = (local - hold) / separate;
+      if (local >= hold + separate) {
+        morph = (local - hold - separate) / recompose;
+        separation = 1 - morph;
       }
-      if (inner) {
-        inner.rotation.y -= delta * 0.018;
-        inner.position.y = Math.sin(elapsed * 0.109) * 0.035;
-      }
-    },
-    { running: () => running },
-  );
+    }
+    material.uniforms.uShape.value = shape;
+    material.uniforms.uMorph.value = morph;
+    material.uniforms.uSeparate.value = separation;
+    material.uniforms.uTime.value = elapsed;
+    if (points && scrubPhase === null && !paused) points.rotation.y += delta * .035;
+  }, { running: () => running });
 
   onMount(() => {
-    const updateVisibility = () => {
-      running = !document.hidden && document.documentElement.dataset.motion === "full";
-    };
-    document.addEventListener("visibilitychange", updateVisibility);
-    window.addEventListener("lunacea:motion", updateVisibility);
-    updateVisibility();
+    const update = () => running = !document.hidden && document.documentElement.dataset.motion === "full";
+    document.addEventListener("visibilitychange", update);
+    addEventListener("lunacea:motion", update);
+    update();
     return () => {
-      document.removeEventListener("visibilitychange", updateVisibility);
-      window.removeEventListener("lunacea:motion", updateVisibility);
+      document.removeEventListener("visibilitychange", update);
+      removeEventListener("lunacea:motion", update);
     };
   });
+  onDestroy(() => geometry.dispose());
 </script>
 
-<T.Group rotation={[0.04, -0.38, 0.08]}>
-  <T.Mesh bind:ref={inner}>
-    <T.LatheGeometry args={[innerProfile, quality === "high" ? 36 : 20]} />
-    <T.MeshStandardMaterial
-      color={palette.primary}
-      roughness={0.88}
-      metalness={0.04}
-      transparent
-      opacity={0.52}
-    />
-  </T.Mesh>
-
-  <T.Mesh bind:ref={outer}>
-    <T.LatheGeometry args={[outerProfile, quality === "high" ? 64 : 28]} />
-    <T.ShaderMaterial
-      bind:ref={material}
-      uniforms={{
-        uTime: { value: 0 },
-        uColor: { value: new Color(palette.primary) },
-        uSignal: { value: new Color(palette.accent) },
-      }}
-      {vertexShader}
-      {fragmentShader}
-      side={DoubleSide}
-      transparent
-      depthWrite={false}
-      blending={AdditiveBlending}
-    />
-  </T.Mesh>
-
-  <T.Mesh rotation={[Math.PI / 2, 0, 0]}>
-    <T.TorusGeometry args={[1.28, 0.006, 4, quality === "high" ? 96 : 48]} />
-    <T.MeshBasicMaterial color={palette.foreground} transparent opacity={0.22} />
-  </T.Mesh>
+<T.Group rotation={[pitch, yaw - .35, .08]} position={[0, offsetY, 0]} {scale}>
+  <T.Points bind:ref={points} {geometry}>
+    <T.ShaderMaterial bind:ref={material} uniforms={{ uShape: { value: 0 }, uMorph: { value: 0 }, uSeparate: { value: 0 }, uTime: { value: 0 }, uColor: { value: new Color(palette.primary) }, uSignal: { value: new Color(palette.accent) } }} {vertexShader} {fragmentShader} transparent depthWrite={false} blending={AdditiveBlending} />
+  </T.Points>
 </T.Group>

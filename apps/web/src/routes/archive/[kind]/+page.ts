@@ -1,19 +1,8 @@
-import { error } from "@sveltejs/kit";
-import { listContent } from "@lunacea/content";
-import type { ContentType } from "@lunacea/schemas";
+import { error, redirect } from "@sveltejs/kit";
 
-const kinds: Record<string, ContentType> = {
-  photos: "photo",
-  places: "place",
-  wines: "wine",
-  moments: "moment",
-};
-export const prerender = true;
-export function entries() {
-  return Object.keys(kinds).map((kind) => ({ kind }));
-}
+const kinds = new Set(["diaries", "photos", "places", "wines", "moments"]);
+export const prerender = false;
 export function load({ params }) {
-  const type = kinds[params.kind];
-  if (!type) error(404, "Archive kind not found");
-  return { kind: params.kind, type, entries: listContent(type) };
+  if (!kinds.has(params.kind)) error(404, "Archive kind not found");
+  redirect(308, `/archive?kind=${params.kind}`);
 }

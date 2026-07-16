@@ -10,6 +10,18 @@
     type Location,
     type WeatherState
   } from "@lunacea/schemas";
+  import {
+    applyDisplayPreferences,
+    readMotionPreference,
+    readThemePreference,
+    setMotionPreference,
+    setThemePreference,
+    subscribeDisplayCapabilities,
+    type MotionPreference,
+    type ThemePreference
+  } from "$ui/motion/preferences";
+
+  let { compact = false }: { compact?: boolean } = $props();
 
   const initialLocation = locationSchema.parse(siteConfig.defaultLocation);
 
@@ -42,6 +54,8 @@
   let results = $state<Location[]>([]);
   let loading = $state(false);
   let message = $state("環境データを取得中");
+  let theme = $state<ThemePreference>("auto");
+  let motion = $state<MotionPreference>("reduced");
 
   const conditionLabels = {
     clear: "晴れ",
@@ -110,7 +124,20 @@
     void loadWeather();
   }
 
+  function setTheme(value: ThemePreference) {
+    theme = value;
+    setThemePreference(value);
+  }
+
+  function setMotion(value: MotionPreference) {
+    motion = value;
+    setMotionPreference(value);
+  }
+
   onMount(() => {
+    theme = readThemePreference();
+    motion = readMotionPreference();
+    applyDisplayPreferences(theme, motion);
     const stored = localStorage.getItem("lunacea-location");
     if (stored) {
       const parsed = locationSchema.safeParse(JSON.parse(stored));
@@ -120,10 +147,11 @@
       }
     }
     void loadWeather();
+    return subscribeDisplayCapabilities(() => applyDisplayPreferences(theme, motion));
   });
 </script>
 
-<section class="weather" aria-labelledby="weather-title">
+<section class:compact class="weather" aria-labelledby="weather-title">
   <div>
     <p class="eyebrow" id="weather-title">Environment / {location.name}</p>
     {#if weather}
@@ -139,7 +167,7 @@
   </div>
   <Collapsible.Root class="weather-picker">
     <Collapsible.Trigger class="weather-trigger">
-      <Icon name={interfaceIcons.location} />地点を変更
+      <Icon name={interfaceIcons.display} />環境・表示
     </Collapsible.Trigger>
     <Collapsible.Content class="weather-content">
       <form onsubmit={(event) => { event.preventDefault(); void search(); }}>
@@ -162,6 +190,18 @@
           {/each}
         </ul>
       {/if}
+      <div class="display-controls">
+        <label>Theme
+          <select value={theme} onchange={(event) => setTheme(event.currentTarget.value as ThemePreference)}>
+            <option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option>
+          </select>
+        </label>
+        <label>Motion
+          <select value={motion} onchange={(event) => setMotion(event.currentTarget.value as MotionPreference)}>
+            <option value="full">Full</option><option value="reduced">Reduced</option><option value="off">Off</option>
+          </select>
+        </label>
+      </div>
     </Collapsible.Content>
   </Collapsible.Root>
   <p class="sr-status" aria-live="polite">{message}</p>
@@ -179,6 +219,12 @@
     border-top: 1px solid var(--color-line);
     padding-top: var(--space-4);
   }
+
+  .weather.compact { width: auto; align-items: center; gap: var(--space-3); border: 0; padding: 0; }
+  .weather.compact .eyebrow { display: none; }
+  .weather.compact .state { gap: var(--space-2); font-size: var(--text-caption); }
+  .weather.compact .state strong { font-size: var(--text-small); }
+  .weather.compact .state time { display: none; }
 
   .state {
     display: flex;
@@ -227,12 +273,29 @@
     min-width: min(22rem, 82vw);
   }
 
+  :global(.weather-content) {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: min(22rem, 82vw);
+  }
+
   form,
   ul {
     padding: var(--space-4);
     border: 1px solid var(--color-line);
     background: var(--color-surface);
     box-shadow: var(--shadow-overlay);
+  }
+
+  .display-controls { display: grid; gap: var(--space-3); border: 1px solid var(--color-line); border-top: 0; padding: var(--space-4); background: var(--color-surface); box-shadow: var(--shadow-overlay); }
+  .display-controls label { display: grid; grid-template-columns: 1fr 7rem; align-items: center; gap: var(--space-4); font-size: var(--text-small); }
+  .display-controls select { min-height: var(--control-size); border: 1px solid var(--color-line); background: var(--color-background); color: var(--color-foreground); }
+
+  @media (max-width: 52rem) {
+    .weather.compact .state span, .weather.compact .state :global(svg) { display: none; }
+    :global(.weather-trigger) { width: var(--control-size); overflow: hidden; white-space: nowrap; }
+    :global(.weather-trigger svg) { flex: none; }
   }
 
   form label {
@@ -281,5 +344,3 @@
     }
   }
 </style>
-    align-items: center;
-    gap: var(--space-2);

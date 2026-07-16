@@ -2,12 +2,15 @@
   import "../app.css";
   import { page } from "$app/state";
   import { primaryNavigation, siteConfig } from "@lunacea/config";
-  import { SampleBanner, SettingsPanel, SiteFooter, SiteHeader } from "$ui/components";
-  import { installPageTransitions, RevealManager } from "$ui/motion";
+  import { FontPreloads, SampleBanner, SiteFooter, SiteHeader } from "$ui/components";
+  import WeatherWidget from "$lib/components/WeatherWidget.svelte";
+  import { CursorLayer, installAnchorNavigation, installPageTransitions, RevealManager } from "$ui/motion";
+  import { onMount } from "svelte";
 
   let { children } = $props();
 
   installPageTransitions();
+  onMount(installAnchorNavigation);
 </script>
 
 <svelte:head>
@@ -17,14 +20,17 @@
 </svelte:head>
 
 <a class="skip-link" href="#main-content">本文へ移動</a>
+<FontPreloads />
 {#if siteConfig.sampleMode}<SampleBanner />{/if}
-<SiteHeader navigation={primaryNavigation} pathname={page.url.pathname} />
+<SiteHeader navigation={primaryNavigation} pathname={page.url.pathname}>
+  {#snippet environment()}<WeatherWidget compact />{/snippet}
+</SiteHeader>
 <main id="main-content">
   {@render children()}
 </main>
-{#if page.url.pathname !== "/"}<SiteFooter />{/if}
-<SettingsPanel />
+<SiteFooter />
 <RevealManager />
+<CursorLayer />
 
 <style>
   .skip-link {

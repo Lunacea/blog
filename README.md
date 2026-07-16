@@ -22,6 +22,7 @@ deno task dev
 deno task dev                 # SvelteKit + /api
 deno task build               # 本番ビルド
 deno task preview             # ビルド結果の確認
+deno task preview:audit       # previewのCLS・font・landmark・OGP検証
 deno task check               # frontmatter・リンク・svelte-check
 deno task test                # Deno Test + Vitest
 deno task test:e2e            # Playwright + axe
@@ -47,7 +48,8 @@ e2e/                     Playwright + axe
 docs/                    設計、執筆、公開runbook
 ```
 
-公開URLは`/articles/[slug]`、`/works/[slug]`、`/talks/[slug]`、`/archive/{photos|places|wines|moments}/[slug]`です。タグ、GET検索、About、RSS、Atom、Sitemap、OGP、限定APIも同じアプリから配信します。
+公開URLは`/articles/[slug]`、`/works/[slug]`、`/archive/{diaries|photos|places|wines|moments}/[slug]`です。Article一覧のGET検索、タグ、Home内About、RSS、Atom、Sitemap、OGP、限定APIも同じアプリから配信します。旧Talk、Search、About、Archive一覧URLは互換用の308
+redirectとして維持します。
 
 ## コンテンツを入れ替える
 

@@ -15,6 +15,7 @@ export type ApiOptions = {
   reactions?: ReactionRepository;
   signingSecret?: string;
   fetcher?: typeof fetch;
+  resolveReactionTarget?: (contentId: string) => string;
 };
 
 type ApiEnvironment = {
@@ -35,6 +36,7 @@ function sameOrigin(request: Request): boolean {
 export function createApi(options: ApiOptions = {}): Hono<ApiEnvironment> {
   const app = new Hono<ApiEnvironment>().basePath("/api/v1");
   const reactions = options.reactions ?? createDenoKvReactionRepository();
+  const resolveReactionTarget = options.resolveReactionTarget ?? ((contentId: string) => contentId);
   const secret = options.signingSecret ??
     Deno.env.get("REACTION_SIGNING_SECRET") ??
     "local-development-secret-change-before-production";
@@ -81,7 +83,7 @@ export function createApi(options: ApiOptions = {}): Hono<ApiEnvironment> {
     if (!target.success) return context.json({ error: "invalid_target" }, 400);
     const actor = await signedActor(context.req.header("cookie"), secret);
     if (actor.cookie) context.header("set-cookie", actor.cookie);
-    const id = `${target.data.type}:${target.data.slug}`;
+    const id = resolveReactionTarget(`${target.data.type}:${target.data.slug}`);
     return context.json(await reactions.get(id, actor.actorId), 200, {
       "cache-control": "private, no-store",
     });
@@ -103,7 +105,7 @@ export function createApi(options: ApiOptions = {}): Hono<ApiEnvironment> {
       return context.json({ error: "rate_limited" }, 429, { "retry-after": "600" });
     }
     if (actor.cookie) context.header("set-cookie", actor.cookie);
-    const id = `${target.data.type}:${target.data.slug}`;
+    const id = resolveReactionTarget(`${target.data.type}:${target.data.slug}`);
     return context.json(
       await reactions.set(id, actor.actorId, kind.data, body.data.active),
       200,

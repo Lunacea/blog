@@ -17,6 +17,7 @@ coordinates:
   - 39.7029
   - 141.1545
 cover:
+  kind: image
   src: /images/archive/morioka-riverside.webp
   alt: 夕方の川沿いに続く石垣と草
   width: 1600

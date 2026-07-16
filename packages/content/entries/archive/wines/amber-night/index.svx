@@ -19,6 +19,7 @@ region: Mountain Region
 grapes:
   - White Blend
 cover:
+  kind: image
   src: /images/archive/amber-night.webp
   alt: 窓辺の淡い灯りに照らされた琥珀色のワイン
   width: 1600

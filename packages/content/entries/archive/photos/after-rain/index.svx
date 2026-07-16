@@ -16,6 +16,7 @@ location: 岩手県盛岡市
 camera: Sample Camera
 lens: 35mm
 cover:
+  kind: image
   src: /images/archive/after-rain.webp
   alt: 雨に濡れたコンクリートの回廊と緑の植物
   width: 1600

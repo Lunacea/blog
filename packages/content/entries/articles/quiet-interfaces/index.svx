@@ -1,6 +1,7 @@
 ---
 slug: quiet-interfaces
-type: talk
+type: article
+category: talk
 title: Quiet Interfaces — 読むための演出
 summary: 情報を隠さず、必要な瞬間だけ反応するインターフェースの設計原則を紹介した発表。
 publishedAt: 2026-06-01
@@ -12,10 +13,17 @@ status: stable
 featured: true
 draft: false
 sample: true
-event: Sample Design Meetup
-venue: 盛岡
-format: talk
-links: {}
+event:
+  name: Sample Design Meetup
+  heldAt: 2026-06-01
+  mode: in-person
+  venue: 盛岡
+  presentationType: talk
+targetVersions: []
+legacyIds:
+  - talk:quiet-interfaces
+legacyPaths:
+  - /talks/quiet-interfaces
 related:
   - article:motion-as-information
 revisions: []

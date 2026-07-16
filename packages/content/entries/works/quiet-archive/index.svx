@@ -20,6 +20,10 @@ stack:
   - Deno
   - Hono
   - Deno KV
+cover:
+  kind: placeholder
+  assetId: work-quiet-archive
+  aspectRatio: 16 / 10
 links:
   github: https://github.com/Lunacea/blog
 related:

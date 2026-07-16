@@ -1,5 +1,5 @@
-import { listContent } from "@lunacea/content";
-export const prerender = true;
+import { redirect } from "@sveltejs/kit";
+export const prerender = false;
 export function load() {
-  return { entries: listContent("talk") };
+  redirect(308, "/articles?category=talk");
 }

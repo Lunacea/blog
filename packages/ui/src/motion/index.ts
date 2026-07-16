@@ -1,6 +1,11 @@
 export { default as RevealManager } from "./RevealManager.svelte";
+export { default as CursorLayer } from "./CursorLayer.svelte";
 export { type CursorState, cursorStates } from "./cursor.ts";
-export { installPageTransitions } from "./page-transitions.ts";
+export {
+  canUsePageTransition,
+  installAnchorNavigation,
+  installPageTransitions,
+} from "./page-transitions.ts";
 export {
   applyDisplayPreferences,
   type EffectiveMotion,

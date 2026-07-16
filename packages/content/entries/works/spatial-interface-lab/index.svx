@@ -18,6 +18,10 @@ stack:
   - Threlte
   - Three.js
   - Svelte
+cover:
+  kind: placeholder
+  assetId: work-spatial-interface-lab
+  aspectRatio: 16 / 10
 links: {}
 related:
   - article:motion-as-information

@@ -21,6 +21,6 @@ export const Mobile: Story = {
   globals: { viewport: { value: "mobile", isRotated: false } },
 };
 
-export const SearchCurrent: Story = {
-  args: { pathname: "/search" },
+export const ArticlesCurrent: Story = {
+  args: { pathname: "/articles" },
 };

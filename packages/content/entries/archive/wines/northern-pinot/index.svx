@@ -19,6 +19,7 @@ region: Northern Region
 grapes:
   - Pinot Noir
 cover:
+  kind: image
   src: /images/archive/northern-pinot.webp
   alt: 暗いテーブルに置かれた赤ワインのグラスと無地のボトル
   width: 1600

@@ -7,7 +7,7 @@ import { MediaSlot } from "$ui/visuals/index.ts";
 import ReadingEnhancements from "$ui/patterns/ReadingEnhancements.svelte";
 import ReactionBar from "$lib/components/ReactionBar.svelte";
 import WeatherWidget from "$lib/components/WeatherWidget.svelte";
-import SearchPage from "../routes/search/+page.svelte";
+import ArticlesPage from "../routes/articles/+page.svelte";
 
 const article = {
   type: "article",
@@ -20,6 +20,8 @@ const article = {
   featured: false,
   draft: false,
   sample: true,
+  legacyIds: [],
+  legacyPaths: [],
   related: [],
   revisions: [],
   category: "engineering",
@@ -86,20 +88,22 @@ describe("reading enhancements", () => {
     document.body.append(prose);
     const view = render(ReadingEnhancements);
 
-    await waitFor(() => expect(view.getByRole("link", { name: "概要" })).toBeTruthy());
+    await waitFor(() => expect(view.getAllByRole("link", { name: "概要" })).toHaveLength(2));
     const copy = view.getByRole("button", { name: "コードをコピー" });
     await fireEvent.click(copy);
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith("const calm = true;");
   });
 });
 
-describe("search UI", () => {
+describe("article search UI", () => {
   it("renders a GET form and filtered records from server data", () => {
-    const view = render(SearchPage, {
+    const view = render(ArticlesPage, {
       data: {
         query: "天候",
-        filters: { type: "article", tag: undefined, year: undefined, status: undefined },
-        results: [{
+        filters: { category: "design", tag: undefined },
+        sort: "relevance",
+        isFiltered: true,
+        entries: [{
           id: "article:weather",
           type: "article",
           slug: "weather",
@@ -107,12 +111,12 @@ describe("search UI", () => {
           summary: "天候を静かな環境情報として表示するための記事です。",
           tags: ["Weather"],
           publishedAt: "2026-01-01",
+          category: "design",
           status: "stable",
+          legacyIds: [],
           body: "天候",
           href: "/articles/weather",
         }],
-        tags: ["Weather"],
-        years: [2026],
       },
     });
     const form = view.getByRole("searchbox").closest("form");
@@ -155,7 +159,7 @@ describe("weather location picker", () => {
 
     const view = render(WeatherWidget);
     await waitFor(() => expect(view.getByText("22°C")).toBeTruthy());
-    await fireEvent.click(view.getByText("地点を変更"));
+    await fireEvent.click(view.getByRole("button", { name: /環境・表示/ }));
     await fireEvent.input(view.getByLabelText("都市名"), { target: { value: "盛岡駅" } });
     await fireEvent.click(view.getByRole("button", { name: "検索" }));
     const result = await view.findByText("盛岡駅前");

@@ -4,9 +4,11 @@
 
   let {
     component,
+    headings = [],
     class: className = "",
   }: {
     component: Component;
+    headings?: Array<{ id: string; text: string; level: number }>;
     class?: string;
   } = $props();
   let ContentComponent = $derived(component);
@@ -16,7 +18,7 @@
 <div class={["reading-surface", className]}>
   <div class="shell article-grid">
     <div class="prose" bind:this={prose}><ContentComponent /></div>
-    <ReadingEnhancements root={prose} />
+    <ReadingEnhancements root={prose} {headings} />
   </div>
 </div>
 
