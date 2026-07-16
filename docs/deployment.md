@@ -49,6 +49,7 @@ https://docs.deno.com/deploy/reference/frameworks/ と https://docs.deno.com/dep
 
 ```bash
 E2E_BASE_URL=https://<preview-host> deno task test:e2e
+PREVIEW_URL=https://<preview-host> deno task preview:audit
 curl -fsS https://<preview-host>/api/v1/health
 curl -fsSI https://<preview-host>/rss.xml
 curl -fsSI https://<preview-host>/sitemap.xml
