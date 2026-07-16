@@ -1,6 +1,6 @@
 <script lang="ts">
   import { siteConfig, visualAssets } from "@lunacea/config";
-  import MediaSlot from "$ui/MediaSlot.svelte";
+  import { MediaSlot } from "$ui/visuals";
   import PageHead from "$lib/components/PageHead.svelte";
 </script>
 
@@ -79,8 +79,8 @@
     margin: 0 0 var(--space-8);
     font-family: var(--font-serif);
     font-size: var(--text-h2);
-    font-weight: 400;
-    line-height: 1.42;
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-profile);
   }
 
   .statement > p:last-child {

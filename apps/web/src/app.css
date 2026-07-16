@@ -1,116 +1,4 @@
-@import "tailwindcss";
-@import "../../../packages/tokens/tokens.css";
-@import "katex/dist/katex.min.css";
-
-@theme inline {
-  --color-canvas: var(--color-background);
-  --color-panel: var(--color-surface);
-  --color-ink: var(--color-foreground);
-  --color-action: var(--color-primary);
-  --color-support: var(--color-secondary);
-  --color-accent: var(--color-accent);
-  --color-quiet: var(--color-muted);
-  --color-rule: var(--color-line);
-  --font-interface: var(--font-sans);
-  --font-editorial: var(--font-serif);
-  --font-code: var(--font-mono);
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-html {
-  min-width: 20rem;
-  scroll-behavior: smooth;
-  background: var(--color-background);
-}
-
-html[data-motion="off"],
-html[data-motion="off"] * {
-  scroll-behavior: auto !important;
-  animation-duration: 0.001ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.001ms !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html:not([data-motion="full"]) {
-    scroll-behavior: auto;
-  }
-}
-
-body {
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  color: var(--color-foreground);
-  background:
-    linear-gradient(90deg, transparent 0 calc(var(--layout-gutter) - 1px), var(--color-line) 0
-    var(--layout-gutter), transparent 0),
-    radial-gradient(circle at 78% 12%, color-mix(in srgb, var(--color-secondary) 8%, transparent),
-    transparent 30rem),
-    var(--color-background);
-  font-family: var(--font-sans);
-  font-size: var(--text-body);
-  line-height: var(--leading-body);
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-}
-
-::selection {
-  color: var(--color-background);
-  background: var(--color-primary);
-}
-
-a {
-  color: inherit;
-  text-decoration-color: var(--color-secondary);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.24em;
-}
-
-a:hover {
-  text-decoration-color: var(--color-accent);
-}
-
-button,
-select,
-input,
-textarea {
-  color: inherit;
-  font: inherit;
-}
-
-button,
-select,
-input[type="submit"] {
-  min-height: var(--control-size);
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 4px;
-  box-shadow: var(--focus-ring);
-}
-
-img,
-svg,
-canvas {
-  display: block;
-  max-width: 100%;
-}
-
-img {
-  height: auto;
-}
-
-.shell {
-  width: min(calc(100% - (2 * var(--layout-gutter))), var(--content-width));
-  margin-inline: auto;
-}
+@import "../../../packages/ui/src/foundations/global.css";
 
 .page {
   min-height: 65vh;
@@ -123,7 +11,7 @@ img {
   font-family: var(--font-mono);
   font-size: var(--text-caption);
   letter-spacing: var(--tracking-label);
-  line-height: 1.5;
+  line-height: var(--leading-ui);
   text-transform: uppercase;
 }
 
@@ -132,9 +20,9 @@ img {
   margin: 0;
   font-family: var(--font-serif);
   font-size: var(--text-h1);
-  font-weight: 400;
+  font-weight: var(--weight-regular);
   letter-spacing: var(--tracking-display);
-  line-height: 0.96;
+  line-height: var(--leading-title);
   text-wrap: balance;
   view-transition-name: section-title;
 }
@@ -144,7 +32,7 @@ img {
   margin: var(--space-6) 0 0;
   color: var(--color-muted);
   font-size: var(--text-body);
-  line-height: 1.75;
+  line-height: var(--leading-relaxed);
 }
 
 .section-heading {
@@ -160,108 +48,9 @@ img {
 .section-heading h2 {
   margin: 0;
   font-size: var(--text-small);
-  font-weight: 650;
+  font-weight: var(--weight-label);
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
-}
-
-.prose {
-  width: min(100%, var(--prose-width));
-  font-size: var(--text-body);
-  line-height: var(--leading-body);
-}
-
-.prose h2,
-.prose h3 {
-  scroll-margin-top: 7rem;
-  line-height: var(--leading-heading);
-  text-wrap: pretty;
-}
-
-.prose h2 {
-  margin: var(--space-20) 0 var(--space-5);
-  font-size: var(--text-h2);
-  font-weight: 540;
-  letter-spacing: var(--tracking-prose-heading);
-}
-
-.prose h3 {
-  margin: var(--space-12) 0 var(--space-4);
-  font-size: var(--text-h3);
-  font-weight: 600;
-}
-
-.prose p,
-.prose ul,
-.prose ol {
-  margin-block: var(--space-5);
-}
-
-.prose blockquote {
-  margin: var(--space-8) 0;
-  border-left: 2px solid var(--color-accent);
-  padding: var(--space-2) 0 var(--space-2) var(--space-6);
-  color: var(--color-muted);
-  font-family: var(--font-serif);
-  font-size: var(--text-h3);
-  line-height: 1.7;
-}
-
-.prose .annotation {
-  margin-block: var(--space-8);
-  border: 1px solid var(--color-line);
-  border-left: 3px solid var(--color-secondary);
-  padding: var(--space-4) var(--space-5);
-  background: var(--color-surface);
-}
-
-.prose .annotation p {
-  margin: var(--space-2) 0 0;
-  color: var(--color-muted);
-  font-size: var(--text-small);
-}
-
-.prose .source-note {
-  color: var(--color-muted);
-  font-size: var(--text-caption);
-}
-
-.prose pre {
-  overflow-x: auto;
-  margin: 0;
-  padding: var(--space-5);
-  font-size: var(--text-small);
-  line-height: 1.7;
-}
-
-.code-block {
-  position: relative;
-  overflow: hidden;
-  margin-block: var(--space-8);
-  border: 1px solid var(--color-line);
-  background: var(--color-surface);
-}
-
-.code-block[data-title]::before {
-  display: block;
-  border-bottom: 1px solid var(--color-line);
-  padding: var(--space-2) var(--space-4);
-  color: var(--color-muted);
-  content: attr(data-title);
-  font-family: var(--font-mono);
-  font-size: var(--text-caption);
-}
-
-.code-block .highlighted {
-  display: inline-block;
-  width: calc(100% + (2 * var(--space-5)));
-  margin-inline: calc(-1 * var(--space-5));
-  padding-inline: var(--space-5);
-  box-shadow: inset 3px 0 var(--color-accent);
-}
-
-.mermaid-source {
-  white-space: pre-wrap;
 }
 
 .tag-list {
@@ -272,101 +61,7 @@ img {
   list-style: none;
 }
 
-.tag {
-  display: inline-flex;
-  min-height: 2rem;
-  align-items: center;
-  border-bottom: 1px solid var(--color-line);
-  padding-inline: var(--space-2);
-  color: var(--color-muted);
-  font-family: var(--font-mono);
-  font-size: var(--text-caption);
-  text-decoration: none;
-}
-
-/* One-shot enhancements. The non-JS frame remains visible. */
-html[data-reveal-ready="true"][data-motion="full"] [data-reveal] {
-  opacity: 0;
-  transform: translateY(var(--space-4));
-  transition:
-    opacity var(--motion-duration-base) var(--motion-ease-enter),
-    transform var(--motion-duration-slow) var(--motion-ease-enter);
-}
-
-html[data-reveal-ready="true"][data-motion="full"] [data-reveal][data-visible="true"] {
-  opacity: 1;
-  transform: translateY(0);
-  animation: reveal-mask var(--motion-duration-slow) var(--motion-ease-enter) both;
-}
-
-html[data-reveal-ready="true"][data-motion="full"] [data-reveal="line"] {
-  transform: none;
-}
-
-html[data-reveal-ready="true"][data-motion="full"] [data-reveal="line"][data-visible="true"] {
-  animation-name: reveal-line;
-}
-
-html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"] {
-  transform: none;
-  filter: saturate(0.72) contrast(0.92);
-}
-
-html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"][data-visible="true"] {
-  animation-name: reveal-image;
-  filter: saturate(0.88) contrast(1);
-}
-
-@keyframes reveal-mask {
-  from {
-    clip-path: inset(0 0 100% 0);
-  }
-  to {
-    clip-path: inset(0);
-  }
-}
-
-@keyframes reveal-line {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-  to {
-    clip-path: inset(0);
-  }
-}
-
-@keyframes reveal-image {
-  from {
-    clip-path: inset(7% 0 7% 0);
-  }
-  to {
-    clip-path: inset(0);
-  }
-}
-
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-}
-
-::view-transition-group(site-identity),
-::view-transition-group(section-title) {
-  animation-duration: var(--motion-duration-base);
-  animation-timing-function: var(--motion-ease-enter);
-}
-
-html[data-motion="reduced"]::view-transition-group(*),
-html[data-motion="off"]::view-transition-group(*) {
-  animation-duration: 0s;
-}
-
 @media (max-width: 44rem) {
-  :root {
-    --layout-gutter: 1.125rem;
-    --section-space: clamp(3.5rem, 14vw, 5rem);
-    --text-display: clamp(3.2rem, 18vw, 5.8rem);
-  }
-
   body {
     background:
       linear-gradient(90deg, transparent 0 calc(var(--layout-gutter) - 1px), var(--color-line) 0
@@ -383,11 +78,6 @@ html[data-motion="off"]::view-transition-group(*) {
   .reactions,
   .reading-progress {
     display: none !important;
-  }
-
-  body {
-    background: white;
-    color: black;
   }
 
   .page {

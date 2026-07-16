@@ -1,6 +1,8 @@
 <script lang="ts">
   import { siteConfig } from "@lunacea/config";
-  import ContentList from "$ui/ContentList.svelte";
+  import { ContentList } from "$ui/patterns";
+  import { Button, Input, NativeSelect } from "$ui/primitives";
+  import { Icon, interfaceIcons } from "$ui/icons";
   import PageHead from "$lib/components/PageHead.svelte";
   let { data } = $props();
   const types = ["article", "work", "talk", "photo", "place", "wine", "moment"];
@@ -22,42 +24,44 @@
   <form method="GET" data-reveal>
     <label class="query">
       <span>検索語</span>
-      <input type="search" name="q" value={data.query} maxlength="120" />
+      <Input variant="query" type="search" name="q" value={data.query} maxlength={120} />
     </label>
     <div class="filters">
       <label>種類
-        <select name="type">
+        <NativeSelect name="type">
           <option value="">すべて</option>
           {#each types as type}
             <option value={type} selected={data.filters.type === type}>{type}</option>
           {/each}
-        </select>
+        </NativeSelect>
       </label>
       <label>タグ
-        <select name="tag">
+        <NativeSelect name="tag">
           <option value="">すべて</option>
           {#each data.tags as tag}
             <option value={tag} selected={data.filters.tag === tag}>{tag}</option>
           {/each}
-        </select>
+        </NativeSelect>
       </label>
       <label>年
-        <select name="year">
+        <NativeSelect name="year">
           <option value="">すべて</option>
           {#each data.years as year}
             <option value={year} selected={data.filters.year === year}>{year}</option>
           {/each}
-        </select>
+        </NativeSelect>
       </label>
       <label>状態
-        <select name="status">
+        <NativeSelect name="status">
           <option value="">すべて</option>
           {#each statuses as status}
             <option value={status} selected={data.filters.status === status}>{status}</option>
           {/each}
-        </select>
+        </NativeSelect>
       </label>
-      <button type="submit">検索</button>
+      <Button variant="primary" type="submit">
+        <Icon name={interfaceIcons.search} dataIcon="inline-start" />検索
+      </Button>
     </div>
   </form>
   <div class="result-heading">
@@ -85,17 +89,6 @@
     font-size: var(--text-caption);
   }
 
-  .query input {
-    min-height: var(--space-16);
-    border: 0;
-    border-bottom: 1px solid var(--color-line);
-    border-radius: var(--radius-none);
-    padding: 0;
-    background: transparent;
-    font-family: var(--font-serif);
-    font-size: var(--text-h2);
-  }
-
   .filters {
     display: grid;
     grid-template-columns: repeat(4, 1fr) auto;
@@ -103,21 +96,9 @@
     margin-top: var(--space-4);
   }
 
-  select,
-  button {
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-none);
-    padding-inline: var(--space-3);
-    background: var(--color-surface);
-  }
-
-  button {
+  :global(.filters .button) {
     align-self: end;
     padding-inline: var(--space-5);
-    border-color: var(--color-primary);
-    color: var(--color-background);
-    background: var(--color-primary);
-    cursor: pointer;
   }
 
   .result-heading {
@@ -128,7 +109,7 @@
     font-size: var(--text-caption);
   }
 
-  @media (max-width: 48rem) {
+  @media (max-width: 44rem) {
     .filters {
       grid-template-columns: 1fr 1fr;
     }

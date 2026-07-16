@@ -1,5 +1,7 @@
 # アーキテクチャ
 
+Status: Accepted
+
 ## 決定
 
 このシステムはSvelteKitを唯一のデプロイ単位とするモジュラーモノリスです。公開コンテンツはGit管理の`.svx`、閲覧者由来のリアクションとそのレート制限だけはDeno
@@ -22,15 +24,15 @@ endpointがWeb標準`Request`をHonoへ渡し、レスポンスをそのまま�
 
 ## パッケージの責務
 
-| パッケージ | 責務                                   | 依存してよいもの            |
-| ---------- | -------------------------------------- | --------------------------- |
-| `schemas`  | 公開型、frontmatter/API入力検証        | Zodのみ                     |
-| `core`     | 検索・関連・変換・トグルの純粋関数     | `schemas`                   |
-| `content`  | `.svx` registry、本文索引、ビルド検証  | `schemas`, `core`           |
-| `api`      | HTTP境界、外部通信、Cookie、repository | `schemas`, `core`, `config` |
-| `ui`       | 共有表示部品、著作素材slot             | `schemas`, `config`, tokens |
-| `config`   | 公開可能なサイト設定                   | なし                        |
-| `web`      | ルート、SEO、composition               | すべての公開package         |
+| パッケージ | 責務                                      | 依存してよいもの            |
+| ---------- | ----------------------------------------- | --------------------------- |
+| `schemas`  | 公開型、frontmatter/API入力検証           | Zodのみ                     |
+| `core`     | 検索・関連・変換・トグルの純粋関数        | `schemas`                   |
+| `content`  | `.svx` registry、本文索引、ビルド検証     | `schemas`, `core`           |
+| `api`      | HTTP境界、外部通信、Cookie、repository    | `schemas`, `core`, `config` |
+| `ui`       | 共有表示部品、design tokens、著作素材slot | `schemas`, `config`         |
+| `config`   | 公開可能なサイト設定                      | なし                        |
+| `web`      | ルート、SEO、composition                  | すべての公開package         |
 
 `core`はDOM、KV、fetchへ依存しません。`api`のリアクション保存はinterface越しにし、Deno
 KVとメモリ実装を同じ契約で検証します。
@@ -41,6 +43,8 @@ KVとメモリ実装を同じ契約で検証します。
 - `/search`はクエリを受け取るためSSRとし、GETフォームでJavaScriptなしでも動作する。
 - `/api/v1`だけを動的HTTP境界にする。
 - Mermaidは該当DOMがある記事でだけ遅延importする。
+- SVXのGFM、heading、Shiki、Mermaid source、KaTeX変換設定はUI packageの共通build設定を
+  WebとStorybookが利用する。KaTeXはbuild時にHTML化し、client runtimeを追加しない。
 - Threlte/Threeはトップの`motion=full`かつ端末条件を満たした場合だけidle時にimportする。記事routeはHeroを参照しない。
 - ロゴ、人物、植物などの著作素材は`config.visualAssets`から`MediaSlot`へ渡す。空slotは構造だけを示し、有機的な図像をコード生成しない。
 

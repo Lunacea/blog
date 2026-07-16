@@ -26,7 +26,7 @@ revisions:
 ---
 
 <script>
-  import LinkCard from "@lunacea/ui/LinkCard.svelte";
+  import { LinkCard } from "@lunacea/ui/components";
 </script>
 
 ## 正本を一つにする
@@ -66,8 +66,8 @@ flowchart LR
 
 ## 数式を必要な記事だけに読み込む
 
-読了時間の概算は、単語数を \(w\)、一分あたりの処理量を \(r\) とすると、
-\(t = \\max(1, \\lceil w / r \\rceil)\) と表せる。数式を含まない記事にはKaTeXのCSS以外を配らない。
+読了時間の概算は、単語数を $w$、一分あたりの処理量を $r$ とすると、
+$t = \max(1, \lceil w / r \rceil)$ と表せる。数式を含まない記事にはKaTeXのCSS以外を配らない。
 
 ## 失敗を公開経路に含める
 

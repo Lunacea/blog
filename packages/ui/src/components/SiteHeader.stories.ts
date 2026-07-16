@@ -1,0 +1,26 @@
+import type { Meta, StoryObj } from "@storybook/svelte-vite";
+import { primaryNavigation } from "@lunacea/config";
+import SiteHeader from "./SiteHeader.svelte";
+
+const meta = {
+  title: "Components/SiteHeader",
+  component: SiteHeader,
+  parameters: { layout: "fullscreen" },
+  args: {
+    navigation: primaryNavigation,
+    pathname: "/articles",
+  },
+} satisfies Meta<typeof SiteHeader>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Desktop: Story = {};
+
+export const Mobile: Story = {
+  globals: { viewport: { value: "mobile", isRotated: false } },
+};
+
+export const SearchCurrent: Story = {
+  args: { pathname: "/search" },
+};

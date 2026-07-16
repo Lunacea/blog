@@ -14,6 +14,14 @@ export default defineConfig({
       "@lunacea/schemas": fileURLToPath(new URL("../../packages/schemas/mod.ts", import.meta.url)),
     },
   },
+  ssr: {
+    noExternal: [
+      "bits-ui",
+      "runed",
+      "svelte-toolbelt",
+      /bits-ui|runed|svelte-toolbelt|@iconify/,
+    ],
+  },
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.ts"],

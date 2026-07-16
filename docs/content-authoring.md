@@ -51,10 +51,11 @@ revisions:
 
 - `##`と`###`から見出しリンクと目次を生成する。
 - fenced codeに`title="file.ts" {2,5}`を付けるとファイル名と行強調を表示する。
-- `mermaid` fenceはブラウザで必要時だけ描画する。
-- `$...$`と`$$...$$`はKaTeXで表示する。
+- `mermaid` fenceはブラウザで必要時だけ描画する。`title="公開フロー"`を付けると、
+  figureの表示captionとaccessible nameにも使われる。
+- `$...$`と`$$...$$`はbuild時にKaTeX HTMLへ変換する。数式表示にclient-side JavaScriptは不要。
 - blockquote、表、リスト、引用、`<aside class="annotation">`を利用できる。
-- 外部リンクカードは`@lunacea/ui/LinkCard.svelte`をimportし、確認済みのtitle/description/siteを手入力する。外部ページの自動スクレイピングはしない。
+- 外部リンクカードは`@lunacea/ui/components`から`LinkCard`をimportし、確認済みのtitle/description/siteを手入力する。外部ページの自動スクレイピングはしない。
 
 全機能の実例は[showcase記事](/app/packages/content/entries/articles/resilient-content-pipeline/index.svx)にあります。
 

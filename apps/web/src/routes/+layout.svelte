@@ -1,30 +1,16 @@
 <script lang="ts">
   import "../app.css";
-  import { onNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import { primaryNavigation, siteConfig } from "@lunacea/config";
-  import SampleBanner from "$ui/SampleBanner.svelte";
-  import SettingsPanel from "$ui/SettingsPanel.svelte";
-  import SiteFooter from "$ui/SiteFooter.svelte";
-  import SiteHeader from "$ui/SiteHeader.svelte";
-  import RevealManager from "$lib/components/RevealManager.svelte";
+  import { SampleBanner, SettingsPanel, SiteFooter, SiteHeader } from "$ui/components";
+  import { installPageTransitions, RevealManager } from "$ui/motion";
 
   let { children } = $props();
 
-  onNavigate((navigation) => {
-    if (!("startViewTransition" in document)) return;
-    if (document.documentElement.dataset.motion !== "full") return;
-    return new Promise<void>((resolve) => {
-      document.startViewTransition(async () => {
-        resolve();
-        await navigation.complete;
-      });
-    });
-  });
+  installPageTransitions();
 </script>
 
 <svelte:head>
-  <meta name="theme-color" content="#0c110f" />
   {#if siteConfig.sampleMode}
     <meta name="robots" content="noindex, nofollow" />
   {/if}
@@ -43,7 +29,7 @@
 <style>
   .skip-link {
     position: fixed;
-    z-index: 100;
+    z-index: var(--z-skip-link);
     top: var(--space-2);
     left: var(--space-2);
     min-height: var(--control-size);

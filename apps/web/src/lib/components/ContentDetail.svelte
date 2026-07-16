@@ -2,10 +2,9 @@
   import type { Component } from "svelte";
   import { siteConfig } from "@lunacea/config";
   import type { Content } from "@lunacea/schemas";
-  import ContentList from "$ui/ContentList.svelte";
-  import StatusBadge from "$ui/StatusBadge.svelte";
+  import { StatusBadge, TagLabel } from "$ui/components";
+  import { ContentList, ReadingSurface } from "$ui/patterns";
   import ReactionBar from "./ReactionBar.svelte";
-  import ReadingEnhancements from "./ReadingEnhancements.svelte";
 
   let {
     metadata,
@@ -69,7 +68,7 @@
     <p class="lead">{metadata.summary}</p>
     <ul class="tag-list" aria-label="タグ">
       {#each metadata.tags as tag}
-        <li><a class="tag" href={"/tags/" + encodeURIComponent(tag)}>{tag}</a></li>
+        <li><TagLabel {tag} href={"/tags/" + encodeURIComponent(tag)} /></li>
       {/each}
     </ul>
   </header>
@@ -86,12 +85,7 @@
     </figure>
   {/if}
 
-  <div class="reading-surface">
-    <div class="shell article-grid">
-      <div class="prose"><ContentComponent /></div>
-      <ReadingEnhancements />
-    </div>
-  </div>
+  <ReadingSurface component={ContentComponent} />
 
   <div class="shell article-tail">
     {#if metadata.revisions.length}
@@ -128,9 +122,9 @@
     max-width: 22ch;
     margin: 0;
     font-size: var(--text-h1);
-    font-weight: 480;
+    font-weight: var(--weight-display);
     letter-spacing: var(--tracking-heading);
-    line-height: 1.04;
+    line-height: var(--leading-tight);
     text-wrap: balance;
   }
 
@@ -153,19 +147,6 @@
     object-fit: cover;
   }
 
-  .reading-surface {
-    border-block: 1px solid var(--color-line);
-    padding-block: var(--section-space);
-    background: var(--color-surface);
-  }
-
-  .article-grid {
-    display: grid;
-    grid-template-columns: minmax(0, var(--prose-width)) minmax(12rem, 1fr);
-    justify-content: space-between;
-    gap: clamp(var(--space-8), 8vw, 8rem);
-  }
-
   .article-tail {
     padding-block: var(--section-space);
   }
@@ -182,7 +163,7 @@
   .revisions h2 {
     margin: 0 0 var(--space-4);
     font-size: var(--text-h3);
-    font-weight: 600;
+    font-weight: var(--weight-strong);
   }
 
   .revisions ol {
@@ -203,12 +184,6 @@
     color: var(--color-muted);
     font-family: var(--font-mono);
     font-size: var(--text-caption);
-  }
-
-  @media (max-width: 60rem) {
-    .article-grid {
-      grid-template-columns: 1fr;
-    }
   }
 
   @media (max-width: 44rem) {

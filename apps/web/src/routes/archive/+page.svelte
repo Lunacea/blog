@@ -72,7 +72,7 @@
 
   .groups {
     display: grid;
-    gap: clamp(var(--space-20), 12vw, 10rem);
+    gap: clamp(var(--space-20), 12vw, var(--space-40));
   }
 
   .section-heading {
@@ -135,7 +135,7 @@
     margin: var(--space-1) 0;
     font-family: var(--font-serif);
     font-size: var(--text-h3);
-    font-weight: 400;
+    font-weight: var(--weight-regular);
   }
 
   p {

@@ -1,0 +1,75 @@
+/* One-shot enhancements. The non-JS frame remains visible. */
+html[data-reveal-ready="true"][data-motion="full"] [data-reveal] {
+  opacity: 0;
+  transform: translateY(var(--space-4));
+  transition:
+    opacity var(--motion-duration-base) var(--motion-ease-enter),
+    transform var(--motion-duration-slow) var(--motion-ease-enter);
+}
+
+html[data-reveal-ready="true"][data-motion="full"] [data-reveal][data-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  animation: reveal-mask var(--motion-duration-slow) var(--motion-ease-enter) both;
+}
+
+html[data-reveal-ready="true"][data-motion="full"] [data-reveal="line"] {
+  transform: none;
+}
+
+html[data-reveal-ready="true"][data-motion="full"] [data-reveal="line"][data-visible="true"] {
+  animation-name: reveal-line;
+}
+
+html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"] {
+  transform: none;
+  filter: saturate(0.72) contrast(0.92);
+}
+
+html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"][data-visible="true"] {
+  animation-name: reveal-image;
+  filter: saturate(0.88) contrast(1);
+}
+
+@keyframes reveal-mask {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@keyframes reveal-line {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@keyframes reveal-image {
+  from {
+    clip-path: inset(7% 0 7% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(site-identity),
+::view-transition-group(section-title) {
+  animation-duration: var(--motion-duration-base);
+  animation-timing-function: var(--motion-ease-enter);
+}
+
+html[data-motion="reduced"]::view-transition-group(*),
+html[data-motion="off"]::view-transition-group(*) {
+  animation-duration: var(--motion-duration-immediate);
+}

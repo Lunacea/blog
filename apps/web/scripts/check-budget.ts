@@ -26,6 +26,23 @@ function collect(key: string): void {
 
 for (const root of roots) collect(root);
 
+const initialKeys = Object.entries(manifest)
+  .filter(([, entry]) => files.has(entry.file))
+  .map(([key]) => key);
+const forbiddenInitialDependencies = [
+  { label: "Mermaid", pattern: /(?:^|\/)mermaid(?:@|\/|$)|@mermaid-js/u },
+  { label: "Storybook", pattern: /(?:^|\/)@?storybook(?:@|\/|$)/u },
+  { label: "Threlte", pattern: /(?:^|\/)@threlte(?:@|\/|$)/u },
+  { label: "Three.js", pattern: /(?:^|\/)three(?:@|\/|$)/u },
+];
+
+for (const dependency of forbiddenInitialDependencies) {
+  const match = initialKeys.find((key) => dependency.pattern.test(key));
+  if (match) {
+    throw new Error(`${dependency.label} entered the article initial graph through ${match}.`);
+  }
+}
+
 let gzipBytes = 0;
 for (const file of files) {
   const bytes = await Deno.readFile(new URL(file, client));

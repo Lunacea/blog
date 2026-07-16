@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Content } from "@lunacea/schemas";
-  import ContentList from "$ui/ContentList.svelte";
+  import { ContentList } from "$ui/patterns";
 
   let {
     eyebrow,
@@ -34,7 +34,7 @@
   .index-header {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) 1fr;
-    margin-bottom: clamp(var(--space-12), 8vw, 7rem);
+    margin-bottom: clamp(var(--space-12), 8vw, var(--space-28));
   }
 
   .index-header .eyebrow {
@@ -47,7 +47,7 @@
 
   .empty {
     border-top: 1px solid var(--color-line);
-    padding-block: 3rem;
+    padding-block: var(--space-12);
     color: var(--color-muted);
   }
 

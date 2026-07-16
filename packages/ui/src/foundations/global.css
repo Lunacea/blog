@@ -1,0 +1,138 @@
+@import "tailwindcss";
+@import "./theme.css";
+@import "./editorial.css";
+@import "../motion/transitions.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scrollbar-color: var(--color-muted) var(--color-background);
+  background: var(--color-background);
+}
+
+html[data-motion="off"],
+html[data-motion="off"] *,
+html[data-motion="reduced"] * {
+  scroll-behavior: auto !important;
+  animation-duration: var(--motion-duration-immediate) !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: var(--motion-duration-immediate) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  html * {
+    scroll-behavior: auto;
+    animation-duration: var(--motion-duration-immediate) !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--motion-duration-immediate) !important;
+  }
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  color: var(--color-foreground);
+  background:
+    linear-gradient(
+    90deg,
+    transparent 0 calc(var(--layout-gutter) - 1px),
+    var(--color-line) 0 var(--layout-gutter),
+    transparent 0
+  ),
+    radial-gradient(
+    circle at 78% 12%,
+    color-mix(in srgb, var(--color-secondary) 8%, transparent),
+    transparent 30rem
+  ),
+    var(--color-background);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  color: var(--color-background);
+  background: var(--color-primary);
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--color-secondary);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.24em;
+}
+
+a:hover {
+  text-decoration-color: var(--color-accent);
+}
+
+button,
+select,
+input,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+button,
+select,
+input[type="submit"] {
+  min-height: var(--control-size);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: var(--space-1);
+  box-shadow: var(--focus-ring);
+}
+
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+.shell {
+  width: min(calc(100% - (2 * var(--layout-gutter))), var(--content-width));
+  margin-inline: auto;
+}
+
+@media (forced-colors: active) {
+  html {
+    scrollbar-color: auto;
+  }
+
+  body {
+    background: Canvas;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+    box-shadow: none;
+  }
+
+  [data-webgl="true"] canvas {
+    display: none;
+  }
+}
+
+@media print {
+  body {
+    color: var(--color-print-foreground);
+    background: var(--color-print-background);
+  }
+}

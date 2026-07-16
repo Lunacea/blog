@@ -2,9 +2,9 @@ import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { AuthoredMedia } from "@lunacea/config";
 import type { Content, Location, WeatherState } from "@lunacea/schemas";
-import MediaSlot from "$ui/MediaSlot.svelte";
-import SettingsPanel from "$ui/SettingsPanel.svelte";
-import ReadingEnhancements from "$lib/components/ReadingEnhancements.svelte";
+import { SettingsPanel } from "$ui/components/index.ts";
+import { MediaSlot } from "$ui/visuals/index.ts";
+import ReadingEnhancements from "$ui/patterns/ReadingEnhancements.svelte";
 import ReactionBar from "$lib/components/ReactionBar.svelte";
 import WeatherWidget from "$lib/components/WeatherWidget.svelte";
 import SearchPage from "../routes/search/+page.svelte";
@@ -29,6 +29,7 @@ const article = {
 describe("display preferences", () => {
   it("persists theme and motion without hiding native keyboard controls", async () => {
     const view = render(SettingsPanel);
+    await fireEvent.click(view.getByRole("button", { name: "Display" }));
     const [theme, motion] = view.getAllByRole("combobox") as HTMLSelectElement[];
     theme.focus();
     expect(document.activeElement).toBe(theme);
@@ -56,6 +57,13 @@ describe("authored media slots", () => {
       loading: "lazy",
       opacity: 0.9,
       allowMotion: false,
+      placeholder: {
+        assetId: "test-portrait",
+        role: "テスト画像",
+        preferredFileType: "AVIF/WebP",
+        accessibilityDescription: "テスト用の画像説明",
+        transparencyRequired: false,
+      },
     };
     const supplied = render(MediaSlot, { asset });
     expect(supplied.getByRole("img", { name: asset.alt })).toBeTruthy();
@@ -64,7 +72,7 @@ describe("authored media slots", () => {
       asset: { ...asset, src: null, alt: "" },
       showPlaceholder: true,
     });
-    expect(empty.getByText("Authored media slot")).toBeTruthy();
+    expect(empty.getByRole("img", { name: /Authored media slot/ })).toBeTruthy();
     expect(empty.container.querySelector("img")).toBeNull();
   });
 });
@@ -179,6 +187,7 @@ describe("reactions", () => {
     vi.stubGlobal("fetch", fetchMock);
     const view = render(ReactionBar, { content: article });
     const button = await view.findByRole("button", { name: /参考になった/ });
+    expect(button.querySelector("svg")).toBeTruthy();
     await waitFor(() => expect(button.hasAttribute("disabled")).toBe(false));
     await fireEvent.click(button);
 

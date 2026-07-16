@@ -1,7 +1,7 @@
 <script lang="ts">
   import { siteConfig, visualAssets } from "@lunacea/config";
-  import MediaSlot from "$ui/MediaSlot.svelte";
-  import AmbientHero from "$lib/components/AmbientHero.svelte";
+  import AmbientHero from "$ui/visuals/AmbientHero.svelte";
+  import { MediaSlot } from "$ui/visuals";
   import PageHead from "$lib/components/PageHead.svelte";
   import WeatherWidget from "$lib/components/WeatherWidget.svelte";
 
@@ -69,7 +69,7 @@
   .home-frame::before,
   .home-frame::after {
     position: absolute;
-    z-index: 0;
+    z-index: var(--z-base);
     pointer-events: none;
     content: "";
   }
@@ -92,7 +92,7 @@
 
   .home-grid {
     position: relative;
-    z-index: 2;
+    z-index: var(--z-visual);
     display: grid;
     height: 100%;
     grid-template-rows: auto minmax(0, 1fr) auto auto;
@@ -134,7 +134,7 @@
     margin: 0;
     font-family: var(--font-serif);
     font-size: var(--text-display);
-    font-weight: 400;
+    font-weight: var(--weight-regular);
     letter-spacing: var(--tracking-display);
     line-height: var(--leading-display);
     text-wrap: balance;
@@ -142,10 +142,11 @@
 
   .statement {
     max-width: 31rem;
-    margin: clamp(var(--space-5), 4vh, var(--space-10)) 0 0 clamp(0rem, 7vw, 6rem);
+    /* design-literal: fluid hero indentation intentionally starts at zero. */
+    margin: clamp(var(--space-5), 4vh, var(--space-10)) 0 0 clamp(0px, 7vw, var(--space-24));
     color: var(--color-muted);
     font-size: var(--text-body);
-    line-height: 1.8;
+    line-height: var(--leading-hero-copy);
   }
 
   .portals {
@@ -192,12 +193,12 @@
   .portals strong {
     font-family: var(--font-serif);
     font-size: var(--text-h3);
-    font-weight: 400;
-    line-height: 1.2;
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-snug);
   }
 
   .note {
-    line-height: 1.35;
+    line-height: var(--leading-compact);
   }
 
   .home-frame :global(.weather) {
@@ -207,19 +208,20 @@
 
   :global(.organic-slot) {
     position: absolute !important;
-    z-index: 1;
+    z-index: var(--z-content);
     right: -3%;
     bottom: 0;
     width: min(28vw, 24rem) !important;
     pointer-events: none;
   }
 
-  @media (max-height: 48rem) and (min-width: 53rem) {
+  /* design-literal: compact landscape height is independent from width breakpoints. */
+  @media (max-height: 48rem) and (min-width: 52rem) {
     .home-frame,
     .home-frame.sample {
       height: auto;
       min-height: calc(100svh - var(--site-header-block));
-      overflow: visible;
+      overflow: clip;
     }
 
     .home-frame.sample {
@@ -237,7 +239,7 @@
     .home-frame.sample {
       height: auto;
       min-height: calc(100svh - var(--site-header-block));
-      overflow: visible;
+      overflow: clip;
     }
 
     .home-frame.sample {

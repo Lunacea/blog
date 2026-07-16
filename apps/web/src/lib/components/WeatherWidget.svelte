@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { siteConfig } from "@lunacea/config";
+  import * as Collapsible from "$ui/primitives/collapsible";
+  import { Button, Input } from "$ui/primitives";
+  import { Icon, interfaceIcons, weatherIconName } from "$ui/icons";
   import {
     locationSchema,
     weatherStateSchema,
@@ -125,6 +128,7 @@
     <p class="eyebrow" id="weather-title">Environment / {location.name}</p>
     {#if weather}
       <p class="state">
+        <Icon name={weatherIconName(weather.condition, weather.phase)} />
         <span>{conditionLabels[weather.condition]}</span>
         {#if weather.temperatureC !== null}<strong>{Math.round(weather.temperatureC)}°C</strong>{/if}
         <time datetime={weather.observedAt}>{weather.observedAt.slice(11, 16)}</time>
@@ -133,34 +137,40 @@
       <p class="state">— / —</p>
     {/if}
   </div>
-  <details>
-    <summary>地点を変更</summary>
-    <form onsubmit={(event) => { event.preventDefault(); void search(); }}>
+  <Collapsible.Root class="weather-picker">
+    <Collapsible.Trigger class="weather-trigger">
+      <Icon name={interfaceIcons.location} />地点を変更
+    </Collapsible.Trigger>
+    <Collapsible.Content class="weather-content">
+      <form onsubmit={(event) => { event.preventDefault(); void search(); }}>
       <label for="location-query">都市名</label>
       <div class="search-row">
-        <input id="location-query" bind:value={query} minlength="2" maxlength="80" />
-        <button type="submit" disabled={loading}>検索</button>
+        <Input id="location-query" bind:value={query} minlength={2} maxlength={80} />
+        <Button type="submit" disabled={loading}>
+          <Icon name={interfaceIcons.search} dataIcon="inline-start" />検索
+        </Button>
       </div>
-    </form>
-    {#if results.length}
-      <ul>
-        {#each results as result}
-          <li>
-            <button type="button" onclick={() => selectLocation(result)}>
-              {result.name}<small>{result.region ?? result.country}</small>
-            </button>
-          </li>
-        {/each}
-      </ul>
-    {/if}
-  </details>
+      </form>
+      {#if results.length}
+        <ul>
+          {#each results as result}
+            <li>
+              <Button variant="ghost" type="button" onclick={() => selectLocation(result)}>
+                {result.name}<small>{result.region ?? result.country}</small>
+              </Button>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    </Collapsible.Content>
+  </Collapsible.Root>
   <p class="sr-status" aria-live="polite">{message}</p>
 </section>
 
 <style>
   .weather {
     position: relative;
-    z-index: 2;
+    z-index: var(--z-visual);
     display: flex;
     width: min(100%, 34rem);
     align-items: flex-start;
@@ -180,25 +190,40 @@
 
   .state strong {
     font-size: var(--text-h3);
-    font-weight: 450;
+    font-weight: var(--weight-quiet);
   }
 
   .state time {
     color: var(--color-muted);
   }
 
-  details {
+  .state :global(svg) {
+    flex: none;
+    align-self: center;
+    font-size: var(--text-h3);
+  }
+
+  :global(.weather-picker) {
     position: relative;
   }
 
-  summary {
+  :global(.weather-trigger) {
+    display: inline-flex;
     min-height: var(--control-size);
+    align-items: center;
+    gap: var(--space-2);
+    border: 0;
+    background: transparent;
     cursor: pointer;
     color: var(--color-muted);
     font-size: var(--text-caption);
   }
 
-  details[open] {
+  :global(.weather-trigger svg) {
+    font-size: var(--text-small);
+  }
+
+  :global(.weather-picker[data-state="open"]) {
     min-width: min(22rem, 82vw);
   }
 
@@ -212,7 +237,7 @@
 
   form label {
     display: block;
-    margin-bottom: 0.4rem;
+    margin-bottom: var(--space-2);
     font-size: var(--text-caption);
   }
 
@@ -221,22 +246,13 @@
     grid-template-columns: 1fr auto;
   }
 
-  input,
-  button {
-    min-height: var(--control-size);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-none);
-    padding-inline: var(--space-3);
-    background: var(--color-background);
-  }
-
   ul {
     margin: 0;
     padding: var(--space-2);
     list-style: none;
   }
 
-  ul button {
+  ul :global(.button) {
     display: flex;
     width: 100%;
     align-items: flex-start;
@@ -259,9 +275,11 @@
     clip: rect(0, 0, 0, 0);
   }
 
-  @media (max-width: 38rem) {
+  @media (max-width: 44rem) {
     .weather {
       flex-direction: column;
     }
   }
 </style>
+    align-items: center;
+    gap: var(--space-2);

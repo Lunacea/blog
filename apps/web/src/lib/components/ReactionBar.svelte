@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { siteConfig } from "@lunacea/config";
+  import { reactionIcons } from "$ui/icons";
+  import * as ToggleGroup from "$ui/primitives/toggle-group";
   import {
     reactionSummarySchema,
     type Content,
@@ -44,6 +46,14 @@
     }
   }
 
+  function updateSelection(next: string[]) {
+    if (!summary || pending) return;
+    const changed = siteConfig.reactions.find((reaction) =>
+      next.includes(reaction.id) !== summary?.selected.includes(reaction.id)
+    );
+    if (changed) void toggle(changed.id);
+  }
+
   onMount(() => void load());
 </script>
 
@@ -52,20 +62,23 @@
     <p class="eyebrow">Response</p>
     <h2 id="reaction-heading">この記録をどう感じましたか</h2>
   </div>
-  <div class="buttons">
+  <ToggleGroup.Root
+    class="buttons"
+    type="multiple"
+    value={summary?.selected ?? []}
+    disabled={!summary || pending !== null}
+    onValueChange={updateSelection}
+    aria-label="リアクション"
+  >
     {#each siteConfig.reactions as reaction}
-      <button
-        type="button"
-        aria-pressed={summary?.selected.includes(reaction.id) ?? false}
-        disabled={!summary || pending !== null}
-        onclick={() => void toggle(reaction.id)}
-      >
-        <span aria-hidden="true">{reaction.emoji}</span>
+      {@const ReactionIcon = reactionIcons[reaction.id]}
+      <ToggleGroup.Item value={reaction.id}>
+        <ReactionIcon />
         {reaction.label}
         <strong>{summary?.counts[reaction.id] ?? 0}</strong>
-      </button>
+      </ToggleGroup.Item>
     {/each}
-  </div>
+  </ToggleGroup.Root>
   <p class="status" aria-live="polite">{message}</p>
 </section>
 
@@ -82,16 +95,16 @@
   h2 {
     margin: 0;
     font-size: var(--text-small);
-    font-weight: 520;
+    font-weight: var(--weight-component);
   }
 
-  .buttons {
+  :global(.buttons) {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2);
   }
 
-  button {
+  :global([data-slot="toggle-group-item"]) {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
@@ -102,12 +115,12 @@
     cursor: pointer;
   }
 
-  button[aria-pressed="true"] {
+  :global([data-slot="toggle-group-item"][data-state="on"]) {
     border-color: var(--color-accent);
     background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
   }
 
-  button:disabled {
+  :global([data-slot="toggle-group-item"]:disabled) {
     cursor: wait;
     opacity: 0.7;
   }
@@ -115,6 +128,11 @@
   strong {
     font-family: var(--font-mono);
     font-size: var(--text-caption);
+  }
+
+  :global([data-slot="toggle-group-item"] svg) {
+    flex: none;
+    font-size: var(--text-body);
   }
 
   .status {

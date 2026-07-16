@@ -26,6 +26,7 @@ deno task check               # frontmatter・リンク・svelte-check
 deno task test                # Deno Test + Vitest
 deno task test:e2e            # Playwright + axe
 deno task storybook           # UIカタログ :6006
+deno task storybook:check     # 全storyのbuild・axe・responsive・WebGL fallback検証
 deno task content:validate    # コンテンツだけを検証
 deno task budget:check        # build後の初期JS上限を検証
 deno task fmt
@@ -41,8 +42,7 @@ packages/config/         サイト名、ナビゲーション、既定地点、s
 packages/content/        .svx正本、ビルド時registry、検索文書、validator
 packages/core/           検索、関連資料、天候変換、リアクションの純粋ロジック
 packages/schemas/        Zodによる共通・種別固有スキーマ
-packages/tokens/         semantic color、書体、余白、ガラス、motionのCSS token
-packages/ui/             共通Svelte UIとStorybook
+packages/ui/             design token、共通Svelte UI、motion/visual境界、Storybook
 e2e/                     Playwright + axe
 docs/                    設計、執筆、公開runbook
 ```

@@ -19,9 +19,9 @@ export const siteConfig = {
     timezone: "Asia/Tokyo",
   },
   reactions: [
-    { id: "useful", emoji: "💡", label: "参考になった" },
-    { id: "inspiring", emoji: "🌱", label: "刺激を受けた" },
-    { id: "love", emoji: "✦", label: "好き" },
+    { id: "useful", label: "参考になった" },
+    { id: "inspiring", label: "刺激を受けた" },
+    { id: "love", label: "好き" },
   ],
 } as const;
 
@@ -50,6 +50,13 @@ export type AuthoredMedia = {
   loading: "eager" | "lazy";
   opacity: number;
   allowMotion: boolean;
+  placeholder: {
+    assetId: string;
+    role: string;
+    preferredFileType: "AVIF/WebP" | "SVG/PNG";
+    accessibilityDescription: string;
+    transparencyRequired: boolean;
+  };
 };
 
 /**
@@ -68,6 +75,13 @@ export const visualAssets = {
     loading: "eager",
     opacity: 1,
     allowMotion: false,
+    placeholder: {
+      assetId: "identity-mark",
+      role: "サイト識別子",
+      preferredFileType: "SVG/PNG",
+      accessibilityDescription: "装飾なら空のalt、文字やロゴを含む場合は内容を説明する",
+      transparencyRequired: true,
+    },
   },
   profile: {
     src: null,
@@ -81,6 +95,13 @@ export const visualAssets = {
     loading: "lazy",
     opacity: 0.92,
     allowMotion: false,
+    placeholder: {
+      assetId: "profile-portrait",
+      role: "プロフィール画像",
+      preferredFileType: "AVIF/WebP",
+      accessibilityDescription: "人物と撮影状況を簡潔に説明する",
+      transparencyRequired: false,
+    },
   },
   heroOrganic: {
     src: null,
@@ -94,5 +115,12 @@ export const visualAssets = {
     loading: "eager",
     opacity: 0.44,
     allowMotion: true,
+    placeholder: {
+      assetId: "home-hero-organic",
+      role: "ホームヒーローのauthored media",
+      preferredFileType: "AVIF/WebP",
+      accessibilityDescription: "装飾画像のため空のaltを維持する",
+      transparencyRequired: true,
+    },
   },
 } as const satisfies Record<string, AuthoredMedia>;

@@ -9,19 +9,98 @@ test("all primary routes render on desktop and mobile", async ({ page }, testInf
     const response = await page.goto(route);
     expect(response?.ok(), route).toBe(true);
     await expect(page.locator("main")).toBeVisible();
+    const overflow = await page.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(overflow, route).toBeLessThanOrEqual(1);
   }
+});
+
+test("editorial HTML remains complete without JavaScript", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "no-javascript");
+  await page.goto("/articles/resilient-content-pipeline");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.locator(".code-block code")).toBeVisible();
+  await expect(page.locator(".katex").first()).toBeVisible();
+  await expect(page.locator(".mermaid-source")).toBeVisible();
+  await expect(page.locator(".mermaid-diagram")).toHaveCount(0);
 });
 
 test("theme and motion preferences survive navigation", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
   await page.goto("/");
-  await expect(page.locator("details.settings")).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".settings[data-slot='collapsible-root']")).toHaveAttribute(
+    "data-ready",
+    "true",
+  );
   await page.getByText("Display", { exact: true }).click();
   await page.getByLabel("Theme").selectOption("dark");
   await page.getByLabel("Motion").selectOption("off");
   await page.goto("/articles");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
+});
+
+test("mobile navigation dismisses with Escape and returns focus", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile");
+  await page.goto("/");
+  await expect(page.locator("header")).toHaveAttribute("data-ready", "true");
+  const menu = page.getByRole("button", { name: /メニュー/ });
+  await menu.click();
+  await expect(menu).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+  await expect(menu).toBeFocused();
+});
+
+test("OS reduced motion caps a saved Full preference", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => localStorage.setItem("lunacea-motion", "full"));
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion-preference", "full");
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "reduced");
+  await expect(page.locator("canvas")).toHaveCount(0);
+});
+
+test("forced colors disables custom scroll colors and WebGL", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.emulateMedia({ forcedColors: "active" });
+  await page.addInitScript(() => localStorage.setItem("lunacea-motion", "full"));
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-motion", "reduced");
+  await expect(page.locator("canvas")).toHaveCount(0);
+});
+
+test("narrow mobile, tablet, and 200% text do not create horizontal overflow", async (
+  { page },
+  testInfo,
+) => {
+  test.skip(testInfo.project.name !== "desktop");
+  for (const viewport of [{ width: 320, height: 720 }, { width: 768, height: 1024 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto("/articles");
+    await page.evaluate(() => {
+      document.documentElement.style.fontSize = "200%";
+    });
+    await expect(page.locator("main")).toBeVisible();
+    const overflow = await page.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+  }
+});
+
+test("back and forward navigation preserve route usability", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.goto("/articles");
+  await page.goto("/works");
+  await page.goBack();
+  await expect(page).toHaveURL(/\/articles$/u);
+  await expect(page.locator("main")).toBeVisible();
+  await page.goForward();
+  await expect(page).toHaveURL(/\/works$/u);
+  await expect(page.locator("main")).toBeVisible();
 });
 
 test("home is one desktop frame with a deterministic non-WebGL fallback", async (
@@ -49,6 +128,10 @@ test("article has reading tools but never creates a WebGL canvas", async ({ page
     .toBeVisible();
   await expect(page.getByRole("progressbar", { name: "読了進捗" })).toBeVisible();
   await expect(page.getByRole("complementary", { name: "目次" })).toBeVisible();
+  const diagram = page.locator(".mermaid-diagram svg");
+  await expect(diagram).toBeVisible();
+  const diagramBox = await diagram.boundingBox();
+  expect(diagramBox?.height).toBeLessThan(diagramBox?.width ?? 0);
   await expect(page.locator("canvas")).toHaveCount(0);
 
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
@@ -71,6 +154,10 @@ test("anonymous reaction toggles with the same browser actor", async ({ page }, 
 test("keyboard focus reaches navigation and display settings", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
   await page.goto("/");
+  await expect(page.locator(".settings[data-slot='collapsible-root']")).toHaveAttribute(
+    "data-ready",
+    "true",
+  );
   await page.keyboard.press("Tab");
   await expect(page.locator(":focus")).toHaveAttribute("href", "#main-content");
   await page.keyboard.press("Tab");

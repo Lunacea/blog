@@ -1,0 +1,149 @@
+@theme inline {
+  --color-canvas: var(--color-background);
+  --color-panel: var(--color-surface);
+  --color-ink: var(--color-foreground);
+  --color-action: var(--color-primary);
+  --color-support: var(--color-secondary);
+  --color-signal: var(--color-accent);
+  --color-quiet: var(--color-muted);
+  --color-rule: var(--color-line);
+  --font-interface: var(--font-sans);
+  --font-editorial: var(--font-serif);
+  --font-code: var(--font-mono);
+  --breakpoint-xs: 34rem;
+  --breakpoint-sm: 44rem;
+  --breakpoint-md: 52rem;
+  --breakpoint-lg: 60rem;
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* Semantic values use light-dark() so each role is declared exactly once. */
+  --color-background: light-dark(#d7dbd5, #0c110f);
+  --color-surface: light-dark(#eef0eb, #151b18);
+  --color-foreground: light-dark(#151a17, #e7ede8);
+  --color-primary: light-dark(#173d2d, #a1c9b2);
+  --color-secondary: light-dark(#466451, #83a58f);
+  --color-accent: light-dark(#705800, #e2c654);
+  --color-muted: light-dark(#46524c, #aab5ae);
+  --color-line: light-dark(rgb(21 26 23 / 24%), rgb(231 237 232 / 20%));
+  --color-glass: light-dark(rgb(244 247 242 / 72%), rgb(20 31 26 / 76%));
+  --color-positive: light-dark(#245d40, #8bc6a1);
+  --color-negative: light-dark(#8a343c, #e69aa0);
+  --color-concrete: light-dark(#adb5ae, #68726c);
+  --color-forest: light-dark(#102f23, #173e2d);
+  --color-moss: light-dark(#587460, #739880);
+  --color-neon: light-dark(#c3a92f, #e2c654);
+  --color-white: #f7f8f4;
+  --color-black: #090c0a;
+  --color-print-background: #fff;
+  --color-print-foreground: #000;
+
+  --font-sans: "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-serif: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --text-display: clamp(3.75rem, 8.1vw, 7.5rem);
+  --text-h1: clamp(2.625rem, 6.5vw, 6rem);
+  --text-h2: clamp(1.75rem, 3.6vw, 3.25rem);
+  --text-h3: clamp(1.25rem, 2vw, 1.625rem);
+  --text-body: clamp(1.0625rem, 0.25vw + 1rem, 1.125rem);
+  --text-small: 0.875rem;
+  --text-caption: 0.75rem;
+  --weight-regular: 400;
+  --weight-quiet: 450;
+  --weight-display: 480;
+  --weight-component: 520;
+  --weight-title: 540;
+  --weight-emphasis: 560;
+  --weight-strong: 600;
+  --weight-label: 650;
+  --leading-none: 1;
+  --leading-display: 0.88;
+  --leading-title: 0.96;
+  --leading-tight: 1.04;
+  --leading-snug: 1.2;
+  --leading-heading: 1.25;
+  --leading-compact: 1.35;
+  --leading-profile: 1.42;
+  --leading-ui: 1.5;
+  --leading-card: 1.6;
+  --leading-body: 1.86;
+  --leading-copy: 1.7;
+  --leading-relaxed: 1.75;
+  --leading-hero-copy: 1.8;
+  --tracking-display: -0.055em;
+  --tracking-heading: -0.045em;
+  --tracking-prose-heading: -0.025em;
+  --tracking-label: 0.1em;
+  --tracking-ui: 0.035em;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-14: 3.5rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-28: 7rem;
+  --space-32: 8rem;
+  --space-40: 10rem;
+  --layout-gutter: clamp(1.125rem, 4vw, 3.75rem);
+  --section-space: clamp(4rem, 9vw, 8rem);
+  --content-width: 78rem;
+  --prose-width: 72ch;
+  --layout-grid-compact: 12rem;
+  --layout-grid-standard: 18rem;
+  --layout-grid-wide: 24rem;
+  --control-size: 2.75rem;
+  --site-header-block: 4.3125rem;
+  --sample-banner-block: 2.5625rem;
+
+  --radius-none: 0;
+  --radius-small: 0.1875rem;
+  --radius-round: 999px;
+  --shadow-overlay: 0 0.75rem 2.5rem light-dark(rgb(16 47 35 / 14%), rgb(0 0 0 / 34%));
+  --shadow-accent-rule: inset 3px 0 var(--color-accent);
+  --glass-blur: 0.625rem;
+  --focus-ring: 0 0 0 0.1875rem light-dark(rgb(112 88 0 / 36%), rgb(226 198 84 / 38%));
+
+  --motion-duration-immediate: 1ms;
+  --motion-duration-fast: 140ms;
+  --motion-duration-base: 360ms;
+  --motion-duration-slow: 760ms;
+  --motion-duration-status: 1500ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+
+  --z-base: 0;
+  --z-content: 1;
+  --z-visual: 2;
+  --z-controls: 10;
+  --z-header: 20;
+  --z-overlay: 30;
+  --z-progress: 40;
+  --z-skip-link: 100;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+@media (max-width: 44rem) {
+  :root {
+    --layout-gutter: 1.125rem;
+    --section-space: clamp(3.5rem, 14vw, 5rem);
+    --text-display: clamp(3.2rem, 18vw, 5.8rem);
+  }
+}
