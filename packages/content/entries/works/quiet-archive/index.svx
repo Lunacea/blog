@@ -15,6 +15,9 @@ draft: false
 sample: true
 period: 2026
 role: 情報設計、UI設計、フルスタック実装
+fields:
+  - Information Architecture
+  - Software Engineering
 stack:
   - SvelteKit
   - Deno

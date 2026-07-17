@@ -17,7 +17,16 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Portrait: Story = {};
+export const ProfileCharacter: Story = {
+  args: {
+    assetId: "profile-creature-crescent-v1",
+    role: "三日月状の構図を持つプロフィールキャラクター",
+    aspectRatio: "1 / 1",
+    preferredFileType: "AVIF/WebP",
+    accessibilityDescription: "黄色いウーパールーパーと魚の中間のキャラクターを説明する",
+    transparencyRequired: true,
+  },
+};
 
 export const TransparentIdentity: Story = {
   args: {

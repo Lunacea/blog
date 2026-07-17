@@ -2,6 +2,7 @@
 
 import { AxeBuilder } from "@axe-core/playwright";
 import { chromium, type ConsoleMessage, type Page } from "playwright";
+import sharp from "sharp";
 
 const browserHeadless = Deno.env.get("STORYBOOK_HEADED") !== "true";
 
@@ -123,6 +124,79 @@ async function openStory(page: Page, baseUrl: string, id: string) {
   await page.goto(`${baseUrl}/iframe.html?id=${id}&viewMode=story`, { waitUntil: "networkidle" });
 }
 
+async function checkVisualBaselines(
+  baseUrl: string,
+  browser: Awaited<ReturnType<typeof chromium.launch>>,
+) {
+  const update = Deno.env.get("UPDATE_VISUAL_BASELINES") === "true";
+  const directory = new URL("../visual-baselines/", import.meta.url);
+  const stories = [
+    "components-siteheader--desktop",
+    "components-filterselector--default",
+    "components-viewtoggle--grid",
+    "patterns-glassprofilecard--placeholder",
+    "visuals-assetplaceholder--profile-character",
+    "visuals-ambienthero--static-fallback",
+  ];
+  const viewports = [
+    { name: "mobile", width: 320, height: 720 },
+    { name: "desktop", width: 1280, height: 900 },
+  ];
+  if (update) await Deno.mkdir(directory, { recursive: true });
+
+  for (const viewport of viewports) {
+    const context = await browser.newContext({ viewport });
+    const page = await context.newPage();
+    for (const theme of ["light", "dark"] as const) {
+      for (const story of stories) {
+        await openStory(page, baseUrl, story);
+        await page.evaluate((selectedTheme) => {
+          document.documentElement.dataset.theme = selectedTheme;
+          document.documentElement.dataset.motion = "off";
+        }, theme);
+        await page.evaluate(() => document.fonts.ready);
+        const screenshot = await page.screenshot({ animations: "disabled" });
+        const name = `${story}.${viewport.name}.${theme}.png`;
+        const baselineUrl = new URL(name, directory);
+        if (update) {
+          await Deno.writeFile(baselineUrl, screenshot);
+          continue;
+        }
+
+        let baseline: Uint8Array;
+        try {
+          baseline = await Deno.readFile(baselineUrl);
+        } catch (error) {
+          if (error instanceof Deno.errors.NotFound) {
+            throw new Error(
+              `Missing visual baseline ${name}; update explicitly with UPDATE_VISUAL_BASELINES=true`,
+            );
+          }
+          throw error;
+        }
+        const [actual, expected] = await Promise.all([
+          sharp(screenshot).raw().toBuffer({ resolveWithObject: true }),
+          sharp(baseline).raw().toBuffer({ resolveWithObject: true }),
+        ]);
+        if (
+          actual.info.width !== expected.info.width ||
+          actual.info.height !== expected.info.height ||
+          actual.info.channels !== expected.info.channels
+        ) throw new Error(`${name}: visual baseline dimensions changed`);
+        let changed = 0;
+        for (let index = 0; index < actual.data.length; index += 1) {
+          if (Math.abs(actual.data[index] - expected.data[index]) > 16) changed += 1;
+        }
+        const ratio = changed / actual.data.length;
+        if (ratio > .002) {
+          throw new Error(`${name}: visual difference ${(ratio * 100).toFixed(3)}%`);
+        }
+      }
+    }
+    await context.close();
+  }
+}
+
 async function checkResponsiveContexts(
   baseUrl: string,
   browser: Awaited<ReturnType<typeof chromium.launch>>,
@@ -190,6 +264,13 @@ async function checkHeaderKeyboard(
   const context = await browser.newContext({ viewport: { width: 412, height: 915 } });
   const page = await context.newPage();
   await openStory(page, baseUrl, "components-siteheader--mobile");
+  const actions = page.locator(".header-actions > *");
+  if (await actions.count() !== 3) {
+    throw new Error("SiteHeader mobile actions are not Theme, Display, Hamburger");
+  }
+  if (!await page.getByRole("button", { name: /テーマに切り替える/u }).count()) {
+    throw new Error("SiteHeader has no accessible Theme control");
+  }
   const trigger = page.locator(".menu-trigger");
   if (await trigger.getAttribute("aria-label") !== "メニューを開く") {
     throw new Error("SiteHeader mobile menu has no accessible open label");
@@ -198,6 +279,11 @@ async function checkHeaderKeyboard(
   if (await trigger.getAttribute("aria-expanded") !== "true") {
     throw new Error("SiteHeader mobile menu did not open");
   }
+  const links = await page.getByRole("navigation", { name: "主要ナビゲーション（モバイル）" })
+    .getByRole("link").allTextContents();
+  if (links.map((label) => label.replace(/^\d+/u, "")).join(",") !== "Articles,Works,Archive") {
+    throw new Error(`SiteHeader mobile menu has unexpected links: ${links.join(", ")}`);
+  }
   await page.keyboard.press("Escape");
   if (await trigger.getAttribute("aria-expanded") !== "false") {
     throw new Error("SiteHeader mobile menu did not close with Escape");
@@ -205,6 +291,52 @@ async function checkHeaderKeyboard(
   if (!await trigger.evaluate((element) => element === document.activeElement)) {
     throw new Error("SiteHeader did not return focus after Escape");
   }
+  await context.close();
+}
+
+async function checkWeatherStories(
+  baseUrl: string,
+  browser: Awaited<ReturnType<typeof chromium.launch>>,
+) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  for (const condition of ["clear", "cloudy", "rain", "snow"] as const) {
+    await openStory(page, baseUrl, `visuals-ambienthero--${condition}`);
+    if (await page.locator("[data-weather]").getAttribute("data-weather") !== condition) {
+      throw new Error(`AmbientHero did not receive ${condition} weather`);
+    }
+  }
+  await context.close();
+}
+
+async function checkHomePatternInteractions(
+  baseUrl: string,
+  browser: Awaited<ReturnType<typeof chromium.launch>>,
+) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+
+  await openStory(page, baseUrl, "visuals-ambienthero--minimal-without-central-motif");
+  if (await page.locator("[data-central-fallback]").isVisible()) {
+    throw new Error("Minimal AmbientHero still exposes the central fallback motif");
+  }
+
+  await openStory(page, baseUrl, "patterns-glassprofilecard--placeholder");
+  const card = page.locator(".profile-card");
+  const links = card.getByRole("link");
+  if (await links.count() !== 3) {
+    throw new Error("GlassProfileCard does not expose the three configured contact links");
+  }
+  const linkBox = await links.first().boundingBox();
+  if (!linkBox) throw new Error("GlassProfileCard GitHub link has no hit area");
+  await page.mouse.move(linkBox.x + linkBox.width / 2, linkBox.y + linkBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(linkBox.x + linkBox.width / 2 + 40, linkBox.y + linkBox.height / 2);
+  await page.mouse.up();
+  if (await card.getAttribute("data-dragging") !== "false") {
+    throw new Error("GlassProfileCard contact link incorrectly initiated drag");
+  }
+
   await context.close();
 }
 
@@ -380,21 +512,22 @@ async function checkVisualFallbacks(baseUrl: string) {
     const bounds = await visual.boundingBox();
     if (!bounds) throw new Error("WebGL interaction surface has no bounds");
     const initialYaw = Number(await visual.getAttribute("data-yaw"));
-    await page.mouse.move(bounds.x + bounds.width * .5, bounds.y + bounds.height * .5);
+    // Use the open part of the preview rather than the semantic text layer above the visual.
+    await page.mouse.move(bounds.x + bounds.width * .7, bounds.y + bounds.height * .75);
     await page.mouse.down();
-    await page.mouse.move(bounds.x + bounds.width * .65, bounds.y + bounds.height * .55);
-    if (await visual.getAttribute("data-interaction-owned") !== "true") {
-      throw new Error("Dragging did not acquire the WebGL timeline");
-    }
-    if (Number(await visual.getAttribute("data-yaw")) === initialYaw) {
-      throw new Error("Dragging did not update WebGL rotation");
-    }
-    await page.mouse.up();
+    await page.mouse.move(bounds.x + bounds.width * .85, bounds.y + bounds.height * .78, {
+      steps: 4,
+    });
+    await page.waitForFunction(() =>
+      document.querySelector("[data-webgl]")?.getAttribute("data-pointer-intent") === "drag"
+    );
     await page.waitForFunction(
-      () =>
-        document.querySelector("[data-webgl]")?.getAttribute("data-interaction-owned") === "false",
-      undefined,
-      { timeout: 2_500 },
+      (yaw) => Number(document.querySelector("[data-webgl]")?.getAttribute("data-yaw")) !== yaw,
+      initialYaw,
+    );
+    await page.mouse.up();
+    await page.waitForFunction(() =>
+      document.querySelector("[data-webgl]")?.getAttribute("data-pointer-intent") === "idle"
     );
     await canvas.dispatchEvent("webglcontextlost");
     await page.waitForFunction(() =>
@@ -437,9 +570,18 @@ try {
 
   const browser = await chromium.launch({ headless: browserHeadless });
   try {
-    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    const page = await context.newPage();
-    for (const story of stories) await assertStory(page, baseUrl, story);
+    let context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    let page = await context.newPage();
+    for (const [index, story] of stories.entries()) {
+      await assertStory(page, baseUrl, story);
+      // Storybook retains module and canvas state across navigations. Periodically recycling the
+      // page bounds memory use so the full accessibility pass remains stable in headless Chromium.
+      if ((index + 1) % 12 === 0 && index + 1 < stories.length) {
+        await context.close();
+        context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+        page = await context.newPage();
+      }
+    }
     const docsErrors: string[] = [];
     page.on("pageerror", (error) => docsErrors.push(error.message));
     page.on("console", (message) => {
@@ -449,18 +591,21 @@ try {
     if (docsErrors.length) throw new Error(`Storybook Docs: ${docsErrors.join(" | ")}`);
     await context.close();
     await checkHeaderKeyboard(baseUrl, browser);
+    await checkWeatherStories(baseUrl, browser);
+    await checkHomePatternInteractions(baseUrl, browser);
     await checkResponsiveContexts(baseUrl, browser, stories);
     await checkIncreasedText(baseUrl, browser, stories);
     await checkMotionCaps(baseUrl, browser);
     await checkEditorialRendering(baseUrl, browser);
     await checkMotionStories(baseUrl, browser);
     await checkVisualFallbacks(baseUrl);
+    await checkVisualBaselines(baseUrl, browser);
   } finally {
     await browser.close();
   }
 
   console.log(
-    `Storybook validated: ${stories.length} stories, axe, responsive, editorial, motion, WebGL fallbacks.`,
+    `Storybook validated: ${stories.length} stories, axe, responsive, visual baselines, editorial, motion, WebGL fallbacks.`,
   );
 } finally {
   abortController.abort();

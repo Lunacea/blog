@@ -12,6 +12,11 @@ export const siteConfig = {
     email: null,
   },
   featuredArticleTags: [],
+  catalogFilters: {
+    articles: { categories: [], tags: [] },
+    works: { fields: [], technologies: [], statuses: [] },
+    archive: { kinds: [], tags: [] },
+  },
   defaultLocation: {
     id: "morioka-jp",
     name: "盛岡",
@@ -32,7 +37,6 @@ export const primaryNavigation = [
   { href: "/articles", label: "Articles" },
   { href: "/works", label: "Works" },
   { href: "/archive", label: "Archive" },
-  { href: "/#about", label: "About" },
 ] as const;
 
 export type AuthoredMedia = {
@@ -87,22 +91,22 @@ export const visualAssets = {
   },
   profile: {
     src: null,
-    alt: "Lunaceaのプロフィール写真",
+    alt: "黄色いウーパールーパーと魚の中間のキャラクター",
     width: 960,
-    height: 1200,
-    aspectRatio: "4 / 5",
-    objectPosition: "50% 38%",
-    mobileObjectPosition: "50% 30%",
-    variant: "portrait",
+    height: 960,
+    aspectRatio: "1 / 1",
+    objectPosition: "50% 50%",
+    mobileObjectPosition: "50% 50%",
+    variant: "organic",
     loading: "lazy",
     opacity: 0.92,
     allowMotion: false,
     placeholder: {
-      assetId: "profile-portrait",
-      role: "プロフィール画像",
+      assetId: "profile-creature-crescent-v1",
+      role: "三日月状の構図を持つプロフィールキャラクター",
       preferredFileType: "AVIF/WebP",
-      accessibilityDescription: "人物と撮影状況を簡潔に説明する",
-      transparencyRequired: false,
+      accessibilityDescription: "黄色いウーパールーパーと魚の中間のキャラクターを簡潔に説明する",
+      transparencyRequired: true,
     },
   },
   heroOrganic: {

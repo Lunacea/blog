@@ -77,7 +77,7 @@ curl -fsSI https://<preview-host>/og/article/<slug>.png
 - `/`、Articles、Works、Talks、Archive、About、タグ、検索をPC/モバイルで確認する。
 - canonical、JSON-LD、OGP、RSS、Atom、Sitemap、robotsを確認する。
 - Light/Dark/Auto、Full/Reduced/Off、JS無効、WebGL fallbackを確認する。
-- health、天候fallback、都市検索、リアクションのKV書込みを確認する。
+- health、config固定地点の天候fallback、リアクションのKV書込みを確認する。
 - Deno Deployのbuild/runtime logsとtracesに継続エラーがないことを確認する。
 - TLS chainと証明書対象hostを確認する。
 

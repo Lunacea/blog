@@ -19,7 +19,7 @@
     border-left: 2px solid var(--color-secondary);
     padding-inline: var(--space-2);
     color: var(--color-muted);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: var(--text-caption);
   }
 

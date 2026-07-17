@@ -16,11 +16,18 @@ export function createHeroShapePositions(count: number): HeroShapePositions {
   const octahedron = new Float32Array(count * 3);
   const seeds = new Float32Array(count);
   const golden = Math.PI * (3 - Math.sqrt(5));
+  const mobiusBands = 14;
 
   for (let index = 0; index < count; index += 1) {
     const offset = index * 3;
-    const u = (index / count) * Math.PI * 2;
-    const v = (hash(index, 1) - 0.5) * 0.72;
+    const turn = Math.floor(index / mobiusBands);
+    const u = ((turn + hash(index, 1)) / Math.ceil(count / mobiusBands)) * Math.PI * 2;
+    const band = index % mobiusBands;
+    const edgeSample = index % 9 === 0;
+    const normalizedWidth = edgeSample
+      ? (index % 18 === 0 ? -0.5 : 0.5)
+      : (band + hash(index, 2)) / mobiusBands - 0.5;
+    const v = normalizedWidth * 0.72;
     const radius = 1.15 + v * Math.cos(u / 2);
     mobius[offset] = radius * Math.cos(u);
     mobius[offset + 1] = v * Math.sin(u / 2);
@@ -29,21 +36,23 @@ export function createHeroShapePositions(count: number): HeroShapePositions {
     const sphereY = 1 - (index / Math.max(1, count - 1)) * 2;
     const sphereRadius = Math.sqrt(Math.max(0, 1 - sphereY * sphereY));
     const angle = index * golden;
-    sphere[offset] = sphereRadius * Math.cos(angle) * 1.12;
-    sphere[offset + 1] = sphereY * 1.12;
-    sphere[offset + 2] = sphereRadius * Math.sin(angle) * 1.12;
+    const cloudScale = hash(index, 3) > 0.78 ? 0.34 + hash(index, 4) * 0.64 : 1;
+    sphere[offset] = sphereRadius * Math.cos(angle) * 1.12 * cloudScale;
+    sphere[offset + 1] = sphereY * 1.12 * cloudScale;
+    sphere[offset + 2] = sphereRadius * Math.sin(angle) * 1.12 * cloudScale;
 
-    let x = hash(index, 2) * 2 - 1;
-    let y = hash(index, 3) * 2 - 1;
-    let z = hash(index, 4) * 2 - 1;
-    const length = Math.abs(x) + Math.abs(y) + Math.abs(z) || 1;
-    x /= length;
-    y /= length;
-    z /= length;
-    octahedron[offset] = x * 1.45;
-    octahedron[offset + 1] = y * 1.45;
-    octahedron[offset + 2] = z * 1.45;
-    seeds[index] = hash(index, 5);
+    const face = index % 8;
+    const signX = face & 1 ? -1 : 1;
+    const signY = face & 2 ? -1 : 1;
+    const signZ = face & 4 ? -1 : 1;
+    const root = Math.sqrt(hash(index, 5));
+    const a = 1 - root;
+    const b = root * (1 - hash(index, 6));
+    const c = root - b;
+    octahedron[offset] = signX * a * 1.45;
+    octahedron[offset + 1] = signY * b * 1.45;
+    octahedron[offset + 2] = signZ * c * 1.45;
+    seeds[index] = hash(index, 7);
   }
   return { mobius, sphere, octahedron, seeds };
 }

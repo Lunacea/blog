@@ -115,6 +115,7 @@ export const workSchema = z.object({
   type: z.literal("work"),
   period: z.coerce.string().trim().min(1),
   role: nonEmpty,
+  fields: z.array(nonEmpty).min(1),
   stack: z.array(nonEmpty).min(1),
   cover: workCoverSchema,
   links: workLinkSetSchema,

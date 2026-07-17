@@ -1,16 +1,26 @@
 <script lang="ts">
   import "../app.css";
+  import { dev } from "$app/environment";
   import { page } from "$app/state";
   import { primaryNavigation, siteConfig } from "@lunacea/config";
-  import { FontPreloads, SampleBanner, SiteFooter, SiteHeader } from "$ui/components";
-  import WeatherWidget from "$lib/components/WeatherWidget.svelte";
+  import { FontPreloads, SettingsPanel, SiteHeader, ThemeToggle } from "$ui/components";
+  import { parseWeatherVisualOverride, WeatherBackdrop } from "$ui/visuals";
+  import { createWeatherContext, loadFixedLocationWeather } from "$lib/weather-context.ts";
   import { CursorLayer, installAnchorNavigation, installPageTransitions, RevealManager } from "$ui/motion";
   import { onMount } from "svelte";
 
   let { children } = $props();
+  const weather = createWeatherContext();
+  const devWeather = $derived(
+    dev ? parseWeatherVisualOverride(page.url.searchParams.get("weather")) : null,
+  );
 
   installPageTransitions();
-  onMount(installAnchorNavigation);
+  onMount(() => {
+    const stopAnchorNavigation = installAnchorNavigation();
+    void loadFixedLocationWeather(weather);
+    return stopAnchorNavigation;
+  });
 </script>
 
 <svelte:head>
@@ -21,14 +31,14 @@
 
 <a class="skip-link" href="#main-content">本文へ移動</a>
 <FontPreloads />
-{#if siteConfig.sampleMode}<SampleBanner />{/if}
+<WeatherBackdrop condition={devWeather ?? $weather.visual} hidden={page.url.pathname === "/"} />
 <SiteHeader navigation={primaryNavigation} pathname={page.url.pathname}>
-  {#snippet environment()}<WeatherWidget compact />{/snippet}
+  {#snippet theme()}<ThemeToggle />{/snippet}
+  {#snippet display()}<SettingsPanel />{/snippet}
 </SiteHeader>
 <main id="main-content">
   {@render children()}
 </main>
-<SiteFooter />
 <RevealManager />
 <CursorLayer />
 

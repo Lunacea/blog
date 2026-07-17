@@ -34,7 +34,7 @@
     border-bottom: 1px solid var(--color-line);
     padding-inline: var(--space-2);
     color: var(--color-muted);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: var(--text-caption);
     text-decoration: none;
   }

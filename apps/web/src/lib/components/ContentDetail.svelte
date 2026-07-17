@@ -38,7 +38,7 @@
     author: { "@type": "Person", name: siteConfig.author.name },
     mainEntityOfPage: canonical
   });
-  const transitionName = $derived(`record-${metadata.type}-${metadata.slug}`);
+  const mediaTransitionName = $derived(`record-media-${metadata.type}-${metadata.slug}`);
 </script>
 
 <svelte:head>
@@ -65,13 +65,14 @@
       <p class="eyebrow">{metadata.type} / {metadata.publishedAt}</p>
       <StatusBadge status={metadata.status} />
     </div>
-    <h1 style:view-transition-name={transitionName}>{metadata.title}</h1>
+    <h1>{metadata.title}</h1>
     <p class="lead">{metadata.summary}</p>
     {#if metadata.type === "work"}
       <dl class="work-meta">
         <div><dt>Role</dt><dd>{metadata.role}</dd></div>
         <div><dt>Period</dt><dd>{metadata.period}</dd></div>
-        <div><dt>Stack</dt><dd>{metadata.stack.join(" / ")}</dd></div>
+        <div><dt>Field</dt><dd>{metadata.fields.join(" / ")}</dd></div>
+        <div><dt>Technology</dt><dd>{metadata.stack.join(" / ")}</dd></div>
       </dl>
       {#if metadata.links.github || metadata.links.site}
         <nav class="work-links" aria-label="制作物の外部リンク">
@@ -95,7 +96,7 @@
   </header>
 
   {#if metadata.cover?.kind === "image" || metadata.cover?.kind === "og"}
-    <figure class="cover shell" data-reveal="image">
+    <figure class="cover shell" data-reveal="image" style:view-transition-name={mediaTransitionName}>
       <ResponsiveImage cover={{ ...metadata.cover, kind: "image" }} eager />
       {#if metadata.cover.kind === "image" && metadata.cover.caption}
         <figcaption>{metadata.cover.caption}</figcaption>
@@ -174,7 +175,7 @@
 
   .work-meta, .event-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); margin: 0; }
   .work-meta div, .event-meta div { border-top: 1px solid var(--color-line); padding-top: var(--space-2); }
-  .work-meta dt, .event-meta dt { color: var(--color-muted); font-family: var(--font-mono); font-size: var(--text-caption); }
+  .work-meta dt, .event-meta dt { color: var(--color-muted); font-size: var(--text-caption); }
   .work-meta dd, .event-meta dd { margin: var(--space-1) 0 0; }
   .work-links { display: flex; gap: var(--space-4); }
 
@@ -197,7 +198,7 @@
     border: 1px solid var(--color-line);
     background: var(--color-surface);
     color: var(--color-muted);
-    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
     font-size: var(--text-caption);
   }
 
@@ -236,7 +237,7 @@
 
   .revisions time {
     color: var(--color-muted);
-    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
     font-size: var(--text-caption);
   }
 

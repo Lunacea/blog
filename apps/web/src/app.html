@@ -6,6 +6,7 @@
     <meta name="color-scheme" content="light dark" />
     <script>
       (() => {
+        document.documentElement.dataset.js = "true";
         try {
           const themePreference = localStorage.getItem("lunacea-theme") || "auto";
           const motionPreference = localStorage.getItem("lunacea-motion") || "full";

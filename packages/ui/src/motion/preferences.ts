@@ -1,6 +1,7 @@
 export type ThemePreference = "auto" | "light" | "dark";
 export type MotionPreference = "full" | "reduced" | "off";
 export type EffectiveMotion = MotionPreference;
+export type EffectiveTheme = "light" | "dark";
 
 type Connection = EventTarget & { saveData?: boolean };
 
@@ -28,40 +29,50 @@ export function resolveEffectiveMotion(preference: MotionPreference): EffectiveM
   return preference === "reduced" || capabilityLimit ? "reduced" : "full";
 }
 
-export function applyDisplayPreferences(
-  themePreference = readThemePreference(),
-  motionPreference = readMotionPreference(),
-) {
-  const root = document.documentElement;
-  const theme = themePreference === "auto"
+export function resolveEffectiveTheme(preference: ThemePreference): EffectiveTheme {
+  return preference === "auto"
     ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-    : themePreference;
-  const motion = resolveEffectiveMotion(motionPreference);
+    : preference;
+}
 
+export function applyThemePreference(themePreference = readThemePreference()) {
+  const theme = resolveEffectiveTheme(themePreference);
+  const root = document.documentElement;
   root.dataset.themePreference = themePreference;
   root.dataset.theme = theme;
+  return { themePreference, theme };
+}
+
+export function applyMotionPreference(motionPreference = readMotionPreference()) {
+  const motion = resolveEffectiveMotion(motionPreference);
+  const root = document.documentElement;
   root.dataset.motionPreference = motionPreference;
   root.dataset.motion = motion;
-  return { themePreference, theme, motionPreference, motion };
+  return { motionPreference, motion };
 }
 
 export function setThemePreference(preference: ThemePreference) {
   localStorage.setItem(themeKey, preference);
-  const state = applyDisplayPreferences(preference, readMotionPreference());
+  const state = { ...applyThemePreference(preference), ...applyMotionPreference() };
   globalThis.dispatchEvent(new CustomEvent("lunacea:theme", { detail: state }));
   return state;
 }
 
 export function setMotionPreference(preference: MotionPreference) {
   localStorage.setItem(motionKey, preference);
-  const state = applyDisplayPreferences(readThemePreference(), preference);
+  const state = { ...applyThemePreference(), ...applyMotionPreference(preference) };
   globalThis.dispatchEvent(new CustomEvent("lunacea:motion", { detail: state }));
   return state;
 }
 
-export function subscribeDisplayCapabilities(callback: () => void) {
+export function subscribeThemeCapability(callback: () => void) {
+  const query = matchMedia("(prefers-color-scheme: dark)");
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+export function subscribeMotionCapabilities(callback: () => void) {
   const media = [
-    matchMedia("(prefers-color-scheme: dark)"),
     matchMedia("(prefers-reduced-motion: reduce)"),
     matchMedia("(forced-colors: active)"),
   ];

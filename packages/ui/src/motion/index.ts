@@ -7,14 +7,18 @@ export {
   installPageTransitions,
 } from "./page-transitions.ts";
 export {
-  applyDisplayPreferences,
+  applyMotionPreference,
+  applyThemePreference,
   type EffectiveMotion,
+  type EffectiveTheme,
   type MotionPreference,
   readMotionPreference,
   readThemePreference,
   resolveEffectiveMotion,
+  resolveEffectiveTheme,
   setMotionPreference,
   setThemePreference,
-  subscribeDisplayCapabilities,
+  subscribeMotionCapabilities,
+  subscribeThemeCapability,
   type ThemePreference,
 } from "./preferences.ts";

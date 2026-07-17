@@ -45,6 +45,8 @@ KVとメモリ実装を同じ契約で検証します。
   SSRとする。公開情報だけを返し、full queryをcache keyとして
   `public, max-age=0, s-maxage=3600, stale-while-revalidate=86400`で共有cacheできる。絞り込みURLは
   `noindex,follow`、canonicalは常に`/articles`とする。
+- ArticlesとWorksは`view=grid|list`を公開queryとして受け取る。表示状態はURLだけを正本とし、
+  localStorageへ保存しない。WorksとArchiveのclient filterは初期HTMLの全件表示を保つ。
 - `/search`は検索語を維持して`/articles`へ恒久redirectする。旧Talk、旧About、旧Archive一覧も
   migration manifestに基づく1 hopの308互換redirectだけを提供する。旧Talk OGPも新Article OGPへ
   redirectし、旧URLはSitemapへ含めない。互換redirectはHTTP 308を保持するためprerenderせず、本文・
@@ -54,7 +56,21 @@ KVとメモリ実装を同じ契約で検証します。
 - Mermaidは該当DOMがある記事でだけ遅延importする。
 - SVXのGFM、heading、Shiki、Mermaid source、KaTeX変換設定はUI packageの共通build設定を
   WebとStorybookが利用する。KaTeXはbuild時にHTML化し、client runtimeを追加しない。
-- Threlte/Threeはトップの`motion=full`かつ端末条件を満たした場合だけidle時にimportする。記事routeはHeroを参照しない。
+- Threlte/Threeはトップの`motion=full`かつ端末条件を満たした場合だけidle時にimportする。記事routeはHeroを参照せず、
+  天候はThree.jsを含まない軽量CSS背景へ縮退する。
+- Homeは上部の100svh Heroと、最小100svhから内容量に応じて伸びるAboutをまたぐfull-bleedの単一visual
+  layerだけを持つ。同じCanvas内で背景天候環境と中央Heroの責務・geometryを分け、rendererとanimation
+  schedulerだけを共有する。WebGLはscroll位置を読まず、
+  morph、位置、scale、pauseをscrollへ結び付けない。中央Heroのdrag/touchは観察角度だけを変更し、
+  Aboutのprofile cardは同sectionのpadding box内だけを移動する任意の装飾操作とする。profile cardの
+  慣性は保存せず、境界で停止し、Reduced/Offでは無効にする。どちらも link、text selection、native
+  touch scrollを妨げず、情報アクセスに必須としない。初回appearanceはdrag開始時に破棄し、その後の
+  inertiaへopacity animationが再適用されないよう一回限りとする。
+- Homeの2区間はroot scrollのmandatory snapを使う。小さなwheel/trackpad入力だけはHome限定controllerが
+  36pxまで方向別に累積し、一度に隣接する1区間だけへ移動する。nested scrollを優先し、移動中は短時間
+  lockして追加入力の振動を防ぐ。keyboardとtouchはbrowser標準のroot scrollへ委ねる。
+- 天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。
+  `fog`は`cloudy`、`storm`は`rain`、取得fallbackは`neutral`な環境表現へ正規化する。
 - ロゴ、人物、植物などの著作素材は`config.visualAssets`から`MediaSlot`へ渡す。空slotは構造だけを示し、有機的な図像をコード生成しない。
 
 ビルド後のbudget checkは記事詳細の初期JavaScript依存を再帰集計し、gzip 150
@@ -87,9 +103,11 @@ checkを使ったatomic retryで集計と選択を同時に更新します。
 
 ## 障害時の縮退
 
-- Open-Meteo失敗: 選択地点の現地時刻とday/nightだけを返す。
-- WebGL未対応・低メモリ・save-data・Reduced/Off: 常設SVGを使う。
+- Open-Meteo失敗: config固定地点の現地時刻とday/nightだけを返し、画面はneutral背景を使う。
+- WebGL未対応・低メモリ・save-data・Reduced/Off: Homeの中央motifは非表示にし、full-bleedの
+  静的天候背景とHTML contentだけを残す。他routeは疎で低速なCSS天候背景を使う。
 - Mermaid変換失敗: ソースを残し、表示失敗のaria-labelを付ける。
 - リアクション失敗: 本文を妨げず、live regionにだけ通知する。
-- JavaScript無効: 本文、ナビゲーション、Articles GET検索、フィードは利用可能。WorksとArchiveの
-  optional filterは無効になるが、全entryは読める。
+- JavaScript無効: 本文、主要ナビゲーション、Articles
+  GET検索、フィードendpointは利用可能。WorksとArchiveの optional
+  filterは無効になるが、全entryは読める。

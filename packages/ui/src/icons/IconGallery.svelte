@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon, { type ApprovedIconName } from "./Icon.svelte";
-  import { interfaceIcons, tagIconName, weatherIconName } from "./semantic.ts";
+  import { interfaceIcons, tagIconName } from "./semantic.ts";
 
   const groups: ReadonlyArray<{
     title: string;
@@ -9,20 +9,6 @@
     {
       title: "Interface",
       icons: Object.entries(interfaceIcons).map(([label, name]) => ({ name, label })),
-    },
-    {
-      title: "Weather",
-      icons: [
-        { label: "clear / day", name: weatherIconName("clear", "day") },
-        { label: "clear / night", name: weatherIconName("clear", "night") },
-        { label: "cloudy / day", name: weatherIconName("cloudy", "day") },
-        { label: "cloudy / night", name: weatherIconName("cloudy", "night") },
-        { label: "fog", name: weatherIconName("fog", "day") },
-        { label: "rain", name: weatherIconName("rain", "day") },
-        { label: "snow", name: weatherIconName("snow", "day") },
-        { label: "storm", name: weatherIconName("storm", "day") },
-        { label: "unknown", name: weatherIconName("unknown", "day") },
-      ],
     },
     {
       title: "Technology",

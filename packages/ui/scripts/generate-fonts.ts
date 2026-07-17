@@ -27,8 +27,12 @@ async function walk(directory: URL, extensions: Set<string>): Promise<URL[]> {
 function displayText(value: string): string {
   return value
     .replace(/```[\s\S]*?```|~~~[\s\S]*?~~~/gu, " ")
+    .replace(/`[^`\n]+`/gu, " ")
     .replace(/https?:\/\/[^\s"')>]+/gu, " ")
+    .replace(/<script[\s\S]*?<\/script>/gu, " ")
     .replace(/<style[\s\S]*?<\/style>/gu, " ")
+    .replace(/<[^>]+>/gu, " ")
+    .replace(/\{[#/:@]?[\s\S]*?\}/gu, " ")
     .replace(/\s+/gu, " ");
 }
 
@@ -36,7 +40,30 @@ function uniqueCharacters(value: string): string {
   return [...new Set(value)].sort().join("");
 }
 
-async function corpus(): Promise<string> {
+function stringLiterals(value: string): string {
+  return [...value.matchAll(/(["'`])((?:\\.|(?!\1)[\s\S])*?)\1/gu)]
+    .map((match) => match[2] ?? "")
+    .filter((text) => /[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\s]/u.test(text))
+    .join(" ");
+}
+
+function codeText(value: string): string {
+  const fenced = [...value.matchAll(/```[^\n]*\n([\s\S]*?)```|~~~[^\n]*\n([\s\S]*?)~~~/gu)]
+    .map((match) => match[1] ?? match[2] ?? "");
+  const inline = [...value.matchAll(/`([^`\n]+)`/gu)].map((match) => match[1] ?? "");
+  return [...fenced, ...inline].join(" ").replace(/https?:\/\/\S+/gu, " ");
+}
+
+function editorialText(value: string): string {
+  const markdown = [...value.matchAll(/^(?:#{1,2}|>)\s+(.+)$/gmu)].map((match) => match[1] ?? "");
+  const markup = [
+    ...value.matchAll(/<(?:h1|h2|blockquote)\b[^>]*>([\s\S]*?)<\/(?:h1|h2|blockquote)>/gu),
+  ]
+    .map((match) => displayText(match[1] ?? ""));
+  return [...markdown, ...markup].join(" ");
+}
+
+async function corpora(): Promise<{ full: string; editorial: string; code: string }> {
   const roots = [
     new URL("packages/content/entries/", root),
     new URL("packages/ui/src/", root),
@@ -46,14 +73,35 @@ async function corpus(): Promise<string> {
     roots.map((directory) => walk(directory, new Set([".svx", ".svelte", ".ts"]))),
   )).flat();
   files.push(new URL("packages/config/mod.ts", root));
-  const text = (await Promise.all(files.map((file) => Deno.readTextFile(file)))).join("\n");
-  return uniqueCharacters(
-    displayText(text) +
-      " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz、。・！？「」『』（）—…/:#",
-  );
+  const sources = await Promise.all(files.map((file) => Deno.readTextFile(file)));
+  const full = sources.map((text) => displayText(text) + " " + stringLiterals(text)).join("\n");
+  const editorial = sources.map(editorialText).join("\n");
+  const code = sources.map(codeText).join("\n");
+  return {
+    full: uniqueCharacters(
+      full +
+        " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz、。・！？「」『』（）—…/:#&",
+    ),
+    editorial: uniqueCharacters(
+      editorial +
+        " Quiet structures growing records Lunacea 静かな記録技術は内容を残すために使う、。！？「」—…",
+    ),
+    code: uniqueCharacters(
+      code +
+        " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz{}[]()<>+-=*/._:#@$%&|!?;,'\"\\",
+    ),
+  };
 }
 
 const fonts = [
+  {
+    family: "Manrope",
+    key: "manrope",
+    weight: "200 800",
+    file: "manrope/Manrope[wght].ttf",
+    role: "latin",
+    preload: true,
+  },
   {
     family: "Zen Kaku Gothic New",
     key: "zen-400",
@@ -79,6 +127,14 @@ const fonts = [
     preload: false,
   },
   {
+    family: "Newsreader",
+    key: "newsreader",
+    weight: "200 800",
+    file: "newsreader/Newsreader[opsz,wght].ttf",
+    role: "editorial-latin",
+    preload: false,
+  },
+  {
     family: "Hina Mincho",
     key: "hina-400",
     weight: 400,
@@ -94,13 +150,18 @@ const fonts = [
     role: "accent",
     preload: false,
   },
+  {
+    family: "Fira Code",
+    key: "fira-code",
+    weight: "300 700",
+    file: "fira-code/FiraCode[wght].ttf",
+    role: "code",
+    preload: false,
+  },
 ] as const;
 
 export async function generateFontSubsets(): Promise<void> {
-  const fullCorpus = await corpus();
-  const editorialCorpus = uniqueCharacters(
-    fullCorpus + "静かな記録技術は内容を隠すためではなく残すために使う",
-  );
+  const { full: fullCorpus, editorial: editorialCorpus, code: codeCorpus } = await corpora();
   const accentCorpus = uniqueCharacters(
     "Lunacea Archive System quiet Sample Published 0123456789/:.-",
   );
@@ -111,8 +172,10 @@ export async function generateFontSubsets(): Promise<void> {
     const input = await Deno.readFile(new URL(font.file, source));
     const text = font.role === "accent"
       ? accentCorpus
-      : font.role === "editorial"
+      : font.role === "editorial" || font.role === "editorial-latin"
       ? editorialCorpus
+      : font.role === "code"
+      ? codeCorpus
       : fullCorpus;
     const result = await subsetFont(Buffer.from(input), text, { targetFormat: "woff2" });
     const hash = createHash("sha256").update(result).digest("hex").slice(0, 12);
@@ -145,6 +208,24 @@ export async function generateFontSubsets(): Promise<void> {
   size-adjust: 100%;
   ascent-override: 90%;
   descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Manrope Fallback";
+  src: local("Arial"), local("Helvetica");
+  size-adjust: 101%;
+  ascent-override: 94%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback";
+  src: local("Georgia"), local("Times New Roman");
+  size-adjust: 100%;
+  ascent-override: 91%;
+  descent-override: 23%;
   line-gap-override: 0%;
 }`;
   await Deno.writeTextFile(new URL("fonts.css", output), `${faces}\n\n${fallbacks}\n`);

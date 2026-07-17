@@ -134,7 +134,6 @@
     font-family: var(--font-serif);
     font-size: var(--text-h2);
     font-weight: var(--weight-regular);
-    view-transition-name: section-title;
   }
 
   .shared-shape {

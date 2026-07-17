@@ -1,6 +1,7 @@
+import { allContent } from "@lunacea/content";
 import { searchDocuments } from "@lunacea/content/search.ts";
 import { searchContent, type SearchSort } from "@lunacea/core/search.ts";
-import { articleCategorySchema } from "@lunacea/schemas";
+import { type Article, articleCategorySchema } from "@lunacea/schemas";
 
 export const prerender = false;
 
@@ -19,18 +20,29 @@ export function load({ url, setHeaders }) {
     : query
     ? "relevance"
     : "published";
-  const tag = url.searchParams.get("tag")?.trim() || undefined;
+  const documents = searchDocuments.filter((entry) => entry.type === "article");
+  const availableTags = new Set(documents.flatMap((entry) => entry.tags));
+  const requestedTag = url.searchParams.get("tag")?.trim();
+  const tag = requestedTag && availableTags.has(requestedTag) ? requestedTag : undefined;
+  const view: "grid" | "list" = url.searchParams.get("view") === "grid" ? "grid" : "list";
   const filters = {
     category: categoryResult.success ? categoryResult.data : undefined,
     tag,
   };
-  const documents = searchDocuments.filter((entry) => entry.type === "article");
+  const entries = searchContent(documents, query, filters, sort).map((entry) => ({
+    ...entry,
+    cover:
+      (allContent.find((content) => content.type === "article" && content.slug === entry.slug) as
+        | Article
+        | undefined)?.cover,
+  }));
 
   return {
     query,
     filters,
     sort,
-    entries: searchContent(documents, query, filters, sort),
-    isFiltered: [...url.searchParams.keys()].length > 0,
+    view,
+    entries,
+    isFiltered: Boolean(query || filters.category || filters.tag || sort !== "published"),
   };
 }

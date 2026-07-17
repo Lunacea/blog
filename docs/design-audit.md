@@ -2,6 +2,9 @@
 
 Updated: 2026-07-14
 
+Status: Historical baseline. The accepted contracts in `docs/design-system.md` and
+`.agent/plans/active/layout-redesign.md` supersede the pre-implementation observations below.
+
 This document is the pre-implementation checkpoint for the visual reconstruction. It describes the
 static design before motion or decorative detail is added. The deployment model, content model,
 routes, feeds, weather, search, and reactions remain unchanged.

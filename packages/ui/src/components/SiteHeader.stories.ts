@@ -1,16 +1,16 @@
 import type { Meta, StoryObj } from "@storybook/svelte-vite";
 import { primaryNavigation } from "@lunacea/config";
-import SiteHeader from "./SiteHeader.svelte";
+import SiteHeaderPreview from "./SiteHeaderPreview.svelte";
 
 const meta = {
   title: "Components/SiteHeader",
-  component: SiteHeader,
+  component: SiteHeaderPreview,
   parameters: { layout: "fullscreen" },
   args: {
     navigation: primaryNavigation,
     pathname: "/articles",
   },
-} satisfies Meta<typeof SiteHeader>;
+} satisfies Meta<typeof SiteHeaderPreview>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

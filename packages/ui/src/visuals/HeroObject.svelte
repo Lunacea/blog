@@ -4,18 +4,14 @@
   import { AdditiveBlending, BufferGeometry, Color, Float32BufferAttribute, type Points, type ShaderMaterial } from "three";
   import { createHeroShapePositions } from "./hero-geometry.ts";
 
-  let { quality, palette, scrubPhase = null, yaw = 0, pitch = 0, scale = 1, offsetY = 0, paused = false }: {
+  let { quality, palette, yaw = 0, pitch = 0 }: {
     quality: "low" | "high";
     palette: { foreground: string; primary: string; accent: string };
-    scrubPhase?: number | null;
     yaw?: number;
     pitch?: number;
-    scale?: number;
-    offsetY?: number;
-    paused?: boolean;
   } = $props();
 
-  const count = untrack(() => quality === "high" ? 2400 : 900);
+  const count = untrack(() => quality === "high" ? 3200 : 1400);
   const positions = createHeroShapePositions(count);
   const geometry = new BufferGeometry();
   geometry.setAttribute("position", new Float32BufferAttribute(positions.mobius, 3));
@@ -32,6 +28,7 @@
     attribute vec3 aOctahedron;
     attribute float aSeed;
     varying float vSeed;
+    varying float vDepth;
     vec3 shape(float index) {
       if (index < 0.5) return position;
       if (index < 1.5) return aSphere;
@@ -46,19 +43,23 @@
       transformed += direction * sin(uTime * .7 + aSeed * 18.0) * .012;
       vec4 view = modelViewMatrix * vec4(transformed, 1.0);
       gl_Position = projectionMatrix * view;
-      gl_PointSize = (2.2 + aSeed * 2.0) * (5.0 / max(2.0, -view.z));
+      gl_PointSize = (2.9 + aSeed * 1.8) * (5.9 / max(2.0, -view.z));
       vSeed = aSeed;
+      vDepth = 1.0 - smoothstep(4.2, 7.2, -view.z);
     }
   `;
   const fragmentShader = `
     uniform vec3 uColor;
     uniform vec3 uSignal;
     varying float vSeed;
+    varying float vDepth;
     void main() {
       vec2 point = gl_PointCoord - .5;
-      if (dot(point, point) > .25) discard;
+      float diamond = abs(point.x) + abs(point.y);
+      if (diamond > .44) discard;
       vec3 color = mix(uColor, uSignal, step(.82, vSeed));
-      gl_FragColor = vec4(color, .34 + vSeed * .46);
+      float edge = 1.0 - smoothstep(.28, .44, diamond);
+      gl_FragColor = vec4(color, edge * (.42 + vSeed * .42) * (.65 + vDepth * .35));
     }
   `;
 
@@ -70,39 +71,25 @@
   const separate = 0.6;
   const recompose = 1.6;
   const interval = hold + separate + recompose;
-  let wasPaused = false;
-
-  $effect(() => {
-    if (wasPaused && !paused) elapsed = Math.round(elapsed / interval) * interval;
-    wasPaused = paused;
-  });
-
   useTask((delta) => {
     if (!material) return;
-    if (!paused) elapsed += Math.min(delta, .05);
+    elapsed += Math.min(delta, .05);
     let shape = 0;
     let morph = 0;
     let separation = 0;
-    if (scrubPhase !== null) {
-      const phase = Math.max(0, Math.min(2.999, scrubPhase));
-      shape = Math.floor(phase);
-      morph = phase - shape;
-      separation = Math.sin(morph * Math.PI) * .45;
-    } else {
-      const cycleIndex = Math.floor(elapsed / interval);
-      const local = elapsed % interval;
-      shape = cycleIndex % 3;
-      if (local >= hold && local < hold + separate) separation = (local - hold) / separate;
-      if (local >= hold + separate) {
-        morph = (local - hold - separate) / recompose;
-        separation = 1 - morph;
-      }
+    const cycleIndex = Math.floor(elapsed / interval);
+    const local = elapsed % interval;
+    shape = cycleIndex % 3;
+    if (local >= hold && local < hold + separate) separation = (local - hold) / separate;
+    if (local >= hold + separate) {
+      morph = (local - hold - separate) / recompose;
+      separation = 1 - morph;
     }
     material.uniforms.uShape.value = shape;
     material.uniforms.uMorph.value = morph;
     material.uniforms.uSeparate.value = separation;
     material.uniforms.uTime.value = elapsed;
-    if (points && scrubPhase === null && !paused) points.rotation.y += delta * .035;
+    if (points) points.rotation.y += delta * .04;
   }, { running: () => running });
 
   onMount(() => {
@@ -118,7 +105,7 @@
   onDestroy(() => geometry.dispose());
 </script>
 
-<T.Group rotation={[pitch, yaw - .35, .08]} position={[0, offsetY, 0]} {scale}>
+<T.Group rotation={[pitch, yaw - .35, .08]}>
   <T.Points bind:ref={points} {geometry}>
     <T.ShaderMaterial bind:ref={material} uniforms={{ uShape: { value: 0 }, uMorph: { value: 0 }, uSeparate: { value: 0 }, uTime: { value: 0 }, uColor: { value: new Color(palette.primary) }, uSignal: { value: new Color(palette.accent) } }} {vertexShader} {fragmentShader} transparent depthWrite={false} blending={AdditiveBlending} />
   </T.Points>

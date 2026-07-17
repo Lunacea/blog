@@ -14,6 +14,9 @@ draft: false
 sample: true
 period: 2025–2026
 role: プロトタイピング、性能検証
+fields:
+  - Interactive Systems
+  - Visualization
 stack:
   - Threlte
   - Three.js

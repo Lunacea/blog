@@ -6,5 +6,6 @@ export function load() {
     entries,
     years: [...new Set(entries.map((entry) => entry.publishedAt.slice(0, 4)))],
     stacks: [...new Set(entries.flatMap((entry) => entry.stack))].sort(),
+    fields: [...new Set(entries.flatMap((entry) => entry.fields))].sort(),
   };
 }

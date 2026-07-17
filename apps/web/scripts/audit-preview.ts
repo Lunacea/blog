@@ -58,7 +58,7 @@ try {
     "Fonts were not served successfully from the preview origin",
   );
   assert(failedRequests.length === 0, `Preview requests failed: ${failedRequests.join(", ")}`);
-  for (const landmark of ["header", "nav", "main", "footer"]) {
+  for (const landmark of ["header", "nav", "main"]) {
     assert(landmarkTags.includes(landmark), `Missing ${landmark} landmark`);
   }
   assert(headingCount === 1, `Expected one Home h1, found ${headingCount}`);

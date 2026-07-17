@@ -1,31 +1,86 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { page } from "$app/state";
   import { siteConfig } from "@lunacea/config";
   import { parseFilterQuery, updateFilterQuery } from "@lunacea/core/filter-query.ts";
-  import { StatusBadge } from "$ui/components";
+  import { FilterSelector, ViewToggle } from "$ui/components";
+  import { WorkPreview } from "$ui/patterns";
   import PageHead from "$lib/components/PageHead.svelte";
   import ResponsiveImage from "$lib/components/ResponsiveImage.svelte";
+
   let { data } = $props();
+  const representativeFields: readonly string[] = siteConfig.catalogFilters.works.fields;
+  const representativeTechnologies: readonly string[] = siteConfig.catalogFilters.works.technologies;
+  const representativeStatuses: readonly string[] = siteConfig.catalogFilters.works.statuses;
   const statuses = ["stable", "growing", "fragment", "deprecated"];
   let enhanced = $state(false);
-  let filters = $state({ status: "", year: "", stack: "" });
-  function readLocation() {
-    const parsed = parseFilterQuery(location.search, { status: statuses, year: data.years, stack: data.stacks });
-    filters = { status: parsed.status ?? "", year: parsed.year ?? "", stack: parsed.stack ?? "" };
+  let filters = $state({ q: "", field: "", technology: "", status: "", year: "", view: "grid" as "grid" | "list" });
+
+  function readLocation(search = location.search) {
+    const params = new URLSearchParams(search);
+    const aliased = new URLSearchParams(params);
+    if (!aliased.has("technology") && aliased.has("stack")) aliased.set("technology", aliased.get("stack") ?? "");
+    const parsed = parseFilterQuery(`?${aliased}`, {
+      field: data.fields,
+      technology: data.stacks,
+      status: statuses,
+      year: data.years,
+      view: ["grid", "list"],
+    });
+    filters = {
+      q: (params.get("q") ?? "").trim().slice(0, 120),
+      field: parsed.field ?? "",
+      technology: parsed.technology ?? "",
+      status: parsed.status ?? "",
+      year: parsed.year ?? "",
+      view: parsed.view === "list" ? "list" : "grid",
+    };
   }
+
+  $effect(() => {
+    const search = page.url.search;
+    if (enhanced) readLocation(search);
+  });
+
   function apply(event: SubmitEvent) {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget as HTMLFormElement)) as Record<string, string>;
-    filters = { status: values.status ?? "", year: values.year ?? "", stack: values.stack ?? "" };
-    history.pushState({}, "", updateFilterQuery(location.search, filters));
+    filters.q = (values.q ?? "").trim().slice(0, 120);
+    history.pushState({}, "", updateFilterQuery(location.search, { q: filters.q, stack: "" }));
   }
+
+  function href(overrides: Partial<typeof filters>): string {
+    const next = { ...filters, ...overrides };
+    return `/works${updateFilterQuery("", {
+      q: next.q,
+      field: next.field,
+      technology: next.technology,
+      status: next.status,
+      year: next.year,
+      view: next.view,
+    })}`;
+  }
+
+  function matches(entry: typeof data.entries[number]): boolean {
+    const query = filters.q.toLocaleLowerCase("ja");
+    const text = [entry.title, entry.summary, entry.role, ...entry.fields, ...entry.stack, ...entry.tags]
+      .join(" ").toLocaleLowerCase("ja");
+    return (!query || text.includes(query)) &&
+      (!filters.field || entry.fields.includes(filters.field)) &&
+      (!filters.technology || entry.stack.includes(filters.technology)) &&
+      (!filters.status || entry.status === filters.status) &&
+      (!filters.year || entry.publishedAt.startsWith(filters.year));
+  }
+
   onMount(() => {
+    const handlePopstate = () => readLocation();
     enhanced = true;
     readLocation();
-    addEventListener("popstate", readLocation);
-    return () => removeEventListener("popstate", readLocation);
+    addEventListener("popstate", handlePopstate);
+    return () => removeEventListener("popstate", handlePopstate);
   });
 </script>
+
 <PageHead
   title={`Works — ${siteConfig.name}`}
   description="実装、研究、空間表現を、役割と技術、検証した問いとともに記録します。"
@@ -36,56 +91,82 @@
   <header data-reveal>
     <p class="eyebrow">Catalog / Constructed</p>
     <h1 class="page-title">Works</h1>
-    <p class="lead">作ったものだけでなく、問題、役割、設計判断、検証と反省をケーススタディとして示します。</p>
+    <p class="lead">問題、役割、設計判断、検証と反省を、画像とケーススタディで示します。</p>
   </header>
-  <form method="GET" onsubmit={apply} aria-label="制作物を絞り込む">
-    <label>状態<select name="status" bind:value={filters.status}><option value="">すべて</option>{#each statuses as status}<option value={status}>{status}</option>{/each}</select></label>
-    <label>年<select name="year" bind:value={filters.year}><option value="">すべて</option>{#each data.years as year}<option value={year}>{year}</option>{/each}</select></label>
-    <label>技術<select name="stack" bind:value={filters.stack}><option value="">すべて</option>{#each data.stacks as stack}<option value={stack}>{stack}</option>{/each}</select></label>
-    <button type="submit">適用</button>
-    {#if filters.status || filters.year || filters.stack}<a href="/works">解除</a>{/if}
-  </form>
-  <ol class="work-grid">
+
+  <section class="catalog-controls" aria-label="制作物の検索と絞り込み">
+    <form method="GET" role="search" onsubmit={apply}>
+      <label for="work-query">制作物を検索</label>
+      <div class="search-row">
+        <input id="work-query" type="search" name="q" value={filters.q} maxlength="120" />
+        <button type="submit">検索</button>
+      </div>
+    </form>
+
+    <FilterSelector label="Field" options={representativeFields.map((field) => ({ label: field, href: href({ field: filters.field === field ? "" : field }), active: filters.field === field }))} />
+    <FilterSelector label="Technology" options={representativeTechnologies.map((technology) => ({ label: technology, href: href({ technology: filters.technology === technology ? "" : technology }), active: filters.technology === technology }))} />
+    <FilterSelector label="Status" options={representativeStatuses.map((status) => ({ label: status, href: href({ status: filters.status === status ? "" : status }), active: filters.status === status }))} />
+
+    <details>
+      <summary>年で絞り込む</summary>
+      <FilterSelector label="Year" options={data.years.map((year) => ({ label: year, href: href({ year: filters.year === year ? "" : year }), active: filters.year === year }))} />
+    </details>
+
+    {#if filters.q || filters.field || filters.technology || filters.status || filters.year}<a class="clear" href="/works">条件を解除</a>{/if}
+  </section>
+
+  <div class="result-heading">
+    <p>{data.entries.filter((entry) => !enhanced || matches(entry)).length} records</p>
+    <ViewToggle value={filters.view} gridHref={href({ view: "grid" })} listHref={href({ view: "list" })} />
+  </div>
+
+  <ol class:grid={filters.view === "grid"} class:list={filters.view === "list"} class="work-collection">
     {#each data.entries as entry}
-      {@const visible = !enhanced || ((!filters.status || entry.status === filters.status) && (!filters.year || entry.publishedAt.startsWith(filters.year)) && (!filters.stack || entry.stack.includes(filters.stack)))}
+      {@const visible = !enhanced || matches(entry)}
       <li class:hidden={!visible}>
-        <a href={"/works/" + entry.slug}>
-          {#if entry.cover.kind === "image" || entry.cover.kind === "og"}
-            <ResponsiveImage cover={{ ...entry.cover, kind: "image" }} />
-          {:else}
-            <div class="asset-placeholder" style:aspect-ratio={entry.cover.aspectRatio} data-asset-id={entry.cover.assetId} role="img" aria-label="制作物画像は未設定です">
-              <span>Asset placeholder</span><code>{entry.cover.assetId}</code>
-            </div>
-          {/if}
-          <div class="work-copy">
-            <div class="meta"><time datetime={entry.publishedAt}>{entry.period}</time><StatusBadge status={entry.status} /></div>
-            <h2>{entry.title}</h2>
-            <p>{entry.summary}</p>
-            <p class="role">{entry.role}</p>
-            <ul aria-label="使用技術">{#each entry.stack as item}<li>{item}</li>{/each}</ul>
-          </div>
-        </a>
+        <WorkPreview
+          href={`/works/${entry.slug}`}
+          title={entry.title}
+          summary={entry.summary}
+          role={entry.role}
+          period={entry.period}
+          status={entry.status}
+          technologies={entry.stack}
+          view={filters.view}
+          mediaTransitionName={`record-media-work-${entry.slug}`}
+        >
+          {#snippet media()}
+            {#if entry.cover.kind === "image" || entry.cover.kind === "og"}
+              <ResponsiveImage cover={{ ...entry.cover, kind: "image" }} />
+            {:else}
+              <div class="asset-placeholder" style:aspect-ratio={entry.cover.aspectRatio} data-asset-id={entry.cover.assetId} role="img" aria-label="制作物画像は未設定です">
+                <span>Asset placeholder</span><code>{entry.cover.assetId}</code>
+              </div>
+            {/if}
+          {/snippet}
+        </WorkPreview>
       </li>
     {/each}
   </ol>
 </div>
 
 <style>
-  header { margin-bottom: var(--space-12); }
-  form { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-4); margin-bottom: var(--space-16); border-block: 1px solid var(--color-line); padding-block: var(--space-5); }
-  label { display: grid; gap: var(--space-1); color: var(--color-muted); font-size: var(--text-caption); }
-  select, button { min-height: var(--control-size); border: 1px solid var(--color-line); border-radius: var(--radius-small); background: var(--color-background); color: var(--color-foreground); padding-inline: var(--space-3); font: inherit; }
-  button { background: var(--color-foreground); color: var(--color-background); }
-  .work-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(var(--space-8), 6vw, var(--space-16)); margin: 0; padding: 0; list-style: none; }
-  .work-grid li.hidden { display: none; }
-  .work-grid a { display: block; text-decoration: none; }
-  .work-grid :global(picture), .asset-placeholder { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
-  .asset-placeholder { display: grid; place-content: center; gap: var(--space-2); border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-muted); text-align: center; }
-  .work-copy { padding-top: var(--space-4); }
-  .meta { display: flex; justify-content: space-between; color: var(--color-muted); font-family: var(--font-mono); font-size: var(--text-caption); }
-  h2 { margin: var(--space-3) 0; font-size: var(--text-h2); }
-  p { color: var(--color-muted); }
-  .role { color: var(--color-foreground); }
-  ul { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-4) 0 0; padding: 0; list-style: none; color: var(--color-muted); font-family: var(--font-mono); font-size: var(--text-caption); }
-  @media (max-width: 44rem) { .work-grid { grid-template-columns: 1fr; } }
+  header { margin-bottom: var(--space-16); }
+  .catalog-controls { display: grid; gap: var(--space-4); margin-bottom: var(--space-16); }
+  form { display: grid; max-width: 46rem; gap: var(--space-2); }
+  form > label, summary { color: var(--color-muted); font-size: var(--text-caption); letter-spacing: var(--tracking-ui); }
+  .search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  input, button { min-height: var(--control-size); border: 1px solid var(--color-line); background: var(--color-background); color: var(--color-foreground); font: inherit; }
+  input { min-width: 0; padding-inline: var(--space-3); }
+  button { padding-inline: var(--space-5); background: var(--color-foreground); color: var(--color-background); }
+  details { width: fit-content; }
+  summary { min-height: var(--control-size); cursor: pointer; }
+  .clear { width: fit-content; color: var(--color-muted); font-size: var(--text-small); }
+  .result-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-8); color: var(--color-muted); font-size: var(--text-caption); font-variant-numeric: tabular-nums; }
+  .work-collection { margin: 0; padding: 0; list-style: none; }
+  .work-collection li.hidden { display: none; }
+  .asset-placeholder { display: grid; place-content: center; gap: var(--space-2); border: 1px solid var(--color-line); color: var(--color-muted); text-align: center; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(var(--space-10), 7vw, var(--space-24)) clamp(var(--space-6), 5vw, var(--space-16)); }
+  .list > li + li { margin-top: var(--space-2); }
+  @media (max-width: 44rem) { .grid { grid-template-columns: 1fr; } }
 </style>

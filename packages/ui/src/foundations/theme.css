@@ -1,5 +1,47 @@
 @import "../../.generated/fonts/fonts.css";
 
+@property --color-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #d7dbd5;
+}
+
+@property --color-surface {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #eef0eb;
+}
+
+@property --color-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #151a17;
+}
+
+@property --color-primary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #173d2d;
+}
+
+@property --color-secondary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #466451;
+}
+
+@property --color-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #705800;
+}
+
+@property --color-muted {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #46524c;
+}
+
 @theme inline {
   --color-canvas: var(--color-background);
   --color-panel: var(--color-surface);
@@ -42,10 +84,10 @@
   --color-print-background: #fff;
   --color-print-foreground: #000;
 
-  --font-sans: "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
-  --font-serif: "Hina Mincho", "Hina Mincho Fallback", "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+  --font-sans: "Manrope", "Manrope Fallback", "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-serif: "Newsreader", "Newsreader Fallback", "Hina Mincho", "Hina Mincho Fallback", "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
   --font-accent: "DotGothic16", "MS Gothic", "Japanese gothic", monospace;
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-mono: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --text-display: clamp(3.75rem, 8.1vw, 7.5rem);
   --text-h1: clamp(2.625rem, 6.5vw, 6rem);
   --text-h2: clamp(1.75rem, 3.6vw, 3.25rem);
@@ -53,6 +95,7 @@
   --text-body: clamp(1.0625rem, 0.25vw + 1rem, 1.125rem);
   --text-small: 0.875rem;
   --text-caption: 0.75rem;
+  --text-title-glyph: .74em;
   --weight-regular: 400;
   --weight-quiet: 400;
   --weight-display: 500;
@@ -104,37 +147,56 @@
   --layout-grid-compact: 12rem;
   --layout-grid-standard: 18rem;
   --layout-grid-wide: 24rem;
+  --profile-card-width: 21rem;
+  --profile-card-media: 3.5rem;
+  --profile-card-padding: var(--space-5);
+  --profile-card-gap: var(--space-4);
+  --profile-card-boundary: var(--layout-gutter);
   --control-size: 2.75rem;
   --site-header-block: 4.3125rem;
-  --sample-banner-block: 2.5625rem;
 
   --radius-none: 0;
   --radius-small: 0.1875rem;
   --radius-round: 999px;
   --shadow-overlay: 0 0.75rem 2.5rem light-dark(rgb(16 47 35 / 14%), rgb(0 0 0 / 34%));
+  --shadow-profile: 0 0.5rem 1.5rem light-dark(rgb(16 47 35 / 10%), rgb(0 0 0 / 24%));
   --shadow-accent-rule: inset 3px 0 var(--color-accent);
   --glass-blur: 0.625rem;
   --focus-ring: 0 0 0 0.1875rem light-dark(rgb(112 88 0 / 36%), rgb(226 198 84 / 38%));
 
   --motion-duration-immediate: 1ms;
   --motion-duration-fast: 140ms;
-  --motion-duration-base: 360ms;
+  --motion-duration-micro: 240ms;
+  --motion-duration-exit: 280ms;
+  --motion-duration-base: 420ms;
+  --motion-duration-page: 520ms;
   --motion-duration-slow: 760ms;
   --motion-duration-status: 1500ms;
   --motion-duration-opening: 1200ms;
   --motion-duration-resume: 1500ms;
+  --motion-duration-ambient: 8s;
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
 
   --z-base: 0;
-  --z-content: 1;
-  --z-visual: 2;
+  --z-weather: 1;
+  --z-content: 2;
+  --z-visual: 3;
   --z-controls: 10;
   --z-header: 20;
   --z-overlay: 30;
   --z-progress: 40;
   --z-skip-link: 100;
+
+  transition:
+    --color-background var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-surface var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-foreground var(--motion-duration-base) var(--motion-ease-standard),
+    --color-primary var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-secondary var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-accent var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-muted var(--motion-duration-base) var(--motion-ease-standard);
 }
 
 :root[data-theme="light"] {

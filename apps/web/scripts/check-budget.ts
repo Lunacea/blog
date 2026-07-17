@@ -43,6 +43,30 @@ for (const dependency of forbiddenInitialDependencies) {
   }
 }
 
+function collectKeys(key: string, keys: Set<string>): void {
+  const entry = manifest[key];
+  if (!entry || keys.has(key)) return;
+  keys.add(key);
+  for (const imported of entry.imports ?? []) collectKeys(imported, keys);
+}
+
+for (const key of Object.keys(manifest)) {
+  const match = key.match(/generated\/client-optimized\/nodes\/(\d+)\.js$/u);
+  if (!match || Number(match[1]) <= 2) continue;
+  const routeKeys = new Set<string>();
+  collectKeys(key, routeKeys);
+  for (const dependency of forbiddenInitialDependencies.slice(2)) {
+    const leaked = [...routeKeys].find((routeKey) => dependency.pattern.test(routeKey));
+    if (leaked) {
+      throw new Error(`${dependency.label} entered non-Home route ${key} through ${leaked}.`);
+    }
+  }
+  const heroImport = [...routeKeys].some((routeKey) =>
+    manifest[routeKey]?.dynamicImports?.some((path) => path.includes("HeroScene"))
+  );
+  if (heroImport) throw new Error(`Home Hero entered non-Home route ${key}.`);
+}
+
 let gzipBytes = 0;
 for (const file of files) {
   const bytes = await Deno.readFile(new URL(file, client));

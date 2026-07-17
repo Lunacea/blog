@@ -13,6 +13,7 @@ export function canUsePageTransition({
   if (document.visibilityState !== "visible") return false;
   if (document.documentElement.dataset.motion !== "full") return false;
   if (type === "popstate") return false;
+  if (from && to && from.pathname === to.pathname && from.search !== to.search) return false;
   if (
     from && to && from.pathname === to.pathname && from.search === to.search &&
     from.hash !== to.hash

@@ -13,14 +13,17 @@ semantic color, typography, spacing, layout, shape, depth, motion, breakpoint, a
 must consume those tokens rather than define a second scale.
 
 The light and dark themes retain the same semantic roles. System preference is used when the stored
-preference is `auto`. Zen Kaku Gothic New 400/500/700 is the sans role, Hina Mincho 400 is the
-editorial serif role, and DotGothic16 400 is limited to named accents. System monospace remains the
-role for dates, coordinates, status, and code.
+preference is `auto`. Manrope followed by Zen Kaku Gothic New is the sans role. Newsreader followed
+by Hina Mincho is reserved for large editorial headings and quotations. DotGothic16 remains limited
+to named accents. Fira Code followed by system monospace is limited to fenced/inline code, keyboard
+input, and technical identifiers. Dates, navigation, tags, and ordinary status text use the sans
+role with tabular numerals where alignment is useful.
 
 These fonts are self-hosted from repository-pinned OFL sources. The build derives hashed WOFF2
 subsets from public content, UI strings, and configuration, emits the same generated CSS for Web and
-Storybook, and never contacts Google Fonts at runtime. Zen 400 and Hina 400 are the only preloads;
-the preload budget is 350 KiB and the total initial-route custom-font budget is 500 KiB.
+Storybook, and never contacts Google Fonts at runtime. Only the regular sans Latin/Japanese faces
+needed for first paint are preloaded; the preload budget is 350 KiB and the total initial-route
+custom-font budget is 500 KiB.
 
 ## Components and behavior
 
@@ -55,17 +58,57 @@ and transparency need.
 ## Motion and resilience
 
 Motion clarifies state and hierarchy. The effective motion mode never exceeds OS reduced-motion,
-save-data, or forced-colors constraints. Page transitions do not apply a root fade and must preserve
-navigation, focus, scroll restoration, and no-JavaScript access. Smooth scrolling is enabled only
-for a user-clicked same-document anchor. The custom cursor is available only for fine, hovering
-pointers in full motion and never replaces native input/selection behavior.
+save-data, or forced-colors constraints. Eligible route changes use a restrained root opacity and at
+most 6px translation; individual page text is not flown in as shared content. Shared continuity is
+limited to matching Article/Work media. Transitions preserve navigation, focus, scroll restoration,
+and no-JavaScript access. Smooth scrolling is enabled for a user-clicked same-document anchor and
+the bounded Home two-section snap assist; Reduced/Off uses immediate movement. The custom cursor is
+available only for fine, hovering pointers in full motion and never replaces native input/selection
+behavior.
+
+The Header is a transparent fixed control layer rather than a horizontal bar. Its desktop region
+stacks Articles, Works, and Archive at the safe-area-aware upper-right inset, followed by Theme and
+Display; mobile keeps Theme, Display, and the hamburger in that order. It has no background,
+decorative border, shadow, blur, or radius. Feed and sitemap endpoints do not appear in Header
+navigation. Display and mobile navigation disclosures use the same unboxed, vertically stacked text
+language as desktop navigation, with a short enter/exit transition. Glass treatment is limited to
+the Home profile card, and the site has no global Footer. The profile card is a compact 18–22rem
+identity surface containing only the authored profile asset, name, short field, and vertical
+GitHub/X/Email links. Pointer movement is clamped to the Home About section, yields to links, text
+selection, and vertical touch scrolling, and does not persist. Full motion may continue with short
+damped inertia that stops at the section boundary; Reduced/Off removes inertia and tilt. The first
+in-view appearance uses one restrained sub-15-degree rotation to suggest optional drag without
+adding instructions; that one-shot animation is cleared before drag so opacity and transform remain
+continuous into inertia. Introduction remains centered below the movable card, and the category
+based Engineering list follows in a four/two/one-column responsive grid without card or pill chrome.
+
+The shared Theme glyph uses tight local SVG bounds: a crescent for Dark and one filled circle for
+Light. Both shapes use the same visible outer square and center, without hidden viewBox padding.
+Header and the `Lunacea` title reuse this definition while keeping their hit-area and typographic
+sizing independent; the title motif is also a keyboard-accessible Theme toggle while the heading's
+accessible name remains `Lunacea`. Registered semantic color properties interpolate theme changes
+over the existing base/slow motion tokens; Reduced/Off remains immediate.
 
 WebGL remains a Home-only optional enhancement loaded dynamically after capability checks. Static
-geometry, primary text, and navigation exist before it loads and remain when it fails. The scene
-morphs equal-size deterministic point sets through a Möbius strip, a sphere/point cloud, and a
-regular octahedron. Low quality uses at most 900 points and DPR 1.2; high quality uses at most 2400
-points and DPR 1.5. Scroll and drag temporarily own the shared timeline, which aligns to a hold
-state before automatic motion resumes.
+weather ambience, primary text, and navigation exist before it loads and remain when it fails; no
+unrelated central substitute geometry is shown. One Canvas shares its renderer between a background
+weather environment and the independent central Hero. The Hero still morphs equal-size deterministic
+point sets through a Möbius strip, a sphere/point cloud, and a regular octahedron. Point sprites use
+small soft diamonds rather than circular droplet shapes. Low quality uses at most 1400 Hero points
+and DPR 1.2; high quality uses at most 3200 Hero points and DPR 1.5. Other routes use a CSS-only
+weather backdrop. Reduced motion, save-data, forced colors, and Display Off hide the Home central
+motif rather than substituting unrelated geometry. The Home visual layer is full-bleed across the
+Hero and About continuum while prose keeps its content width. Scroll never owns or pauses the WebGL
+timeline; pointer drag may only change the Hero observation angle while preserving vertical touch
+scrolling.
+
+Weather motion uses a seamless shared phase in the Home shader. Clear renders slowly drifting,
+leaf-filtered light shafts; Cloudy layers moving fog; Rain grows sparse glass-surface droplets; Snow
+combines falling flakes with a gently changing lower accumulation line. Non-Home CSS uses sparse
+droplets, flakes, and diffuse light with exact tile-period endpoints, so the last frame joins the
+first without a jump. Development builds may preview `clear`, `cloudy`, `rain`, `snow`, or `neutral`
+through the `?weather=` query; production ignores that override and continues to use fixed-location
+weather.
 
 ## Storybook
 

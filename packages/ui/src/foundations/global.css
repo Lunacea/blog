@@ -40,12 +40,6 @@ body {
   margin: 0;
   color: var(--color-foreground);
   background:
-    linear-gradient(
-    90deg,
-    transparent 0 calc(var(--layout-gutter) - 1px),
-    var(--color-line) 0 var(--layout-gutter),
-    transparent 0
-  ),
     radial-gradient(
     circle at 78% 12%,
     color-mix(in srgb, var(--color-secondary) 8%, transparent),

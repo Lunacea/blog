@@ -13,6 +13,12 @@ class TestIntersectionObserver implements IntersectionObserver {
   unobserve() {}
 }
 
+class TestResizeObserver implements ResizeObserver {
+  disconnect() {}
+  observe() {}
+  unobserve() {}
+}
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({
@@ -29,6 +35,10 @@ Object.defineProperty(window, "matchMedia", {
 Object.defineProperty(window, "IntersectionObserver", {
   writable: true,
   value: TestIntersectionObserver,
+});
+Object.defineProperty(window, "ResizeObserver", {
+  writable: true,
+  value: TestResizeObserver,
 });
 Object.defineProperty(navigator, "clipboard", {
   configurable: true,

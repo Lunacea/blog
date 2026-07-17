@@ -31,7 +31,7 @@
     "preview:audit": "deno task --cwd apps/web preview:audit",
     "check": "deno task fonts:generate && deno task images:generate && deno task content:generate && deno task content:validate && deno task --cwd apps/web check",
     "content:validate": "deno run --allow-read packages/content/validate.ts",
-    "test": "deno test --allow-env --allow-read --unstable-kv packages/core packages/schemas packages/api packages/ui/src/visuals/hero-geometry.test.ts && deno task test:unit",
+    "test": "deno test --allow-env --allow-read --unstable-kv packages/core packages/schemas packages/api packages/ui/src/visuals/hero-geometry.test.ts packages/ui/src/visuals/weather-visual.test.ts && deno task test:unit",
     "test:unit": "deno task --cwd apps/web test:unit",
     "test:e2e": "deno task --cwd apps/web test:e2e",
     "storybook": "deno task --cwd packages/ui storybook",

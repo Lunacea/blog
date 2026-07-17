@@ -1,13 +1,16 @@
-import type { WeatherCondition, WeatherState } from "@lunacea/schemas";
 import type { ApprovedIconName } from "./Icon.svelte";
 
 export const interfaceIcons = {
   search: "solar:magnifer-linear",
   tag: "solar:tag-linear",
-  location: "solar:map-point-linear",
   display: "solar:monitor-linear",
-  theme: "solar:palette-linear",
   motion: "solar:bolt-linear",
+} as const satisfies Record<string, ApprovedIconName>;
+
+export const socialIcons = {
+  github: "simple-icons:github",
+  x: "simple-icons:x",
+  email: "solar:letter-linear",
 } as const satisfies Record<string, ApprovedIconName>;
 
 const tagIcons: Record<string, ApprovedIconName> = {
@@ -35,21 +38,4 @@ function normalizedTag(tag: string): string {
 
 export function tagIconName(tag: string): ApprovedIconName {
   return tagIcons[normalizedTag(tag)] ?? interfaceIcons.tag;
-}
-
-export function weatherIconName(
-  condition: WeatherCondition,
-  phase: WeatherState["phase"],
-): ApprovedIconName {
-  if (condition === "clear") {
-    return phase === "night" ? "solar:moon-linear" : "solar:sun-2-linear";
-  }
-  if (condition === "cloudy") {
-    return phase === "night" ? "solar:cloudy-moon-linear" : "solar:cloud-sun-2-linear";
-  }
-  if (condition === "fog") return "solar:fog-linear";
-  if (condition === "rain") return "solar:cloud-rain-linear";
-  if (condition === "snow") return "solar:cloud-snowfall-linear";
-  if (condition === "storm") return "solar:cloud-storm-linear";
-  return "solar:clock-circle-linear";
 }

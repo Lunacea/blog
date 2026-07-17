@@ -20,7 +20,8 @@ copied.
 ## Types
 
 - Article: engineering, research, design, essay, log, or talk. Talk articles require event data.
-- Work: image-led project record with period, role, stack, links, and an `.svx` case study.
+- Work: image-led project record with period, role, fields, technology stack, links, and an `.svx`
+  case study. `stack` remains the canonical technology field; `fields` owns broader practice areas.
 - Diary, Photo, Place, Wine, Moment: Archive records with type-specific optional metadata.
 
 Talk event data contains name, held date, in-person/online/hybrid mode, optional venue, presentation

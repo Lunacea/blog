@@ -1,25 +1,21 @@
 <script lang="ts">
   import { Canvas, T } from "@threlte/core";
   import HeroObject from "./HeroObject.svelte";
+  import WeatherEnvironment from "./WeatherEnvironment.svelte";
+  import type { WeatherVisualCondition } from "./weather-visual.ts";
 
   let {
     quality,
     palette,
-    scrubPhase,
     yaw,
     pitch,
-    scale,
-    offsetY,
-    paused = false,
+    weather,
   }: {
     quality: "low" | "high";
     palette: { foreground: string; primary: string; accent: string };
-    scrubPhase?: number | null;
     yaw?: number;
     pitch?: number;
-    scale?: number;
-    offsetY?: number;
-    paused?: boolean;
+    weather: WeatherVisualCondition;
   } = $props();
 </script>
 
@@ -29,8 +25,6 @@
   shadows={false}
 >
   <T.PerspectiveCamera makeDefault position={[0, 0, 5.8]} fov={32} />
-  <T.AmbientLight intensity={1.25} color={palette.foreground} />
-  <T.DirectionalLight position={[3, 4, 5]} intensity={2.1} color={palette.primary} />
-  <T.PointLight position={[-2.4, -1.2, 2.6]} intensity={14} color={palette.accent} />
-  <HeroObject {quality} {palette} {scrubPhase} {yaw} {pitch} {scale} {offsetY} {paused} />
+  <WeatherEnvironment {quality} {palette} condition={weather} />
+  <HeroObject {quality} {palette} {yaw} {pitch} />
 </Canvas>

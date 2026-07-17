@@ -223,7 +223,7 @@
   aside p {
     margin: 0 0 var(--space-4);
     color: var(--color-muted);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: var(--text-caption);
     letter-spacing: var(--tracking-label);
     text-transform: uppercase;
@@ -263,7 +263,7 @@
     border: 1px solid var(--color-line);
     background: var(--color-surface);
     color: var(--color-muted);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: var(--text-caption);
     cursor: pointer;
   }
@@ -279,7 +279,7 @@
   :global(.mermaid-diagram figcaption) {
     margin-top: var(--space-3);
     color: var(--color-muted);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: var(--text-caption);
   }
 
@@ -296,7 +296,7 @@
       border: 1px solid var(--color-line);
       padding: var(--space-4);
     }
-    .mobile-toc summary { cursor: pointer; font-family: var(--font-mono); font-size: var(--text-caption); letter-spacing: var(--tracking-label); text-transform: uppercase; }
+    .mobile-toc summary { cursor: pointer; font-family: var(--font-sans); font-size: var(--text-caption); letter-spacing: var(--tracking-label); text-transform: uppercase; }
     .mobile-toc nav { margin-top: var(--space-4); }
   }
 

@@ -1,10 +1,10 @@
 /* One-shot enhancements. The non-JS frame remains visible. */
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal] {
   opacity: 0;
-  transform: translateY(var(--space-4));
+  transform: translateY(var(--space-2));
   transition:
-    opacity var(--motion-duration-base) var(--motion-ease-enter),
-    transform var(--motion-duration-slow) var(--motion-ease-enter);
+    opacity var(--motion-duration-page) var(--motion-ease-enter),
+    transform var(--motion-duration-page) var(--motion-ease-enter);
 }
 
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal][data-visible="true"] {
@@ -22,7 +22,7 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="line"][data-vis
 }
 
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"] {
-  transform: none;
+  transform: translateY(var(--space-1));
   filter: saturate(0.72) contrast(0.92);
 }
 
@@ -58,15 +58,34 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"][data-vi
   }
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
+::view-transition-old(root) {
+  animation: page-exit var(--motion-duration-exit) var(--motion-ease-exit) both;
 }
 
-::view-transition-group(site-identity),
-::view-transition-group(section-title) {
-  animation-duration: var(--motion-duration-base);
+::view-transition-new(root) {
+  animation: page-enter var(--motion-duration-page) var(--motion-ease-enter) both;
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--motion-duration-page);
   animation-timing-function: var(--motion-ease-enter);
+}
+
+@keyframes page-exit {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 html[data-motion="reduced"]::view-transition-group(*),

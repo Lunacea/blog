@@ -39,7 +39,7 @@
           <StatusBadge status={entry.status} />
         </div>
         <div class="copy">
-          <h2 style:view-transition-name={`record-${entry.type}-${entry.slug}`}>{entry.title}</h2>
+          <h2>{entry.title}</h2>
           <p>{entry.summary}</p>
           <ul class="tag-list" aria-label="タグ">
             {#each entry.tags.slice(0, 4) as tag}
@@ -57,12 +57,11 @@
   .content-list {
     margin: 0;
     padding: 0;
-    border-top: 1px solid var(--color-line);
     list-style: none;
   }
 
-  .content-list > li {
-    border-bottom: 1px solid var(--color-line);
+  .content-list > li + li {
+    margin-top: var(--space-2);
   }
 
   .content-list > li > a {
@@ -89,8 +88,8 @@
     align-items: flex-start;
     flex-direction: column;
     color: var(--color-muted);
-    font-family: var(--font-mono);
     font-size: var(--text-caption);
+    font-variant-numeric: tabular-nums;
   }
 
   .copy h2 {

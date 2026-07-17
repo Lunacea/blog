@@ -1,9 +1,12 @@
 <script lang="ts">
   import AmbientHero from "./AmbientHero.svelte";
+  import type { WeatherVisualCondition } from "./weather-visual.ts";
+
+  let { weather = "neutral" }: { weather?: WeatherVisualCondition } = $props();
 </script>
 
 <section class="ambient-preview" aria-label="Ambient Hero visual preview">
-  <AmbientHero />
+  <AmbientHero {weather} />
   <div>
     <p>Visuals / Ambient Hero</p>
     <h2>Quiet structures,<br />growing records.</h2>

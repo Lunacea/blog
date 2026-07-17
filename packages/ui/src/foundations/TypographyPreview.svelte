@@ -6,11 +6,17 @@
   </header>
 
   <section aria-labelledby="roles-title">
-    <h3 id="roles-title">Type roles</h3>
+    <h3 id="roles-title">Mixed-language specimen</h3>
     <dl>
-      <div class="editorial"><dt>Editorial serif</dt><dd>余白と文章のリズムを読む。</dd></div>
-      <div class="interface"><dt>Interface sans</dt><dd>検索、設定、状態を明快に伝える。</dd></div>
-      <div class="technical"><dt>Technical mono</dt><dd>2026-07-15 / 39.702°N / stable</dd></div>
+      <div class="interface"><dt>日本語本文</dt><dd>静かな余白の中で、文章と記録を長く読み続けられる構造をつくる。</dd></div>
+      <div class="interface"><dt>English body</dt><dd>Durable interfaces keep content readable when optional features fail.</dd></div>
+      <div class="interface"><dt>Mixed body</dt><dd>SvelteKitとDenoで、Accessible Information Designを実装する。</dd></div>
+      <div class="editorial display"><dt>大見出し</dt><dd>Quiet structures,<br />静かな記録。</dd></div>
+      <div class="interface heading"><dt>小見出し</dt><dd>Engineering and field notes</dd></div>
+      <div class="interface nav"><dt>Navigation</dt><dd>Articles　Works　Archive　Display</dd></div>
+      <div class="interface date"><dt>日付と技術名</dt><dd>2026-07-16　SvelteKit / TypeScript / WebGL</dd></div>
+      <div class="technical code"><dt>Code block</dt><dd><pre><code>const durable = content ?? fallback;</code></pre></dd></div>
+      <div class="technical"><dt>Inline code</dt><dd><code>view=grid</code> と <kbd>Escape</kbd> はFira Codeを使う。</dd></div>
     </dl>
   </section>
 
@@ -35,7 +41,6 @@
   header span,
   dt {
     color: var(--color-muted);
-    font-family: var(--font-mono);
     font-size: var(--text-caption);
   }
 
@@ -80,12 +85,21 @@
   }
 
   dd {
+    min-width: 0;
     font-size: var(--text-h3);
+    overflow-wrap: anywhere;
   }
 
   .editorial dd { font-family: var(--font-serif); }
   .interface dd { font-family: var(--font-sans); }
   .technical dd { font-family: var(--font-mono); font-size: var(--text-small); }
+  .display dd { font-size: var(--text-h1); line-height: var(--leading-title); }
+  .heading dd { font-size: var(--text-h2); font-weight: var(--weight-component); }
+  .nav dd { font-size: var(--text-small); letter-spacing: var(--tracking-ui); }
+  .date dd { font-variant-numeric: tabular-nums; }
+  pre { max-width: 100%; overflow-x: auto; margin: 0; padding: var(--space-4); background: var(--color-surface); }
+  code, kbd { font-family: var(--font-mono); }
+  kbd { border: 1px solid var(--color-line); padding: 0 var(--space-1); }
 
   .measure p {
     max-width: var(--prose-width);

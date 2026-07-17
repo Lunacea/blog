@@ -39,7 +39,6 @@
   }
 
   .site {
-    font-family: var(--font-mono);
     font-size: var(--text-caption);
     text-transform: uppercase;
   }

@@ -1,10 +1,13 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import type { Component } from "svelte";
+  import type { WeatherVisualCondition } from "./weather-visual.ts";
 
   type Quality = "low" | "high";
   type HeroPalette = { foreground: string; primary: string; accent: string };
   type Connection = { saveData?: boolean };
+
+  let { weather = "neutral" }: { weather?: WeatherVisualCondition } = $props();
 
   let Scene = $state<Component<Record<string, unknown>> | null>(null);
   let enabled = $state(false);
@@ -16,17 +19,18 @@
   let primaryProbe: HTMLSpanElement;
   let accentProbe: HTMLSpanElement;
   let inViewport = $state(true);
-  let scrubPhase = $state<number | null>(null);
   let yaw = $state(0);
   let pitch = $state(0);
-  let scale = $state(1);
-  let offsetY = $state(0);
   let dragging = $state(false);
-  let interactionOwned = $state(false);
+  let pointerIntent = $state<"idle" | "pending" | "drag" | "scroll">("idle");
+  let pointerId: number | null = null;
   let pointerX = 0;
   let pointerY = 0;
-  let resumeTimer = 0;
-  let alignTimer = 0;
+  let pointerStartX = 0;
+  let pointerStartY = 0;
+  let pendingYaw = 0;
+  let pendingPitch = 0;
+  let dragFrame = 0;
   let generation = 0;
 
   function readPalette(): HeroPalette {
@@ -90,52 +94,57 @@
     enabled = false;
   }
 
-  function scheduleAutoResume() {
-    clearTimeout(resumeTimer);
-    clearTimeout(alignTimer);
-    resumeTimer = window.setTimeout(() => {
-      if (scrubPhase !== null) scrubPhase = Math.round(scrubPhase) % 3;
-      alignTimer = window.setTimeout(() => {
-        scrubPhase = null;
-        interactionOwned = false;
-      }, 180);
-    }, 1500);
-  }
-
-  function handleScroll() {
-    const rect = ambientHost.getBoundingClientRect();
-    const distance = Math.max(1, rect.height - innerHeight);
-    const progress = Math.max(0, Math.min(1, -rect.top / distance));
-    interactionOwned = true;
-    scrubPhase = progress * 2.999;
-    scale = .9 + progress * .18;
-    offsetY = (progress - .5) * .38;
-    scheduleAutoResume();
+  function commitDrag() {
+    dragFrame = 0;
+    yaw += pendingYaw;
+    pitch = Math.max(-.65, Math.min(.65, pitch + pendingPitch));
+    pendingYaw = 0;
+    pendingPitch = 0;
   }
 
   function startDrag(event: PointerEvent) {
-    dragging = true;
-    interactionOwned = true;
-    clearTimeout(resumeTimer);
-    clearTimeout(alignTimer);
+    if (!event.isPrimary) return;
+    pointerId = event.pointerId;
+    pointerIntent = "pending";
+    pointerStartX = event.clientX;
+    pointerStartY = event.clientY;
     pointerX = event.clientX;
     pointerY = event.clientY;
-    ambientHost.setPointerCapture(event.pointerId);
   }
 
   function moveDrag(event: PointerEvent) {
-    if (!dragging) return;
-    yaw += (event.clientX - pointerX) * .006;
-    pitch = Math.max(-.65, Math.min(.65, pitch + (event.clientY - pointerY) * .004));
+    if (pointerId !== event.pointerId || pointerIntent === "idle" || pointerIntent === "scroll") return;
+    const fromStartX = event.clientX - pointerStartX;
+    const fromStartY = event.clientY - pointerStartY;
+    if (pointerIntent === "pending" && Math.hypot(fromStartX, fromStartY) > 7) {
+      if (Math.abs(fromStartX) > Math.abs(fromStartY) * 1.25) {
+        pointerIntent = "drag";
+        dragging = true;
+        ambientHost.setPointerCapture(event.pointerId);
+      } else {
+        pointerIntent = "scroll";
+        pointerId = null;
+        return;
+      }
+    }
+    if (pointerIntent !== "drag") return;
+    pendingYaw += (event.clientX - pointerX) * .006;
+    pendingPitch += (event.clientY - pointerY) * .004;
     pointerX = event.clientX;
     pointerY = event.clientY;
+    if (!dragFrame) dragFrame = requestAnimationFrame(commitDrag);
   }
 
   function stopDrag(event: PointerEvent) {
-    if (!dragging) return;
+    if (pointerId !== event.pointerId && !dragging) return;
+    if (dragFrame) {
+      cancelAnimationFrame(dragFrame);
+      commitDrag();
+    }
     dragging = false;
     if (ambientHost.hasPointerCapture(event.pointerId)) ambientHost.releasePointerCapture(event.pointerId);
-    scheduleAutoResume();
+    pointerIntent = "idle";
+    pointerId = null;
   }
 
   onMount(() => {
@@ -154,17 +163,14 @@
     };
     window.addEventListener("lunacea:motion", motionListener);
     window.addEventListener("lunacea:theme", themeListener);
-    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       generation += 1;
-      clearTimeout(resumeTimer);
-      clearTimeout(alignTimer);
+      cancelAnimationFrame(dragFrame);
       intersectionObserver.disconnect();
       if (useIdle) window.cancelIdleCallback(idle);
       else window.clearTimeout(idle);
       window.removeEventListener("lunacea:motion", motionListener);
       window.removeEventListener("lunacea:theme", themeListener);
-      window.removeEventListener("scroll", handleScroll);
     };
   });
 </script>
@@ -174,8 +180,9 @@
   bind:this={ambientHost}
   aria-hidden="true"
   data-webgl={enabled}
+  data-weather={weather}
   data-quality={quality}
-  data-interaction-owned={interactionOwned}
+  data-pointer-intent={pointerIntent}
   data-yaw={yaw}
   data-pitch={pitch}
   data-cursor={dragging ? "drag" : "webgl"}
@@ -187,38 +194,11 @@
   <span class="palette-probe foreground" bind:this={foregroundProbe}></span>
   <span class="palette-probe primary" bind:this={primaryProbe}></span>
   <span class="palette-probe accent" bind:this={accentProbe}></span>
-  <svg class="fallback" viewBox="0 0 800 800">
-    <defs>
-      <linearGradient id="hero-glass" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="currentColor" stop-opacity=".42" />
-        <stop offset=".55" stop-color="currentColor" stop-opacity=".06" />
-        <stop offset="1" stop-color="var(--color-accent)" stop-opacity=".2" />
-      </linearGradient>
-      <radialGradient id="hero-signal">
-        <stop offset="0" stop-color="var(--color-accent)" stop-opacity=".32" />
-        <stop offset="1" stop-color="var(--color-accent)" stop-opacity="0" />
-      </radialGradient>
-    </defs>
-    <g class="axis">
-      <line x1="400" y1="92" x2="400" y2="708" />
-      <line x1="168" y1="400" x2="632" y2="400" />
-      <ellipse cx="400" cy="400" rx="218" ry="74" />
-      <ellipse cx="400" cy="400" rx="102" ry="286" />
-    </g>
-    <rect
-      class="solid"
-      x="300"
-      y="112"
-      width="200"
-      height="576"
-      rx="100"
-      fill="url(#hero-glass)"
-    />
-    <ellipse class="core" cx="400" cy="406" rx="104" ry="190" />
-    <circle class="signal" cx="520" cy="255" r="112" fill="url(#hero-signal)" />
-  </svg>
+  <div class="weather-fallback">
+    <i class="clear"></i><i class="cloudy"></i><i class="rain"></i><i class="snow"></i>
+  </div>
   <div class="canvas" bind:this={canvasHost}>
-    {#if Scene && palette}<Scene {quality} {palette} {scrubPhase} {yaw} {pitch} {scale} {offsetY} paused={interactionOwned} />{/if}
+    {#if Scene && palette}<Scene {quality} {palette} {yaw} {pitch} weather={weather} />{/if}
   </div>
 </div>
 
@@ -226,17 +206,61 @@
   .ambient {
     position: absolute;
     z-index: var(--z-content);
-    inset: 0 -4% 0 42%;
+    inset: 0;
     overflow: hidden;
     color: var(--color-secondary);
     touch-action: pan-y;
   }
 
-  .fallback,
   .canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
+    height: min(200svh, 100%);
   }
+
+  .weather-fallback {
+    position: absolute;
+    inset: -8%;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity var(--motion-duration-base) var(--motion-ease-standard);
+  }
+
+  .weather-fallback i {
+    position: absolute;
+    inset: 0;
+    display: block;
+    opacity: 0;
+    transition: opacity var(--motion-duration-base) var(--motion-ease-standard);
+  }
+
+  .weather-fallback .clear {
+    background: radial-gradient(circle at 30% 22%, color-mix(in srgb, var(--color-accent) 34%, transparent), transparent 42%);
+  }
+
+  .weather-fallback .cloudy {
+    background: radial-gradient(ellipse at center, color-mix(in srgb, var(--color-muted) 24%, transparent), transparent 64%);
+    filter: blur(var(--glass-blur));
+  }
+
+  .weather-fallback .rain {
+    background:
+      radial-gradient(ellipse at 28% 24%, color-mix(in srgb, var(--color-secondary) 18%, transparent), transparent 34%),
+      radial-gradient(ellipse at 72% 68%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 38%);
+  }
+
+  .weather-fallback .snow {
+    background: radial-gradient(ellipse at center, color-mix(in srgb, var(--color-foreground) 12%, transparent), transparent 62%);
+  }
+
+  [data-weather="clear"] .weather-fallback .clear,
+  [data-weather="cloudy"] .weather-fallback .cloudy,
+  [data-weather="rain"] .weather-fallback .rain,
+  [data-weather="snow"] .weather-fallback .snow { opacity: 0.3; }
+
+  [data-webgl="true"] .weather-fallback { opacity: 0; }
 
   .palette-probe {
     position: absolute;
@@ -257,48 +281,20 @@
     color: var(--color-accent);
   }
 
-  .fallback {
-    opacity: 0.72;
-    transition: opacity var(--motion-duration-base) var(--motion-ease-standard);
-  }
-
-  [data-webgl="true"] .fallback {
-    opacity: 0.08;
-  }
-
   .canvas {
-    position: absolute;
-    inset: 0;
-  }
-
-  .axis {
-    fill: none;
-    stroke: var(--color-line);
-    stroke-width: 1;
-  }
-
-  .solid {
-    stroke: currentColor;
-    stroke-width: 1.25;
-  }
-
-  .core {
-    fill: color-mix(in srgb, var(--color-primary) 14%, transparent);
-    stroke: var(--color-secondary);
-    stroke-width: 1;
+    right: 0;
   }
 
   @media (max-width: 52rem) {
     .ambient {
-      inset: 12% -38% 30% 28%;
-      opacity: 0.62;
+      opacity: 0.68;
     }
   }
 
   @media (max-width: 34rem) {
     .ambient {
-      inset: 8% -60% 38% 20%;
-      opacity: 0.5;
+      opacity: 0.56;
     }
   }
+
 </style>

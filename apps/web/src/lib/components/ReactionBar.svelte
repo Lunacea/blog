@@ -126,8 +126,8 @@
   }
 
   strong {
-    font-family: var(--font-mono);
     font-size: var(--text-caption);
+    font-variant-numeric: tabular-nums;
   }
 
   :global([data-slot="toggle-group-item"] svg) {

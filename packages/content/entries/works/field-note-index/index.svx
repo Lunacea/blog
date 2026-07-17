@@ -14,6 +14,9 @@ draft: false
 sample: true
 period: 2025
 role: Researcher / Developer
+fields:
+  - Research
+  - Information Retrieval
 stack:
   - TypeScript
   - Indexed Search
