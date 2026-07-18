@@ -42,13 +42,6 @@
   onMount(() => {
     const handleMotion = () => prepare();
     window.addEventListener("lunacea:motion", handleMotion);
-    const root = document.documentElement;
-    const openingKey = "lunacea-home-opening";
-    if (location.pathname === "/" && root.dataset.motion === "full" && !sessionStorage.getItem(openingKey)) {
-      sessionStorage.setItem(openingKey, "shown");
-      root.dataset.homeOpening = "true";
-      window.setTimeout(() => delete root.dataset.homeOpening, 1200);
-    }
     prepare();
     return () => {
       observer?.disconnect();

@@ -7,9 +7,9 @@ export const siteConfig = {
   sampleMode: true,
   author: {
     name: "Lunacea",
-    github: null,
-    x: null,
-    email: null,
+    github: "https://github.com/Lunacea",
+    x: "https://x.com/_Lunacea",
+    email: "dev@lunacea.jp",
   },
   featuredArticleTags: [],
   catalogFilters: {
@@ -34,6 +34,7 @@ export const siteConfig = {
 } as const;
 
 export const primaryNavigation = [
+  { href: "/", label: "Home" },
   { href: "/articles", label: "Articles" },
   { href: "/works", label: "Works" },
   { href: "/archive", label: "Archive" },
@@ -71,7 +72,7 @@ export type AuthoredMedia = {
  */
 export const visualAssets = {
   identity: {
-    src: null,
+    src: "/images/Lunacea-nobg.png",
     alt: "",
     width: 256,
     height: 256,
@@ -90,7 +91,7 @@ export const visualAssets = {
     },
   },
   profile: {
-    src: null,
+    src: "/images/Lunacea-nobg.png",
     alt: "黄色いウーパールーパーと魚の中間のキャラクター",
     width: 960,
     height: 960,
@@ -123,9 +124,9 @@ export const visualAssets = {
     allowMotion: true,
     placeholder: {
       assetId: "home-hero-organic",
-      role: "ホームヒーローのauthored media",
+      role: "ホーム上部から自然に伸びる透過foliage",
       preferredFileType: "AVIF/WebP",
-      accessibilityDescription: "装飾画像のため空のaltを維持する",
+      accessibilityDescription: "装飾の葉なので空のaltを維持する",
       transparencyRequired: true,
     },
   },

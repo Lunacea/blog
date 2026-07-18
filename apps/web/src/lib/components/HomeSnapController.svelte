@@ -22,7 +22,7 @@
   }
 
   onMount(() => {
-    const intro = document.querySelector<HTMLElement>("[data-home-opening]");
+    const intro = document.querySelector<HTMLElement>("[data-home-intro]");
     const about = document.querySelector<HTMLElement>("[data-home-about]");
     if (!intro || !about) return;
 

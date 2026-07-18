@@ -1,4 +1,18 @@
-import { onNavigate } from "$app/navigation";
+import { afterNavigate, onNavigate } from "$app/navigation";
+
+export function isCatalogViewTransition(from?: URL | null, to?: URL | null): boolean {
+  if (!from || !to || from.pathname !== to.pathname || from.hash !== to.hash) return false;
+  const fromParams = new URLSearchParams(from.search);
+  const toParams = new URLSearchParams(to.search);
+  const fromView = fromParams.get("view");
+  const toView = toParams.get("view");
+  if (fromView === toView) return false;
+  fromParams.delete("view");
+  toParams.delete("view");
+  fromParams.sort();
+  toParams.sort();
+  return fromParams.toString() === toParams.toString();
+}
 
 export function canUsePageTransition({
   type,
@@ -13,7 +27,10 @@ export function canUsePageTransition({
   if (document.visibilityState !== "visible") return false;
   if (document.documentElement.dataset.motion !== "full") return false;
   if (type === "popstate") return false;
-  if (from && to && from.pathname === to.pathname && from.search !== to.search) return false;
+  if (
+    from && to && from.pathname === to.pathname && from.search !== to.search &&
+    !isCatalogViewTransition(from, to)
+  ) return false;
   if (
     from && to && from.pathname === to.pathname && from.search === to.search &&
     from.hash !== to.hash
@@ -24,7 +41,26 @@ export function canUsePageTransition({
 }
 
 export function installPageTransitions() {
+  let catalogPosition: { x: number; y: number } | undefined;
+  afterNavigate(() => {
+    if (!catalogPosition) return;
+    const position = catalogPosition;
+    catalogPosition = undefined;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => scrollTo(position.x, position.y));
+    });
+  });
   onNavigate((navigation) => {
+    const catalogTransition = isCatalogViewTransition(
+      navigation.from?.url,
+      navigation.to?.url,
+    );
+    const preserveCatalogPosition = navigation.type !== "popstate" &&
+      navigation.from?.url.pathname === navigation.to?.url.pathname &&
+      navigation.from?.url.search !== navigation.to?.url.search;
+    if (preserveCatalogPosition) {
+      catalogPosition = { x: scrollX, y: scrollY };
+    }
     if (
       !canUsePageTransition({
         type: navigation.type,
@@ -33,10 +69,16 @@ export function installPageTransitions() {
       })
     ) return;
     return new Promise<void>((resolve) => {
-      document.startViewTransition(async () => {
+      if (catalogTransition) document.documentElement.dataset.catalogTransition = "true";
+      const transition = document.startViewTransition(async () => {
         resolve();
         await navigation.complete;
       });
+      if (catalogTransition) {
+        void transition.finished.finally(() => {
+          delete document.documentElement.dataset.catalogTransition;
+        });
+      }
     });
   });
 }

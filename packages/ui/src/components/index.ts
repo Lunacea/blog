@@ -1,4 +1,5 @@
 export { default as LinkCard } from "./LinkCard.svelte";
+export { contentStatusLabel } from "./content-labels.ts";
 export { default as FontPreloads } from "./FontPreloads.svelte";
 export { default as FilterSelector } from "./FilterSelector.svelte";
 export { default as SettingsPanel } from "./SettingsPanel.svelte";

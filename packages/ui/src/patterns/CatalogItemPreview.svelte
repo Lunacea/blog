@@ -27,7 +27,6 @@
     <WorkPreview
       href="#work"
       title="Spatial Interface Lab"
-      summary="空間と情報の関係を検証するインタラクティブなケーススタディ。"
       role="Design engineering / research"
       period="2024–2026"
       status="growing"

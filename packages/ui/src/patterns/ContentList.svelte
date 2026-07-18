@@ -1,17 +1,11 @@
 <script lang="ts">
-  import type { Content, ContentStatus, ContentType } from "@lunacea/schemas";
-  import ArrowRightUpIcon from "../icons/ArrowRightUpIcon.svelte";
-  import StatusBadge from "../components/StatusBadge.svelte";
-  import TagLabel from "../components/TagLabel.svelte";
+  import type { Content, ContentType } from "@lunacea/schemas";
 
   type ContentListEntry = {
     slug: string;
     type: ContentType;
     title: string;
-    summary: string;
-    tags: string[];
     publishedAt: string;
-    status: ContentStatus;
   };
 
   let {
@@ -32,22 +26,16 @@
 <ol class="content-list">
   {#each entries as entry}
     <li data-reveal="line">
-      <a href={href(entry)}>
+      <a
+        href={href(entry)}
+        data-cursor={entry.type === "article" ? "interactive" : undefined}
+        data-cursor-label={entry.type === "article" ? "View more" : undefined}
+      >
         <div class="meta">
-          <time datetime={entry.publishedAt}>{entry.publishedAt}</time>
           {#if showType}<span>{entry.type}</span>{/if}
-          <StatusBadge status={entry.status} />
+          <time datetime={entry.publishedAt}>{entry.publishedAt}</time>
         </div>
-        <div class="copy">
-          <h2>{entry.title}</h2>
-          <p>{entry.summary}</p>
-          <ul class="tag-list" aria-label="タグ">
-            {#each entry.tags.slice(0, 4) as tag}
-              <li><TagLabel {tag} /></li>
-            {/each}
-          </ul>
-        </div>
-        <span class="arrow" aria-hidden="true"><ArrowRightUpIcon /></span>
+        <h2>{entry.title}</h2>
       </a>
     </li>
   {/each}
@@ -57,18 +45,18 @@
   .content-list {
     margin: 0;
     padding: 0;
+    border-bottom: 1px solid var(--color-line);
     list-style: none;
-  }
-
-  .content-list > li + li {
-    margin-top: var(--space-2);
   }
 
   .content-list > li > a {
     display: grid;
-    grid-template-columns: 11rem 1fr auto;
-    gap: clamp(var(--space-4), 5vw, var(--space-16));
-    padding: clamp(var(--space-6), 4vw, var(--space-10)) var(--space-3);
+    min-height: 5.5rem;
+    grid-template-columns: minmax(8rem, .28fr) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-4);
+    border-top: 1px solid var(--color-line);
+    padding: var(--space-3) var(--space-4);
     text-decoration: none;
     transition: background var(--motion-duration-fast) var(--motion-ease-standard);
   }
@@ -78,64 +66,28 @@
     background: color-mix(in srgb, var(--color-surface) 72%, transparent);
   }
 
-  .content-list > li > a:hover h2,
-  .content-list > li > a:focus-visible h2 {
-    color: var(--color-primary);
-  }
-
   .meta {
     display: flex;
-    align-items: flex-start;
-    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
     color: var(--color-muted);
     font-size: var(--text-caption);
     font-variant-numeric: tabular-nums;
   }
 
-  .copy h2 {
+  h2 {
     margin: 0;
+    font-family: var(--font-serif);
     font-size: var(--text-h3);
-    font-weight: var(--weight-component);
+    font-weight: var(--weight-regular);
     line-height: var(--leading-heading);
-  }
-
-  .copy {
-    min-width: 0;
-  }
-
-  .copy p {
-    max-width: 46rem;
-    margin: var(--space-3) 0 var(--space-4);
-    color: var(--color-muted);
-  }
-
-  .tag-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-    padding: 0;
-    list-style: none;
-  }
-
-  .arrow {
-    color: var(--color-accent);
-    font-size: var(--text-h3);
-  }
-
-  .arrow :global(svg) {
-    display: block;
   }
 
   @media (max-width: 44rem) {
     .content-list > li > a {
-      grid-template-columns: 1fr auto;
-    }
-
-    .meta {
-      grid-column: 1 / -1;
-      flex-wrap: wrap;
-      flex-direction: row;
-      gap: var(--space-3);
+      grid-template-columns: 1fr;
+      gap: var(--space-1);
     }
   }
 </style>

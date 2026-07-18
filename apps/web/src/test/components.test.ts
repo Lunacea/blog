@@ -11,6 +11,7 @@ import ReactionBar from "$lib/components/ReactionBar.svelte";
 import { loadFixedLocationWeather } from "$lib/weather-context.ts";
 import { get, writable } from "svelte/store";
 import ArticlesPage from "../routes/articles/+page.svelte";
+import LinkPreviewFixture from "./LinkPreviewFixture.svelte";
 
 const article = {
   type: "article",
@@ -32,28 +33,39 @@ const article = {
 } satisfies Content;
 
 describe("display preferences", () => {
-  it("persists motion through keyboard-accessible text controls", async () => {
+  it("cycles and persists motion through one keyboard-accessible icon control", async () => {
+    localStorage.setItem("lunacea-motion", "full");
     const view = render(SettingsPanel);
-    await fireEvent.click(view.getByRole("button", { name: "Display" }));
-    const motion = view.getByRole("group", { name: "Motion" });
-    const off = view.getByRole("button", { name: "Off" });
-    off.focus();
-    expect(document.activeElement).toBe(off);
-
-    await fireEvent.click(off);
+    const display = view.getByRole("button", { name: /Display: Full/ });
+    display.focus();
+    expect(document.activeElement).toBe(display);
+    expect(display.querySelectorAll('[data-stroke="wave"]')).toHaveLength(2);
+    expect(display.querySelector(".motion-glyph")?.getAttribute("data-mode")).toBe("full");
+    await fireEvent.click(display);
+    expect(document.documentElement.dataset.motion).toBe("reduced");
+    expect(display.querySelectorAll('[data-stroke="wave"]')).toHaveLength(2);
+    expect(display.querySelector(".motion-glyph")?.getAttribute("data-mode")).toBe("reduced");
+    await fireEvent.click(display);
 
     expect(document.documentElement.dataset.motion).toBe("off");
+    expect(display.querySelectorAll('[data-stroke="wave"]')).toHaveLength(2);
+    expect(display.querySelector(".motion-glyph")?.getAttribute("data-mode")).toBe("off");
+    expect(display.querySelector(".wave-primary")).toBeTruthy();
+    expect(display.querySelector(".wave-secondary")).toBeTruthy();
     expect(localStorage.getItem("lunacea-motion")).toBe("off");
-    expect(motion.querySelector('[aria-pressed="true"]')?.textContent?.trim()).toBe("Off");
+    expect(display.getAttribute("aria-label")).toContain("Display: Off");
     expect(view.queryByLabelText("Theme")).toBeNull();
   });
 
   it("turns an automatic effective theme into an explicit opposite preference", async () => {
+    document.documentElement.dataset.motion = "full";
+    localStorage.setItem("lunacea-motion", "off");
     const view = render(ThemeToggle);
     const toggle = view.getByRole("button", { name: "ダークテーマに切り替える" });
     await fireEvent.click(toggle);
 
     expect(document.documentElement.dataset.theme).toBe("dark");
+    expect(document.documentElement.dataset.motion).toBe("full");
     expect(localStorage.getItem("lunacea-theme")).toBe("dark");
     expect(toggle.getAttribute("aria-pressed")).toBe("true");
   });
@@ -160,6 +172,9 @@ describe("reading enhancements", () => {
     const view = render(ReadingEnhancements);
 
     await waitFor(() => expect(view.getAllByRole("link", { name: "概要" })).toHaveLength(2));
+    expect(view.container.querySelector(".toc-list")).toBeTruthy();
+    expect(view.container.querySelector(".mobile-toc-region")).toBeTruthy();
+    expect(view.container.querySelector(".mobile-toc-switch")).toBeNull();
     const copy = view.getByRole("button", { name: "コードをコピー" });
     await fireEvent.click(copy);
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith("const calm = true;");
@@ -175,6 +190,12 @@ describe("article search UI", () => {
         sort: "relevance",
         view: "list",
         isFiltered: true,
+        facets: {
+          categories: ["design"],
+          tags: ["Weather"],
+          categoryCounts: { design: 1 },
+          tagCounts: { Weather: 1 },
+        },
         entries: [{
           id: "article:weather",
           type: "article",
@@ -194,8 +215,22 @@ describe("article search UI", () => {
     });
     const form = view.getByRole("searchbox").closest("form");
     expect(form?.method).toContain("get");
+    expect(view.container.querySelector("details")).toBeNull();
+    expect(view.getByRole("button", { name: "記事を検索" }).querySelector("svg")).toBeTruthy();
     expect(view.getByRole("link", { name: /天候を環境情報にする/ })).toBeTruthy();
     expect(view.getByText(/1 records/)).toBeTruthy();
+    expect(view.getByRole("link", { name: "条件を解除" })).toBeTruthy();
+  });
+});
+
+describe("link previews", () => {
+  it("resolves href-only cards from the reading context", () => {
+    const view = render(LinkPreviewFixture);
+    expect(view.getByRole("link", { name: /Cached article title/ })).toBeTruthy();
+    expect(view.getByText("Cached article description")).toBeTruthy();
+    expect(view.container.querySelector("img")?.getAttribute("src")).toBe(
+      "/images/ogp/example.webp",
+    );
   });
 });
 
@@ -252,6 +287,8 @@ describe("reactions", () => {
     vi.stubGlobal("fetch", fetchMock);
     const view = render(ReactionBar, { content: article });
     const button = await view.findByRole("button", { name: /参考になった/ });
+    expect(view.queryByText("Response")).toBeNull();
+    expect(view.queryByText("この記録をどう感じましたか")).toBeNull();
     expect(button.querySelector("svg")).toBeTruthy();
     await waitFor(() => expect(button.hasAttribute("disabled")).toBe(false));
     await fireEvent.click(button);

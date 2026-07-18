@@ -3,7 +3,12 @@ import type { ApprovedIconName } from "./Icon.svelte";
 export const interfaceIcons = {
   search: "solar:magnifer-linear",
   tag: "solar:tag-linear",
-  display: "solar:monitor-linear",
+  grid: "solar:widget-4-linear",
+  list: "solar:list-outline",
+  reset: "solar:restart-linear",
+  copy: "solar:copy-linear",
+  copied: "solar:check-circle-linear",
+  externalLink: "solar:link-round-linear",
   motion: "solar:bolt-linear",
 } as const satisfies Record<string, ApprovedIconName>;
 

@@ -57,11 +57,7 @@
   onMount(() => void load());
 </script>
 
-<section class="reactions" aria-labelledby="reaction-heading" data-reveal>
-  <div>
-    <p class="eyebrow">Response</p>
-    <h2 id="reaction-heading">この記録をどう感じましたか</h2>
-  </div>
+<section class="reactions" aria-label="リアクション" data-reveal>
   <ToggleGroup.Root
     class="buttons"
     type="multiple"
@@ -85,17 +81,10 @@
 <style>
   .reactions {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: var(--space-8);
-    margin-top: var(--space-20);
+    gap: var(--space-2);
+    margin-top: var(--space-12);
     border-block: 1px solid var(--color-line);
-    padding-block: var(--space-8);
-  }
-
-  h2 {
-    margin: 0;
-    font-size: var(--text-small);
-    font-weight: var(--weight-component);
+    padding-block: var(--space-4);
   }
 
   :global(.buttons) {
@@ -110,14 +99,18 @@
     gap: var(--space-2);
     border: 1px solid var(--color-line);
     border-radius: var(--radius-none);
-    padding-inline: var(--space-3);
-    background: var(--color-surface);
+    min-height: calc(var(--control-size) - var(--space-2));
+    padding-inline: var(--space-2);
+    background: transparent;
+    color: var(--color-muted);
     cursor: pointer;
+    font-size: var(--text-caption);
   }
 
   :global([data-slot="toggle-group-item"][data-state="on"]) {
-    border-color: var(--color-accent);
-    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+    border-color: var(--color-foreground);
+    background: var(--color-foreground);
+    color: var(--color-background);
   }
 
   :global([data-slot="toggle-group-item"]:disabled) {
@@ -132,24 +125,14 @@
 
   :global([data-slot="toggle-group-item"] svg) {
     flex: none;
-    font-size: var(--text-body);
+    font-size: var(--text-small);
   }
 
   .status {
-    grid-column: 2;
     min-height: 1.5rem;
     margin: 0;
     color: var(--color-muted);
     font-size: var(--text-caption);
   }
 
-  @media (max-width: 44rem) {
-    .reactions {
-      grid-template-columns: 1fr;
-    }
-
-    .status {
-      grid-column: 1;
-    }
-  }
 </style>

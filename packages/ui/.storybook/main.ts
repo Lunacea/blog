@@ -4,6 +4,7 @@ import { mergeConfig } from "vite";
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.stories.@(ts|svelte)"],
+  staticDirs: ["../../../apps/web/static"],
   addons: ["@storybook/addon-a11y", "@storybook/addon-docs"],
   framework: {
     name: "@storybook/svelte-vite",

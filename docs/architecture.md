@@ -46,32 +46,46 @@ KVとメモリ実装を同じ契約で検証します。
   `public, max-age=0, s-maxage=3600, stale-while-revalidate=86400`で共有cacheできる。絞り込みURLは
   `noindex,follow`、canonicalは常に`/articles`とする。
 - ArticlesとWorksは`view=grid|list`を公開queryとして受け取る。表示状態はURLだけを正本とし、
-  localStorageへ保存しない。WorksとArchiveのclient filterは初期HTMLの全件表示を保つ。
-- `/search`は検索語を維持して`/articles`へ恒久redirectする。旧Talk、旧About、旧Archive一覧も
-  migration manifestに基づく1 hopの308互換redirectだけを提供する。旧Talk OGPも新Article OGPへ
-  redirectし、旧URLはSitemapへ含めない。互換redirectはHTTP 308を保持するためprerenderせず、本文・
-  新OGPなどcanonical resourceのprerender境界とは分離する。
+  localStorageへ保存しない。`view`だけが変わる同一pathname navigationはFull motion時に item-level
+  View Transitionで配置を補間するが、URL更新とserver/client filterのdata flowは変更
+  しない。Reduced/Off、JavaScript無効、未対応browserでは即時切替する。Listのhover mediaは既存
+  coverだけを任意表示し、情報アクセスには使用しない。WorksとArchiveのclient filterは初期HTMLの
+  全件表示を保つ。
+- `/search`は検索語を維持して`/articles`へ恒久redirectする。旧Aboutと旧Archive一覧は migration
+  manifestに基づく1 hopの308互換redirectだけを提供する。削除済みのTalk一覧・詳細・ OGP
+  routeは互換redirectを提供せず404とする。互換redirectはHTTP 308を保持するためprerenderせず、
+  本文・新OGPなどcanonical resourceのprerender境界とは分離する。
 - `/api/v1`はアプリケーションの動的HTTP境界であり続ける。SSR Articlesと互換redirectは content
   delivery境界であり、別serviceや永続stateを追加しない。
 - Mermaidは該当DOMがある記事でだけ遅延importする。
 - SVXのGFM、heading、Shiki、Mermaid source、KaTeX変換設定はUI packageの共通build設定を
   WebとStorybookが利用する。KaTeXはbuild時にHTML化し、client runtimeを追加しない。
-- Threlte/Threeはトップの`motion=full`かつ端末条件を満たした場合だけidle時にimportする。記事routeはHeroを参照せず、
-  天候はThree.jsを含まない軽量CSS背景へ縮退する。
+- Three.jsのHome rendererは`motion=full`かつ端末条件を満たした場合だけidle時にimportする。描画層は
+  点群と天候を1つのrenderer/schedulerへ直接集約し、wrapper runtimeをWebGL
+  graphへ含めない。記事routeは Heroを参照せず、天候はThree.jsを含まない軽量CSS背景へ縮退する。
 - Homeは上部の100svh Heroと、最小100svhから内容量に応じて伸びるAboutをまたぐfull-bleedの単一visual
   layerだけを持つ。同じCanvas内で背景天候環境と中央Heroの責務・geometryを分け、rendererとanimation
   schedulerだけを共有する。WebGLはscroll位置を読まず、
-  morph、位置、scale、pauseをscrollへ結び付けない。中央Heroのdrag/touchは観察角度だけを変更し、
-  Aboutのprofile cardは同sectionのpadding box内だけを移動する任意の装飾操作とする。profile cardの
-  慣性は保存せず、境界で停止し、Reduced/Offでは無効にする。どちらも link、text selection、native
-  touch scrollを妨げず、情報アクセスに必須としない。初回appearanceはdrag開始時に破棄し、その後の
-  inertiaへopacity animationが再適用されないよう一回限りとする。
+  morph、位置、scale、pauseをscrollへ結び付けない。中央Heroのdrag/touchは観察角度だけを変更し、 fine
+  pointerの近傍では点群が局所的に反発してpointer離脱後に原形へ戻る。Aboutのprofile cardは同
+  sectionのpadding boxを論理境界とする任意の装飾操作とし、Fullのrelease時だけ短いrubber-band
+  overshootを許可してdamped springで境界内へ戻す。慣性は保存せず、Reduced/Offでは無効にする。
+  どちらもlink、text selection、native touch scrollを妨げず、情報アクセスに必須としない。
 - Homeの2区間はroot scrollのmandatory snapを使う。小さなwheel/trackpad入力だけはHome限定controllerが
   36pxまで方向別に累積し、一度に隣接する1区間だけへ移動する。nested scrollを優先し、移動中は短時間
   lockして追加入力の振動を防ぐ。keyboardとtouchはbrowser標準のroot scrollへ委ねる。
+- route間のView Transitionは`main`だけを対象とし、先に旧mainのexitを完了してから新mainを表示する。
+  固定Header、Theme、Display、環境背景などroute間で継続するchromeは移動させない。Catalogの
+  Grid/List切替だけは従来どおりitem-level transitionを使う。
 - 天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。
   `fog`は`cloudy`、`storm`は`rain`、取得fallbackは`neutral`な環境表現へ正規化する。
 - ロゴ、人物、植物などの著作素材は`config.visualAssets`から`MediaSlot`へ渡す。空slotは構造だけを示し、有機的な図像をコード生成しない。
+- 記事内LinkCardは`href`を安定keyとして、明示実行する`deno task links:refresh`だけが外部ページの
+  title、description、site、OGP画像を取得する。生成metadataはGit管理JSON、画像は repository-local
+  WebPを正本とする。通常のvalidation、build、prerenderはcacheだけを読み、 runtime
+  proxy、外部画像hotlink、暗黙のnetwork fetchは導入しない。refreshはHTTP(S)に限定し、
+  private/loopback address、redirect先、timeout、content type、HTML/image sizeを検証し、失敗時は
+  既存cacheを破壊しない。
 
 ビルド後のbudget checkは記事詳細の初期JavaScript依存を再帰集計し、gzip 150
 KiBを超えたら失敗します。MermaidとWebGLのdynamic importはこの集計へ入りません。Home限定の 再帰WebGL
@@ -88,7 +102,7 @@ routeのrollbackでKV data migrationは発生しません。Home WebGLはdynamic
 `legacyPaths`で旧識別子を保持します。Zodのdiscriminated unionがArticle、Work、Diary、
 Photo、Place、Wine、Momentを検証し、Talkはevent情報を持つArticle categoryとして扱います。
 validatorはcanonical/legacy ID重複、slug/ディレクトリ不一致、関連ID、内部リンク、coverの存在、
-外部画像hotlinkも検査します。
+外部画像hotlink、LinkCard URLに対応するlocal preview cacheも検査します。
 
 検索文書はビルド時に本文をplain
 text化して生成します。クエリは`Intl.Segmenter("ja")`の語と正規化後のbigramを併用し、タイトル8、タグ5、概要3、本文1の重みで順位付けします。

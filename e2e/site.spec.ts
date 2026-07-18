@@ -32,11 +32,55 @@ test("theme and motion preferences survive navigation", async ({ page }, testInf
   test.skip(testInfo.project.name !== "desktop");
   await page.goto("/");
   await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true", { timeout: 20_000 });
-  await page.locator("#home-title").getByRole("button", { name: "ダークテーマに切り替える" })
-    .click();
+  const titleTheme = page.locator("#home-title .theme-toggle");
+  const headerTheme = page.locator(".header-theme .theme-toggle");
+  await headerTheme.hover();
+  await expect.poll(() =>
+    headerTheme.evaluate((element) => ({
+      color: getComputedStyle(element).color,
+      accent: getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim(),
+      transform: getComputedStyle(element).transform,
+    }))
+  ).toEqual(expect.objectContaining({
+    color: "rgb(112, 88, 0)",
+    accent: "rgb(112, 88, 0)",
+    transform: "none",
+  }));
+  await expect(titleTheme).toHaveAttribute("aria-label", "ダークテーマに切り替える");
+  await expect.poll(() =>
+    titleTheme.evaluate((element) => ({
+      color: getComputedStyle(element).color,
+      accent: getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim(),
+    }))
+  ).toEqual(expect.objectContaining({ color: "rgb(112, 88, 0)", accent: "rgb(112, 88, 0)" }));
+  await titleTheme.hover();
+  await expect(titleTheme).toHaveCSS("color", "rgb(112, 88, 0)");
+  await titleTheme.click();
   await expect(page.getByRole("button", { name: "ライトテーマに切り替える" })).toHaveCount(2);
-  await page.getByRole("button", { name: "Display" }).click();
-  await page.getByRole("group", { name: "Motion" }).getByRole("button", { name: "Off" }).click();
+  await expect(page.locator(".header-theme .theme-toggle")).toHaveCSS(
+    "background-color",
+    "rgba(0, 0, 0, 0)",
+  );
+  await expect.poll(() =>
+    titleTheme.evaluate((element) => ({
+      color: getComputedStyle(element).color,
+      accent: getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim(),
+    }))
+  ).toEqual(expect.objectContaining({ color: "rgb(226, 198, 84)", accent: "rgb(226, 198, 84)" }));
+  const display = page.getByRole("button", { name: /Display: Full/ });
+  await display.hover();
+  await expect(display).toHaveCSS("transform", "none");
+  const headerControlAlignment = await page.locator(
+    ".header-theme .theme-toggle, .header-display .settings-trigger",
+  ).evaluateAll((controls) =>
+    controls.map((control) => {
+      const box = control.getBoundingClientRect();
+      return box.top + box.height / 2;
+    })
+  );
+  expect(Math.abs(headerControlAlignment[0] - headerControlAlignment[1])).toBeLessThanOrEqual(1);
+  await display.click();
+  await page.getByRole("button", { name: /Display: Reduced/ }).click();
   await page.goto("/articles");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
@@ -49,9 +93,18 @@ test("desktop header is a transparent fixed control region with vertical navigat
   test.skip(testInfo.project.name !== "desktop");
   await page.goto("/articles");
   const header = page.getByRole("banner");
-  await expect(header.locator(".desktop-nav a")).toHaveText(["Articles", "Works", "Archive"]);
+  await expect(header.locator(".desktop-nav a")).toHaveText([
+    "Home",
+    "Articles",
+    "Works",
+    "Archive",
+  ]);
   await expect(header.locator(".mobile-nav")).toBeHidden();
-  await expect(header.locator(".desktop-nav a").first()).toHaveAttribute("aria-current", "page");
+  await expect(header.locator(".desktop-nav a").nth(1)).toHaveAttribute("aria-current", "page");
+  const navigationWidths = await header.locator(".desktop-nav a").evaluateAll((links) =>
+    links.map((link) => link.getBoundingClientRect().width)
+  );
+  expect(Math.max(...navigationWidths) - Math.min(...navigationWidths)).toBeLessThanOrEqual(1);
   await expect(header).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
   const before = await header.locator(".control-region").boundingBox();
   await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
@@ -68,9 +121,21 @@ test("mobile navigation dismisses with Escape and returns focus", async ({ page 
   const menu = page.getByRole("button", { name: /メニュー/ });
   const actions = page.locator(".header-actions > *");
   await expect(actions).toHaveCount(3);
+  const menuAlignment = await menu.evaluate((button) => {
+    const buttonBox = button.getBoundingClientRect();
+    const iconBox = button.querySelector(".menu-icon")!.getBoundingClientRect();
+    return {
+      background: getComputedStyle(button).backgroundColor,
+      centerOffset: Math.abs(
+        buttonBox.left + buttonBox.width / 2 - (iconBox.left + iconBox.width / 2),
+      ),
+    };
+  });
+  expect(menuAlignment.background).not.toBe("rgba(0, 0, 0, 0)");
+  expect(menuAlignment.centerOffset).toBeLessThanOrEqual(1);
   await menu.click();
   const navigation = page.getByRole("navigation", { name: "主要ナビゲーション（モバイル）" });
-  await expect(navigation.getByRole("link")).toHaveText(["Articles", "Works", "Archive"]);
+  await expect(navigation.getByRole("link")).toHaveText(["Home", "Articles", "Works", "Archive"]);
   await expect(navigation.getByText(/RSS|Atom|Sitemap|About|Search/)).toHaveCount(0);
   await expect(menu).toHaveAttribute("aria-expanded", "true");
   await page.keyboard.press("Escape");
@@ -129,7 +194,203 @@ test("narrow mobile, tablet, and 200% text do not create horizontal overflow", a
       document.documentElement.scrollWidth - document.documentElement.clientWidth
     );
     expect(overflow).toBeLessThanOrEqual(1);
+    const overlap = await page.evaluate(() => {
+      const controls = document.querySelector(".control-region")?.getBoundingClientRect();
+      const title = document.querySelector(".page > header")?.getBoundingClientRect();
+      if (!controls || !title) return 0;
+      return Math.max(
+        0,
+        Math.min(controls.right, title.right) - Math.max(controls.left, title.left),
+      ) *
+        Math.max(0, Math.min(controls.bottom, title.bottom) - Math.max(controls.top, title.top));
+    });
+    expect(overlap).toBe(0);
   }
+});
+
+test("non-Home initial content clears the fixed Header controls", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === "no-javascript");
+  for (
+    const [path, selector] of [
+      ["/articles", ".page > header"],
+      ["/works", ".page > header"],
+      ["/archive", ".page > header"],
+      ["/articles/resilient-content-pipeline", ".article-header h1"],
+    ] as const
+  ) {
+    await page.goto(path);
+    const overlap = await page.evaluate(({ selector }) => {
+      const controls = document.querySelector(".control-region")?.getBoundingClientRect();
+      const content = document.querySelector(selector)?.getBoundingClientRect();
+      if (!controls || !content) return 0;
+      return Math.max(
+        0,
+        Math.min(controls.right, content.right) - Math.max(controls.left, content.left),
+      ) *
+        Math.max(
+          0,
+          Math.min(controls.bottom, content.bottom) - Math.max(controls.top, content.top),
+        );
+    }, { selector });
+    expect(overlap, path).toBe(0);
+  }
+});
+
+test("Grid and List use an item layout transition only in Full motion", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.addInitScript(() => {
+    localStorage.setItem("lunacea-motion", "full");
+    const original = document.startViewTransition?.bind(document);
+    if (!original) return;
+    let runs = 0;
+    Object.defineProperty(globalThis, "__catalogTransitionRuns", {
+      configurable: true,
+      get: () => runs,
+    });
+    document.startViewTransition = (update) => {
+      runs += 1;
+      return original(update);
+    };
+  });
+  await page.goto("/articles");
+  await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true");
+  await page.getByRole("link", { name: "グリッド表示" }).click();
+  await expect(page).toHaveURL(/view=grid/u);
+  await expect.poll(() =>
+    page.evaluate(() =>
+      Number(
+        (globalThis as typeof globalThis & { __catalogTransitionRuns?: number })
+          .__catalogTransitionRuns ?? 0,
+      )
+    )
+  ).toBe(1);
+  await expect(page.locator('[style*="catalog-article-"]').first()).toBeVisible();
+  await page.evaluate(() => {
+    document.documentElement.dataset.motion = "off";
+  });
+  await page.getByRole("link", { name: "リスト表示" }).click();
+  await expect(page).toHaveURL(/view=list/u);
+  await expect.poll(() =>
+    page.evaluate(() =>
+      Number(
+        (globalThis as typeof globalThis & { __catalogTransitionRuns?: number })
+          .__catalogTransitionRuns ?? 0,
+      )
+    )
+  ).toBe(1);
+});
+
+test("catalog controls preserve scroll and reserve reset space", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.goto("/articles");
+  await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true");
+  const catalogProtection = await page.evaluate(() => {
+    const noise = document.querySelector<HTMLElement>(".site-noise");
+    const elements = [
+      document.querySelector<HTMLElement>(".search-row"),
+      document.querySelector<HTMLElement>(".filter-selector a"),
+    ];
+    return {
+      noiseZ: Number.parseInt(getComputedStyle(noise!).zIndex, 10),
+      surfaces: elements.map((element) => {
+        const style = getComputedStyle(element!);
+        return {
+          background: style.backgroundColor,
+          z: Number.parseInt(style.zIndex, 10),
+        };
+      }),
+    };
+  });
+  for (const surface of catalogProtection.surfaces) {
+    expect(surface.background).not.toBe("rgba(0, 0, 0, 0)");
+    expect(surface.z).toBeGreaterThan(catalogProtection.noiseZ);
+  }
+  const clearSlot = page.locator(".clear-slot");
+  const initialHeight = await clearSlot.evaluate((element) =>
+    element.getBoundingClientRect().height
+  );
+  await expect(page.getByRole("button", { name: "解除する条件はありません" })).toBeDisabled();
+
+  const before = await page.evaluate(() => {
+    scrollTo(0, Math.min(240, document.documentElement.scrollHeight - innerHeight));
+    return scrollY;
+  });
+  expect(before).toBeGreaterThan(0);
+  await page.locator(".filter-selector a").first().evaluate((element: HTMLAnchorElement) =>
+    element.click()
+  );
+  await expect(page).toHaveURL(/category=/u);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(before, 0);
+  expect(await clearSlot.evaluate((element) => element.getBoundingClientRect().height)).toBe(
+    initialHeight,
+  );
+
+  await page.getByRole("link", { name: "条件を解除" }).evaluate(
+    (element: HTMLAnchorElement) => element.click(),
+  );
+  await expect(page).not.toHaveURL(/category=/u);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(before, 0);
+});
+
+test("article header compacts at the reading surface and restores on return", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.goto("/articles/resilient-content-pipeline");
+  const controls = page.locator(".control-region");
+  await expect(controls).toHaveAttribute("data-article-compact", "false");
+  await page.locator("[data-reading-start]").evaluate((marker) => {
+    scrollTo(0, marker.getBoundingClientRect().top + scrollY + 80);
+  });
+  await expect(controls).toHaveAttribute("data-article-compact", "true");
+  const articleFrames = await page.evaluate(() => {
+    const header = document.querySelector(".article-header")?.getBoundingClientRect();
+    const reading = document.querySelector(".reading-surface .article-grid")
+      ?.getBoundingClientRect();
+    return {
+      headerWidth: header?.width ?? 0,
+      readingWidth: reading?.width ?? 0,
+      readingUsesReservedShell: document.querySelector(".reading-surface .content-shell") !== null,
+    };
+  });
+  expect(articleFrames.readingUsesReservedShell).toBe(false);
+  expect(articleFrames.readingWidth).toBeGreaterThan(articleFrames.headerWidth);
+  const menu = page.locator(".menu-trigger");
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveAttribute("aria-label", "メニューを開く");
+  const firstMenuLine = menu.locator(".menu-icon i").first();
+  const restingLineTransform = await firstMenuLine.evaluate((line) =>
+    getComputedStyle(line).transform
+  );
+  await menu.hover();
+  await expect.poll(() => firstMenuLine.evaluate((line) => getComputedStyle(line).transform))
+    .not.toBe(restingLineTransform);
+  await menu.click();
+  await page.mouse.move(0, 0);
+  await page.waitForTimeout(250);
+  const openIconTransform = await menu.locator(".menu-icon").evaluate((icon) =>
+    getComputedStyle(icon).transform
+  );
+  const openLineTransforms = await menu.locator(".menu-icon i").evaluateAll((lines) =>
+    lines.map((line) => getComputedStyle(line).transform)
+  );
+  await menu.hover();
+  await page.waitForTimeout(250);
+  expect(await menu.locator(".menu-icon").evaluate((icon) => getComputedStyle(icon).transform))
+    .not.toBe(openIconTransform);
+  expect(
+    await menu.locator(".menu-icon i").evaluateAll((lines) =>
+      lines.map((line) => getComputedStyle(line).transform)
+    ),
+  ).toEqual(openLineTransforms);
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeFocused();
+
+  await page.evaluate(() => scrollTo(0, 0));
+  await expect(controls).toHaveAttribute("data-article-compact", "false");
+  await expect(page.locator(".desktop-nav")).toBeVisible();
 });
 
 test("back and forward navigation preserve route usability", async ({ page }, testInfo) => {
@@ -142,6 +403,35 @@ test("back and forward navigation preserve route usability", async ({ page }, te
   await page.goForward();
   await expect(page).toHaveURL(/\/works$/u);
   await expect(page.locator("main")).toBeVisible();
+});
+
+test("page transitions finish the outgoing main before revealing the incoming main", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.goto("/articles");
+  const timing = await page.evaluate(() => {
+    const oldStyle = getComputedStyle(
+      document.documentElement,
+      "::view-transition-old(page-content)",
+    );
+    const newStyle = getComputedStyle(
+      document.documentElement,
+      "::view-transition-new(page-content)",
+    );
+    return {
+      mainName: getComputedStyle(document.querySelector("main")!).viewTransitionName,
+      headerName: getComputedStyle(document.querySelector("header")!).viewTransitionName,
+      oldDuration: oldStyle.animationDuration,
+      newDelay: newStyle.animationDelay,
+    };
+  });
+  expect(timing.mainName).toBe("page-content");
+  expect(timing.headerName).toBe("none");
+  expect(Number.parseFloat(timing.oldDuration)).toBeGreaterThan(0);
+  expect(Number.parseFloat(timing.newDelay)).toBeGreaterThanOrEqual(
+    Number.parseFloat(timing.oldDuration),
+  );
 });
 
 test("home is a continuous document with About and a deterministic non-WebGL fallback", async (
@@ -175,16 +465,53 @@ test("home is a continuous document with About and a deterministic non-WebGL fal
   await expect(page.getByText(/Environment|°C|地点/)).toHaveCount(0);
   await expect(page.locator(".profile-card").getByText("Engineering")).toHaveCount(0);
   await expect(page.locator(".about-introduction")).toBeVisible();
+  await expect(page.getByRole("link", { name: "View profile" })).toBeVisible();
+  await expect(page.locator("[data-home-opening]")).toHaveCount(0);
+  await expect(page.locator("[data-home-intro]")).toBeVisible();
+  await expect(page.locator(".weather-fallback i")).toHaveCount(0);
+  await expect(page.locator(".weather-fallback")).not.toHaveCSS(
+    "background-image",
+    /radial-gradient/u,
+  );
+  await expect(page.locator(".site-noise")).toBeVisible();
+  await expect(page.locator(".site-noise")).toHaveCSS("opacity", "0.36");
+  await expect(page.locator(".site-noise")).toHaveCSS(
+    "background-image",
+    /editorial-noise/u,
+  );
   await expect(page.getByRole("heading", { level: 2, name: "Engineering" })).toBeVisible();
   const initialYaw = await page.locator(".ambient").getAttribute("data-yaw");
   await page.evaluate(() => scrollTo(0, innerHeight));
   await expect(page.locator(".ambient")).toHaveAttribute("data-yaw", initialYaw ?? "0");
 });
 
+test("Home WebGL point cloud reacts to a fine pointer and keeps rendering", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.addInitScript(() => localStorage.setItem("lunacea-motion", "full"));
+  await page.goto("/");
+  const ambient = page.locator(".ambient");
+  await expect(ambient).toHaveAttribute("data-webgl", "true", { timeout: 15_000 });
+  await expect(ambient.locator("canvas")).toHaveCount(1);
+  const bounds = await ambient.boundingBox();
+  expect(bounds).not.toBeNull();
+  await page.mouse.move(
+    bounds!.x + bounds!.width * .68,
+    bounds!.y + bounds!.height * .3,
+  );
+  await expect(ambient).toHaveAttribute("data-repel-active", "1");
+  expect(Number(await ambient.getAttribute("data-repel-x"))).toBeGreaterThan(.2);
+  await page.locator(".desktop-nav a").first().hover();
+  await expect(ambient).toHaveAttribute("data-repel-active", "0");
+  await expect(ambient.locator("canvas")).toHaveCount(1);
+});
+
 test("Home profile card drag stays optional and inside the About region", async ({
   page,
   context,
 }, testInfo) => {
+  test.setTimeout(60_000);
   test.skip(!["desktop", "mobile"].includes(testInfo.project.name));
   if (testInfo.project.name === "mobile") {
     // Keep the mobile navigation breakpoint while leaving enough horizontal room to observe
@@ -221,21 +548,47 @@ test("Home profile card drag stays optional and inside the About region", async 
       type: "touchMove",
       touchPoints: point(start.x + 30, start.y),
     });
+    await expect(card).toHaveAttribute("data-dragging", "true");
     await cdp.send("Input.dispatchTouchEvent", {
       type: "touchMove",
       touchPoints: point(start.x + 48, start.y + 24),
     });
+    await page.waitForTimeout(50);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   } else {
-    await page.mouse.move(start.x, start.y);
-    await page.mouse.down();
-    await page.mouse.move(start.x + 96, start.y - 42, { steps: 4 });
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseMoved",
+      x: start.x,
+      y: start.y,
+    });
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      x: start.x,
+      y: start.y,
+      button: "left",
+      buttons: 1,
+      clickCount: 1,
+    });
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseMoved",
+      x: start.x + 96,
+      y: start.y - 42,
+      button: "left",
+      buttons: 1,
+    });
     await expect(card).toHaveAttribute("data-dragging", "true");
-    await page.mouse.up();
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      x: start.x + 96,
+      y: start.y - 42,
+      button: "left",
+      buttons: 0,
+      clickCount: 1,
+    });
   }
 
   await expect(card).toHaveAttribute("data-dragging", "false");
-  await expect(card).toHaveAttribute("data-inertial", "true");
   await expect.poll(async () => {
     const after = await card.boundingBox();
     return after ? Math.hypot(after.x - before!.x, after.y - before!.y) : 0;
@@ -275,7 +628,10 @@ test("Home profile card drag stays optional and inside the About region", async 
   ).toBe(true);
 });
 
-test("Home profile card disables inertia for reduced motion", async ({ page }, testInfo) => {
+test("Home profile card disables inertia for reduced motion", async ({
+  page,
+  context,
+}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
   await page.addInitScript(() => localStorage.setItem("lunacea-motion", "reduced"));
   await page.goto("/");
@@ -289,10 +645,36 @@ test("Home profile card disables inertia for reduced motion", async ({ page }, t
   const card = page.locator(".profile-card");
   const mediaBox = await card.locator(".profile-media").boundingBox();
   expect(mediaBox).not.toBeNull();
-  await page.mouse.move(mediaBox!.x + 2, mediaBox!.y + 2);
-  await page.mouse.down();
-  await page.mouse.move(mediaBox!.x + 88, mediaBox!.y - 30, { steps: 4 });
-  await page.mouse.up();
+  const start = { x: mediaBox!.x + 2, y: mediaBox!.y + 2 };
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: start.x,
+    y: start.y,
+  });
+  await cdp.send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    x: start.x,
+    y: start.y,
+    button: "left",
+    buttons: 1,
+    clickCount: 1,
+  });
+  await cdp.send("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: start.x + 88,
+    y: start.y - 30,
+    button: "left",
+    buttons: 1,
+  });
+  await cdp.send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    x: start.x + 88,
+    y: start.y - 30,
+    button: "left",
+    buttons: 0,
+    clickCount: 1,
+  });
   await expect(card).toHaveAttribute("data-dragging", "false");
   await expect(card).toHaveAttribute("data-inertial", "false");
 });
@@ -371,16 +753,148 @@ test("article has reading tools but never creates a WebGL canvas", async ({ page
     .toBeVisible();
   await expect(page.getByRole("progressbar", { name: "読了進捗" })).toBeVisible();
   await expect(page.getByRole("complementary", { name: "目次" })).toBeVisible();
+  await expect(page.locator(".article-header h1")).toHaveCSS(
+    "font-family",
+    /Newsreader|Hina Mincho/u,
+  );
+  await expect(page.locator(".reading-surface")).toHaveCSS(
+    "background-color",
+    "rgba(0, 0, 0, 0)",
+  );
+  await expect(page.locator(".article-header .tag-label svg").first()).toBeVisible();
+  await expect(page.locator(".article-flags")).toContainText("更新中");
+  await expect(page.locator(".article-dates")).toContainText("更新");
+  await expect(page.locator(".status-badge")).toContainText("更新中");
+  await expect(page.locator(".prose h2").first()).toHaveCSS("font-family", /Manrope|Zen Kaku/u);
+  await expect(page.locator(".article-record")).toHaveCSS("background-image", "none");
+  await expect(page.locator(".site-noise")).toBeVisible();
+  await expect(page.locator(".site-noise")).toHaveAttribute("data-noise-motion", "reduced");
+  await expect(page.locator(".site-noise")).toHaveCSS("animation-name", "none");
+  await expect(page.locator(".mermaid-diagram")).toBeVisible({ timeout: 15_000 });
+  const protectedSurfaces = await page.evaluate(() => {
+    const selectors = [".annotation", ".code-block", ".mermaid-diagram", ".link-card"];
+    const noise = document.querySelector<HTMLElement>(".site-noise");
+    const main = document.querySelector<HTMLElement>("main");
+    return {
+      noiseZ: Number.parseInt(getComputedStyle(noise!).zIndex, 10),
+      mainZ: Number.parseInt(getComputedStyle(main!).zIndex, 10),
+      surfaces: selectors.map((selector) => {
+        const element = document.querySelector<HTMLElement>(selector);
+        const style = getComputedStyle(element!);
+        return {
+          background: style.backgroundColor,
+          z: Number.parseInt(style.zIndex, 10),
+        };
+      }),
+    };
+  });
+  expect(protectedSurfaces.mainZ).toBeGreaterThan(protectedSurfaces.noiseZ);
+  for (const surface of protectedSurfaces.surfaces) {
+    expect(surface.background).not.toBe("rgba(0, 0, 0, 0)");
+    expect(surface.z).toBeGreaterThan(protectedSurfaces.noiseZ);
+  }
+  await expect(page.getByText("この記録をどう感じましたか")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "関連記事" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "更新履歴" })).toBeVisible();
+  await expect.poll(() => page.locator(".related .content-list > li > a").count())
+    .toBeGreaterThan(0);
   const diagram = page.locator(".mermaid-diagram svg");
   await expect(diagram).toBeVisible({ timeout: 15_000 });
-  const diagramBox = await diagram.boundingBox();
-  expect(diagramBox?.height).toBeLessThan(diagramBox?.width ?? 0);
+  const lightDiagramId = await diagram.getAttribute("id");
+  const theme = page.locator(".header-theme").getByRole("button");
+  const initialSurfaceColor = await page.locator(".annotation").evaluate((element) =>
+    getComputedStyle(element).backgroundColor
+  );
+  await theme.click();
+  await theme.click();
+  await theme.click();
+  await expect.poll(() => diagram.getAttribute("id")).not.toBe(lightDiagramId);
+  await expect.poll(() =>
+    page.locator(".annotation").evaluate((element) => getComputedStyle(element).backgroundColor)
+  ).not.toBe(initialSurfaceColor);
+  await theme.click();
+  await expect(diagram).toBeVisible();
+  await expect.poll(async () => {
+    const diagramBox = await diagram.boundingBox();
+    return diagramBox ? diagramBox.height < diagramBox.width : false;
+  }).toBe(true);
   await expect(page.locator("canvas")).toHaveCount(0);
 
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   const copy = page.getByRole("button", { name: "コードをコピー" }).first();
+  await expect(copy).not.toHaveAttribute("title");
+  const copyAlignment = await copy.evaluate((button) => {
+    const block = button.closest<HTMLElement>(".code-block");
+    const buttonBox = button.getBoundingClientRect();
+    const blockBox = block!.getBoundingClientRect();
+    const blockBorder = Number.parseFloat(getComputedStyle(block!).borderTopWidth);
+    return {
+      actual: buttonBox.top + buttonBox.height / 2 - blockBox.top,
+      expected: blockBorder + 20,
+    };
+  });
+  expect(copyAlignment.actual).toBeCloseTo(copyAlignment.expected, 0);
   await copy.click();
-  await expect(copy).toHaveText("Copied");
+  await expect(copy).toHaveAttribute("data-copied", "true");
+  await expect(copy).toHaveAttribute("aria-label", "コードをコピーしました");
+});
+
+test("article TOC tracks clicked headings and mobile disclosure animates", async ({
+  page,
+}, testInfo) => {
+  test.skip(!["desktop", "mobile"].includes(testInfo.project.name));
+  await page.goto("/articles/resilient-content-pipeline");
+  const linkCard = page.locator(".link-card");
+  await expect(linkCard).toBeVisible();
+  const linkCardLayout = await linkCard.evaluate((element) => {
+    const copy = element.querySelector<HTMLElement>(".copy");
+    return {
+      height: element.getBoundingClientRect().height,
+      copyFits: copy ? copy.scrollHeight <= copy.clientHeight + 1 : false,
+    };
+  });
+  expect(linkCardLayout.height).toBeGreaterThanOrEqual(
+    testInfo.project.name === "mobile" ? 128 : 144,
+  );
+  expect(linkCardLayout.copyFits).toBe(true);
+  if (testInfo.project.name === "desktop") {
+    await expect(page.locator(".desktop-toc")).toHaveAttribute("data-ready", "true");
+    await expect(page.locator(".mobile-toc-region")).toBeHidden();
+    const link = page.locator('.desktop-toc a[href="#処理の流れ"]');
+    await link.click();
+    await expect(link).toHaveAttribute("aria-current", "location");
+    await expect(page.locator("#処理の流れ")).toBeInViewport();
+    const track = await page.locator(".toc-list").evaluate((element) => ({
+      beforeWidth: getComputedStyle(element, "::before").width,
+      beforeHeight: getComputedStyle(element, "::before").height,
+      activeWidth: getComputedStyle(element, "::after").width,
+      activeTransform: getComputedStyle(element, "::after").transform,
+    }));
+    expect(track.beforeWidth).toBe("1px");
+    expect(Number.parseFloat(track.beforeHeight)).toBeGreaterThan(0);
+    expect(track.activeWidth).toBe("2px");
+    expect(track.activeTransform).not.toBe("none");
+    return;
+  }
+  const trigger = page.locator(".mobile-toc-trigger");
+  await expect(page.locator(".desktop-toc")).toBeHidden();
+  await expect(page.locator(".mobile-toc-region")).toHaveAttribute("data-ready", "true");
+  await trigger.click();
+  await expect(trigger).toHaveAttribute("data-state", "open");
+  await expect(page.locator(".mobile-toc-content")).toHaveAttribute("data-state", "open");
+  await trigger.click();
+  await expect(page.locator(".mobile-toc-content")).toHaveAttribute("data-state", "closed");
+});
+
+test("Work detail uses vertical metadata and conditional external actions", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.goto("/works/quiet-archive");
+  await expect(page.locator(".work-meta dt")).toHaveText(["Role", "Period", "Field"]);
+  await expect(page.getByRole("link", { name: /View source/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Visit site/ })).toHaveCount(0);
+  await expect(page.locator(".work-technologies li").first().locator("svg")).toBeVisible();
 });
 
 test("anonymous reaction toggles with the same browser actor", async ({ page }, testInfo) => {
@@ -401,10 +915,10 @@ test("keyboard focus reaches navigation and display settings", async ({ page }, 
   await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true");
   await page.keyboard.press("Tab");
   await expect(page.locator(":focus")).toHaveAttribute("href", "#main-content");
-  await page.getByRole("button", { name: "Display" }).focus();
+  const display = page.getByRole("button", { name: /Display:/ });
+  await display.focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByLabel("Motion")).toBeVisible();
-  await expect(page.locator(".panel").getByLabel("Theme")).toHaveCount(0);
+  await expect(display).toHaveAttribute("aria-label", /Display: (Reduced|Off)/);
 });
 
 test(
@@ -418,6 +932,10 @@ test(
     expect(headingBox).not.toBeNull();
     await page.mouse.move(headingBox!.x + 4, headingBox!.y + 4);
     await expect(page.locator("html")).toHaveAttribute("data-custom-cursor", "");
+    await expect(page.locator(".cursor-shape")).toHaveCSS(
+      "animation-name",
+      /cursor-square-spin/u,
+    );
 
     const search = page.getByRole("searchbox");
     const searchBox = await search.boundingBox();
@@ -434,6 +952,119 @@ test(
     });
     await page.mouse.move(headingBox!.x + 4, headingBox!.y + 4);
     await expect(page.locator("html")).not.toHaveAttribute("data-custom-cursor");
+
+    await page.evaluate(() => {
+      getSelection()?.removeAllRanges();
+      document.dispatchEvent(new Event("selectionchange"));
+    });
+    const articlePreview = page.locator('main a[data-cursor-label="View more"]').first();
+    const articlePreviewBox = await articlePreview.boundingBox();
+    expect(articlePreviewBox).not.toBeNull();
+    await page.mouse.move(
+      articlePreviewBox!.x + articlePreviewBox!.width / 2,
+      articlePreviewBox!.y + articlePreviewBox!.height / 2,
+    );
+    await expect(page.locator(".cursor")).toContainText("View more");
+    const cursorShape = page.locator(".cursor-shape");
+    await expect(cursorShape).toHaveCSS("border-top-width", "3px");
+    await expect(cursorShape).toHaveCSS("border-radius", "0px");
+    await expect(cursorShape).toHaveCSS(
+      "animation-name",
+      /cursor-settle-square/u,
+    );
+    const viewMoreShape = page.locator('.cursor[data-label="View more"] .cursor-shape');
+    await page.waitForTimeout(700);
+    const expandedWidth = await viewMoreShape.evaluate((element) =>
+      element.getBoundingClientRect().width
+    );
+    await page.waitForTimeout(300);
+    expect(await viewMoreShape.evaluate((element) => element.getBoundingClientRect().width)).toBe(
+      expandedWidth,
+    );
+    const viewMoreFill = await viewMoreShape.evaluate((element) => {
+      const style = getComputedStyle(element, "::before");
+      return {
+        animationName: style.animationName,
+        backgroundRepeat: style.backgroundRepeat,
+        backgroundSize: style.backgroundSize,
+      };
+    });
+    expect(viewMoreFill.animationName).toMatch(/cursor-view-more-fill/u);
+    expect(viewMoreFill.backgroundRepeat).toContain("repeat");
+    expect(viewMoreFill.backgroundSize).toBe("208px 100%");
+    expect(Number.parseFloat(viewMoreFill.backgroundSize)).toBeGreaterThan(expandedWidth);
+
+    await page.goto("/articles/resilient-content-pipeline");
+    await page.waitForTimeout(750);
+    const linkCard = page.locator(".link-card");
+    await linkCard.scrollIntoViewIfNeeded();
+    const linkCardBox = await linkCard.boundingBox();
+    expect(linkCardBox).not.toBeNull();
+    await page.mouse.move(
+      linkCardBox!.x + linkCardBox!.width / 2,
+      linkCardBox!.y + linkCardBox!.height / 2,
+    );
+    await expect(page.locator(".cursor")).toContainText("Open external");
+    const copyButton = page.getByRole("button", { name: "コードをコピー" }).first();
+    await copyButton.scrollIntoViewIfNeeded();
+    const copyButtonBox = await copyButton.boundingBox();
+    expect(copyButtonBox).not.toBeNull();
+    await page.mouse.move(
+      copyButtonBox!.x + copyButtonBox!.width / 2,
+      copyButtonBox!.y + copyButtonBox!.height / 2,
+    );
+    await expect(page.locator(".cursor")).toContainText("Copy code");
+
+    await page.goto("/");
+    await page.waitForTimeout(750);
+    await page.evaluate(() => {
+      const section = document.querySelector<HTMLElement>("[data-home-about]");
+      if (section) scrollTo(0, section.offsetTop);
+    });
+    const profileIdentity = page.locator(".identity-copy");
+    await profileIdentity.scrollIntoViewIfNeeded();
+    const profileIdentityBox = await profileIdentity.boundingBox();
+    expect(profileIdentityBox).not.toBeNull();
+    await page.mouse.move(
+      profileIdentityBox!.x + profileIdentityBox!.width / 2,
+      profileIdentityBox!.y + profileIdentityBox!.height / 2,
+    );
+    await expect(page.locator(".cursor")).toContainText("Drag it!");
+
+    const contactList = page.locator(".contact-list");
+    const contactListBox = await contactList.boundingBox();
+    expect(contactListBox).not.toBeNull();
+    await page.mouse.move(
+      contactListBox!.x + contactListBox!.width - 4,
+      contactListBox!.y + contactListBox!.height / 2,
+    );
+    await expect(page.locator(".cursor")).toContainText("Drag it!");
+
+    const contactLink = contactList.locator("a").first();
+    const contactLinkBox = await contactLink.boundingBox();
+    expect(contactLinkBox).not.toBeNull();
+    await page.mouse.move(
+      contactLinkBox!.x + contactLinkBox!.width / 2,
+      contactLinkBox!.y + contactLinkBox!.height / 2,
+    );
+    await expect(page.locator(".cursor")).toHaveText("");
+    await expect(cursorShape).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(cursorShape).toHaveCSS(
+      "animation-name",
+      /cursor-settle-diamond/u,
+    );
+
+    await page.goto("/articles");
+    await page.getByRole("button", { name: "Display: Full" }).click();
+    const reducedPreview = page.locator('main a[data-cursor-label="View more"]').first();
+    const reducedPreviewBox = await reducedPreview.boundingBox();
+    expect(reducedPreviewBox).not.toBeNull();
+    await page.mouse.move(
+      reducedPreviewBox!.x + reducedPreviewBox!.width / 2,
+      reducedPreviewBox!.y + reducedPreviewBox!.height / 2,
+    );
+    await expect(page.locator("html")).toHaveAttribute("data-motion", "reduced");
+    await expect(page.locator(".cursor")).toContainText("View more");
   },
 );
 
@@ -459,7 +1090,7 @@ test("JavaScript-disabled reading and GET search remain usable", async ({ page }
 
   await page.goto("/articles");
   await page.getByRole("searchbox").fill("天候");
-  await page.getByRole("button", { name: "検索" }).click();
+  await page.getByRole("button", { name: "記事を検索" }).click();
   await expect(page).toHaveURL(/q=%E5%A4%A9%E5%80%99/u);
   await expect(page.getByRole("link", { name: /天候をインターフェースの環境情報にする/ }))
     .toBeVisible();
@@ -481,9 +1112,6 @@ test(
 test("legacy URLs use one-hop permanent redirects", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
   const cases = [
-    ["/talks", "/articles?category=talk"],
-    ["/talks/quiet-interfaces", "/articles/quiet-interfaces"],
-    ["/search?q=天候&type=talk", "/articles?q=%E5%A4%A9%E5%80%99&category=talk"],
     ["/about", "/#about"],
     ["/about?ref=legacy", "/?ref=legacy#about"],
     [
@@ -491,7 +1119,6 @@ test("legacy URLs use one-hop permanent redirects", async ({ page }, testInfo) =
       "/articles?q=%E5%A4%A9%E5%80%99&tag=Deno&category=engineering&sort=updated&view=grid",
     ],
     ["/archive/photos", "/archive?kind=photos"],
-    ["/og/talk/quiet-interfaces.png", "/og/article/quiet-interfaces.png"],
   ];
   for (const [from, to] of cases) {
     const response = await page.request.get(from, { maxRedirects: 0 });

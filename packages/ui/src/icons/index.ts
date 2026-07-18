@@ -1,4 +1,3 @@
-export { default as ArrowRightUpIcon } from "./ArrowRightUpIcon.svelte";
 export { default as GithubIcon } from "./GithubIcon.svelte";
 export { default as HeartIcon } from "./HeartIcon.svelte";
 export { default as Icon } from "./Icon.svelte";

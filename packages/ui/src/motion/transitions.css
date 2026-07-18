@@ -59,15 +59,42 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"][data-vi
 }
 
 ::view-transition-old(root) {
-  animation: page-exit var(--motion-duration-exit) var(--motion-ease-exit) both;
+  animation: none;
 }
 
 ::view-transition-new(root) {
-  animation: page-enter var(--motion-duration-page) var(--motion-ease-enter) both;
+  animation: none;
+}
+
+::view-transition-group(root) {
+  animation: none;
+}
+
+::view-transition-old(page-content) {
+  animation: page-exit var(--motion-duration-exit) var(--motion-ease-exit) both;
+}
+
+::view-transition-new(page-content) {
+  animation: page-enter var(--motion-duration-base) var(--motion-ease-enter)
+    var(--motion-duration-exit) both;
 }
 
 ::view-transition-group(*) {
   animation-duration: var(--motion-duration-page);
+  animation-timing-function: var(--motion-ease-enter);
+}
+
+::view-transition-group(page-content) {
+  animation-duration: calc(var(--motion-duration-exit) + var(--motion-duration-base));
+}
+
+html[data-catalog-transition="true"]::view-transition-old(page-content),
+html[data-catalog-transition="true"]::view-transition-new(page-content) {
+  animation: none;
+}
+
+html[data-catalog-transition="true"]::view-transition-group(*) {
+  animation-duration: var(--motion-duration-base);
   animation-timing-function: var(--motion-ease-enter);
 }
 
@@ -95,19 +122,4 @@ html[data-motion="off"]::view-transition-group(*) {
 
 html[data-smooth-anchor="true"] {
   scroll-behavior: smooth;
-}
-
-html[data-home-opening="true"][data-motion="full"] [data-home-opening] {
-  animation: home-opening var(--motion-duration-opening) var(--motion-ease-enter) both;
-}
-
-@keyframes home-opening {
-  from {
-    opacity: 0;
-    clip-path: inset(0 0 10% 0);
-  }
-  to {
-    opacity: 1;
-    clip-path: inset(0);
-  }
 }

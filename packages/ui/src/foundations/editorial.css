@@ -4,47 +4,57 @@
   width: min(100%, var(--prose-width));
   min-width: 0;
   font-size: var(--text-body);
-  line-height: var(--leading-body);
+  line-height: var(--leading-copy);
 }
 
 .prose h2,
 .prose h3 {
-  scroll-margin-top: var(--space-28);
+  scroll-margin-top: var(--article-anchor-offset);
   line-height: var(--leading-heading);
   text-wrap: pretty;
 }
 
 .prose h2 {
-  margin: var(--space-20) 0 var(--space-5);
-  font-size: var(--text-h2);
-  font-weight: var(--weight-title);
-  letter-spacing: var(--tracking-prose-heading);
+  margin: var(--space-16) 0 var(--space-5);
+  border-bottom: 1px solid var(--color-line);
+  padding-bottom: var(--space-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-prose-h2);
+  font-weight: var(--weight-component);
+  letter-spacing: var(--tracking-ui);
+}
+
+.prose > h2:first-child {
+  margin-top: 0;
 }
 
 .prose h3 {
-  margin: var(--space-12) 0 var(--space-4);
-  font-size: var(--text-h3);
-  font-weight: var(--weight-strong);
+  margin: var(--space-10) 0 var(--space-4);
+  font-family: var(--font-sans);
+  font-size: var(--text-prose-h3);
+  font-weight: var(--weight-component);
 }
 
 .prose p,
 .prose ul,
 .prose ol,
 .prose table {
-  margin-block: var(--space-5);
+  margin-block: var(--space-4);
 }
 
 .prose blockquote {
-  margin: var(--space-8) 0;
+  margin: var(--space-6) 0;
   border-left: 2px solid var(--color-accent);
-  padding: var(--space-2) 0 var(--space-2) var(--space-6);
+  padding: var(--space-1) var(--space-3);
   color: var(--color-muted);
-  font-family: var(--font-serif);
-  font-size: var(--text-h3);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
   line-height: var(--leading-copy);
 }
 
 .prose .annotation {
+  position: relative;
+  z-index: calc(var(--z-controls) + 1);
   margin-block: var(--space-8);
   border: 1px solid var(--color-line);
   border-left: 3px solid var(--color-secondary);
@@ -86,17 +96,31 @@
 
 .code-block {
   position: relative;
+  z-index: calc(var(--z-controls) + 1);
   overflow: hidden;
   margin-block: var(--space-8);
   border: 1px solid var(--color-line);
-  background: var(--color-surface);
+  background: var(--color-code-background);
+  color: var(--color-code-foreground);
+}
+
+.code-block pre,
+.code-block pre.shiki {
+  background: transparent !important;
+  color: var(--shiki-dark, var(--color-code-foreground)) !important;
+}
+
+.code-block span {
+  color: var(--shiki-dark, inherit) !important;
 }
 
 .code-block[data-title]::before {
-  display: block;
+  display: flex;
+  min-height: var(--space-10);
+  align-items: center;
   border-bottom: 1px solid var(--color-line);
-  padding: var(--space-2) var(--space-4);
-  color: var(--color-muted);
+  padding: var(--space-2) var(--space-12) var(--space-2) var(--space-4);
+  color: color-mix(in srgb, var(--color-code-foreground) 68%, transparent);
   content: attr(data-title);
   font-family: var(--font-mono);
   font-size: var(--text-caption);
@@ -111,10 +135,13 @@
 }
 
 .mermaid-source {
+  position: relative;
+  z-index: calc(var(--z-controls) + 1);
   overflow-x: auto;
   margin-block: var(--space-8);
   border: 1px solid var(--color-line);
   padding: var(--space-5);
+  background: var(--color-surface);
   white-space: pre-wrap;
 }
 

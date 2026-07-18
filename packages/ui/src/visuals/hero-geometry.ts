@@ -16,7 +16,7 @@ export function createHeroShapePositions(count: number): HeroShapePositions {
   const octahedron = new Float32Array(count * 3);
   const seeds = new Float32Array(count);
   const golden = Math.PI * (3 - Math.sqrt(5));
-  const mobiusBands = 14;
+  const mobiusBands = 20;
 
   for (let index = 0; index < count; index += 1) {
     const offset = index * 3;
@@ -36,10 +36,9 @@ export function createHeroShapePositions(count: number): HeroShapePositions {
     const sphereY = 1 - (index / Math.max(1, count - 1)) * 2;
     const sphereRadius = Math.sqrt(Math.max(0, 1 - sphereY * sphereY));
     const angle = index * golden;
-    const cloudScale = hash(index, 3) > 0.78 ? 0.34 + hash(index, 4) * 0.64 : 1;
-    sphere[offset] = sphereRadius * Math.cos(angle) * 1.12 * cloudScale;
-    sphere[offset + 1] = sphereY * 1.12 * cloudScale;
-    sphere[offset + 2] = sphereRadius * Math.sin(angle) * 1.12 * cloudScale;
+    sphere[offset] = sphereRadius * Math.cos(angle) * 1.12;
+    sphere[offset + 1] = sphereY * 1.12;
+    sphere[offset + 2] = sphereRadius * Math.sin(angle) * 1.12;
 
     const face = index % 8;
     const signX = face & 1 ? -1 : 1;

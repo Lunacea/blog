@@ -7,12 +7,13 @@
 ```text
 articles/<slug>/index.svx
 works/<slug>/index.svx
-talks/<slug>/index.svx
 archive/photos/<slug>/index.svx
 archive/places/<slug>/index.svx
 archive/wines/<slug>/index.svx
 archive/moments/<slug>/index.svx
 ```
+
+Talkは`category: talk`を持つArticleとして`articles/`へ配置し、独立した`talks/` routeは作成しません。
 
 安定IDは`<type>:<slug>`です。`related`にはこのIDを指定します。
 
@@ -55,7 +56,11 @@ revisions:
   figureの表示captionとaccessible nameにも使われる。
 - `$...$`と`$$...$$`はbuild時にKaTeX HTMLへ変換する。数式表示にclient-side JavaScriptは不要。
 - blockquote、表、リスト、引用、`<aside class="annotation">`を利用できる。
-- 外部リンクカードは`@lunacea/ui/components`から`LinkCard`をimportし、確認済みのtitle/description/siteを手入力する。外部ページの自動スクレイピングはしない。
+- 外部リンクカードは`@lunacea/ui/components`から`LinkCard`をimportし、
+  `<LinkCard href="https://example.com/article" />`と書く。追加・変更後に
+  `deno task links:refresh`を明示実行し、更新された
+  `packages/content/link-previews.json`と`apps/web/static/images/ogp/external/`を確認する。
+  通常のvalidation/buildは外部通信せず、cacheがないURLはvalidation errorになる。
 
 全機能の実例は[showcase記事](/app/packages/content/entries/articles/resilient-content-pipeline/index.svx)にあります。
 

@@ -56,17 +56,16 @@
 
   function isDragOrigin(target: EventTarget | null) {
     if (!(target instanceof Element)) return false;
-    if (target.closest(".profile-media")) return true;
-    return !target.closest("a, button, input, textarea, select, [contenteditable], p, h2, dt, dd");
+    return !target.closest("a, button, input, textarea, select, [contenteditable]");
   }
 
   function clamp(value: number, minimum: number, maximum: number) {
     return minimum > maximum ? (minimum + maximum) / 2 : Math.max(minimum, Math.min(maximum, value));
   }
 
-  function clampOffset(x: number, y: number) {
+  function offsetBounds() {
     const boundary = card.closest<HTMLElement>("[data-profile-boundary]") ?? card.parentElement;
-    if (!boundary) return { x, y };
+    if (!boundary) return null;
     const cardRect = card.getBoundingClientRect();
     const boundaryRect = boundary.getBoundingClientRect();
     const boundaryStyle = getComputedStyle(boundary);
@@ -78,19 +77,56 @@
     const minimumY = boundaryRect.top + parseFloat(boundaryStyle.paddingTop) - baseTop;
     const maximumY = boundaryRect.bottom - parseFloat(boundaryStyle.paddingBottom) -
       (baseTop + cardRect.height);
+    return { minimumX, maximumX, minimumY, maximumY };
+  }
+
+  function clampOffset(x: number, y: number) {
+    const bounds = offsetBounds();
+    if (!bounds) return { x, y };
     return {
-      x: clamp(x, minimumX, maximumX),
-      y: clamp(y, minimumY, maximumY),
+      x: clamp(x, bounds.minimumX, bounds.maximumX),
+      y: clamp(y, bounds.minimumY, bounds.maximumY),
     };
+  }
+
+  function overshootLimit() {
+    const value = getComputedStyle(document.documentElement).getPropertyValue("--space-6");
+    return Number.parseFloat(value) || 24;
+  }
+
+  function rubberBand(value: number, minimum: number, maximum: number) {
+    const limit = overshootLimit();
+    if (value < minimum) {
+      return minimum - limit * (1 - Math.exp(-(minimum - value) / limit));
+    }
+    if (value > maximum) {
+      return maximum + limit * (1 - Math.exp(-(value - maximum) / limit));
+    }
+    return value;
+  }
+
+  function elasticOffset(x: number, y: number) {
+    const bounds = offsetBounds();
+    if (!bounds) return { x, y };
+    return {
+      x: rubberBand(x, bounds.minimumX, bounds.maximumX),
+      y: rubberBand(y, bounds.minimumY, bounds.maximumY),
+    };
+  }
+
+  function applyOffset(x: number, y: number) {
+    offsetX = x;
+    offsetY = y;
+    card.style.setProperty("--card-x", `${offsetX.toFixed(2)}px`);
+    card.style.setProperty("--card-y", `${offsetY.toFixed(2)}px`);
   }
 
   function commitDrag() {
     dragFrame = 0;
-    const next = clampOffset(pendingX, pendingY);
-    offsetX = next.x;
-    offsetY = next.y;
-    card.style.setProperty("--card-x", `${offsetX.toFixed(2)}px`);
-    card.style.setProperty("--card-y", `${offsetY.toFixed(2)}px`);
+    const next = motionIsFull()
+      ? elasticOffset(pendingX, pendingY)
+      : clampOffset(pendingX, pendingY);
+    applyOffset(next.x, next.y);
   }
 
   function startDrag(event: PointerEvent) {
@@ -129,7 +165,6 @@
       }
       pointerIntent = "drag";
       dragging = true;
-      card.setPointerCapture(event.pointerId);
     }
     if (pointerIntent !== "drag") return;
     event.preventDefault();
@@ -138,8 +173,8 @@
     const elapsed = Math.max(8, event.timeStamp - pointerTime);
     const horizontalDelta = event.clientX - pointerX;
     const verticalDelta = event.clientY - pointerY;
-    velocityX = clamp(velocityX * .55 + horizontalDelta / elapsed * .45, -.7, .7);
-    velocityY = clamp(velocityY * .55 + verticalDelta / elapsed * .45, -.7, .7);
+    velocityX = clamp(velocityX * .5 + horizontalDelta / elapsed * .5, -1.05, 1.05);
+    velocityY = clamp(velocityY * .5 + verticalDelta / elapsed * .5, -1.05, 1.05);
     if (motionIsFull() && event.pointerType !== "touch") {
       surface.style.setProperty(
         "--card-rotate-x",
@@ -169,23 +204,24 @@
       commitDrag();
     }
     const wasDragging = pointerIntent === "drag";
-    const hasCapture = card.hasPointerCapture(event.pointerId);
     dragging = false;
     pointerId = null;
     pointerIntent = "idle";
-    if (hasCapture) card.releasePointerCapture(event.pointerId);
     if (wasDragging && motionIsFull()) startInertia();
     else resetTilt();
   }
 
   function startInertia() {
     const speed = Math.hypot(velocityX, velocityY);
-    if (speed < .035) {
-      resetTilt();
+    const settled = clampOffset(offsetX, offsetY);
+    const boundaryDistance = Math.hypot(settled.x - offsetX, settled.y - offsetY);
+    if (speed < .035 && boundaryDistance < .5) {
+      stopInertia();
       return;
     }
     inertial = true;
-    let previous = performance.now();
+    const started = performance.now();
+    let previous = started;
     const step = (now: number) => {
       if (!motionIsFull()) {
         stopInertia();
@@ -193,15 +229,32 @@
       }
       const elapsed = Math.min(32, now - previous);
       previous = now;
-      const candidateX = offsetX + velocityX * elapsed;
-      const candidateY = offsetY + velocityY * elapsed;
-      const next = clampOffset(candidateX, candidateY);
-      if (Math.abs(next.x - candidateX) > .5) velocityX = 0;
-      if (Math.abs(next.y - candidateY) > .5) velocityY = 0;
-      offsetX = next.x;
-      offsetY = next.y;
-      card.style.setProperty("--card-x", `${offsetX.toFixed(2)}px`);
-      card.style.setProperty("--card-y", `${offsetY.toFixed(2)}px`);
+      const bounds = offsetBounds();
+      if (!bounds) {
+        applyOffset(offsetX + velocityX * elapsed, offsetY + velocityY * elapsed);
+      } else {
+        const springScale = elapsed / 16;
+        const targetX = clamp(offsetX, bounds.minimumX, bounds.maximumX);
+        const targetY = clamp(offsetY, bounds.minimumY, bounds.maximumY);
+        velocityX += (targetX - offsetX) * .022 * springScale;
+        velocityY += (targetY - offsetY) * .022 * springScale;
+        const candidateX = offsetX + velocityX * elapsed;
+        const candidateY = offsetY + velocityY * elapsed;
+        const limit = overshootLimit();
+        const nextX = clamp(
+          candidateX,
+          bounds.minimumX - limit,
+          bounds.maximumX + limit,
+        );
+        const nextY = clamp(
+          candidateY,
+          bounds.minimumY - limit,
+          bounds.maximumY + limit,
+        );
+        if (nextX !== candidateX) velocityX *= -.34;
+        if (nextY !== candidateY) velocityY *= -.34;
+        applyOffset(nextX, nextY);
+      }
       if (!coarseDrag) {
         surface.style.setProperty(
           "--card-rotate-x",
@@ -216,10 +269,15 @@
         "--card-rotate-z",
         `${clamp(velocityX * 2.6, -1.8, 1.8).toFixed(2)}deg`,
       );
-      const damping = Math.pow(.88, elapsed / 16);
+      const damping = Math.pow(.86, elapsed / 16);
       velocityX *= damping;
       velocityY *= damping;
-      if (Math.hypot(velocityX, velocityY) < .018) {
+      const settled = clampOffset(offsetX, offsetY);
+      const boundaryDistance = Math.hypot(settled.x - offsetX, settled.y - offsetY);
+      if (
+        now - started > 3600 ||
+        (Math.hypot(velocityX, velocityY) < .018 && boundaryDistance < .5)
+      ) {
         stopInertia();
         return;
       }
@@ -234,6 +292,10 @@
     inertial = false;
     velocityX = 0;
     velocityY = 0;
+    if (card) {
+      const next = clampOffset(offsetX, offsetY);
+      applyOffset(next.x, next.y);
+    }
     if (surface) resetTilt();
   }
 
@@ -287,12 +349,11 @@
     if (boundary) resizeObserver.observe(boundary);
     introductionObserver.observe(card);
     card.addEventListener("pointerdown", startDrag);
-    card.addEventListener("pointermove", moveDrag);
     card.addEventListener("pointerup", stopDrag);
     card.addEventListener("pointercancel", stopDrag);
-    card.addEventListener("lostpointercapture", stopDrag);
     card.addEventListener("pointerleave", resetTilt);
     window.addEventListener("resize", keepInBounds);
+    window.addEventListener("pointermove", moveDrag);
     window.addEventListener("pointerup", stopDrag);
     window.addEventListener("pointercancel", stopDrag);
     return () => {
@@ -302,12 +363,11 @@
       resizeObserver.disconnect();
       introductionObserver.disconnect();
       card.removeEventListener("pointerdown", startDrag);
-      card.removeEventListener("pointermove", moveDrag);
       card.removeEventListener("pointerup", stopDrag);
       card.removeEventListener("pointercancel", stopDrag);
-      card.removeEventListener("lostpointercapture", stopDrag);
       card.removeEventListener("pointerleave", resetTilt);
       window.removeEventListener("resize", keepInBounds);
+      window.removeEventListener("pointermove", moveDrag);
       window.removeEventListener("pointerup", stopDrag);
       window.removeEventListener("pointercancel", stopDrag);
     };
@@ -321,6 +381,8 @@
   class:introduced
   data-dragging={dragging}
   data-inertial={inertial}
+  data-cursor="drag"
+  data-cursor-label="Drag it!"
   bind:this={card}
 >
   <div
@@ -340,7 +402,7 @@
 
     <nav class="contact-list" aria-label="連絡先">
       {#if github}
-        <a href={github} rel="me">
+        <a href={github} rel="me" data-cursor="interactive">
           <span class="contact-icon"><Icon name={socialIcons.github} /></span>
           <span>GitHub</span>
         </a>
@@ -351,7 +413,7 @@
         </span>
       {/if}
       {#if x}
-        <a href={x} rel="me">
+        <a href={x} rel="me" data-cursor="interactive">
           <span class="contact-icon"><Icon name={socialIcons.x} /></span>
           <span>X</span>
         </a>
@@ -362,7 +424,7 @@
         </span>
       {/if}
       {#if emailHref}
-        <a href={emailHref}>
+        <a href={emailHref} data-cursor="interactive">
           <span class="contact-icon email-icon"><Icon name={socialIcons.email} /></span>
           <span>Email</span>
         </a>

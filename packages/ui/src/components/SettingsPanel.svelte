@@ -7,167 +7,95 @@
     subscribeMotionCapabilities,
     type MotionPreference,
   } from "../motion/preferences";
-  import * as Collapsible from "../primitives/collapsible";
-  import Icon from "../icons/Icon.svelte";
-  import { interfaceIcons } from "../icons/semantic.ts";
-  import { announceHeaderDisclosure, listenForHeaderDisclosure } from "./header-disclosures.ts";
+  import MotionGlyph from "../icons/MotionGlyph.svelte";
+
+  type Connection = { saveData?: boolean };
 
   let motion = $state<MotionPreference>("reduced");
   let ready = $state(false);
-  let open = $state(false);
+  let motionFeedback = $state(false);
+  const modes: MotionPreference[] = ["full", "reduced", "off"];
+  const modeLabels: Record<MotionPreference, string> = {
+    full: "Full",
+    reduced: "Reduced",
+    off: "Off",
+  };
+  const nextMotion = $derived(modes[(modes.indexOf(motion) + 1) % modes.length]);
 
-  $effect(() => {
-    if (open) announceHeaderDisclosure("display");
-  });
+  function canAnimateFeedback() {
+    const connection = (navigator as Navigator & { connection?: Connection }).connection;
+    return !matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      !matchMedia("(forced-colors: active)").matches &&
+      !connection?.saveData;
+  }
 
   onMount(() => {
     motion = readMotionPreference();
     applyMotionPreference(motion);
     ready = true;
+    motionFeedback = canAnimateFeedback();
     const stopCapabilities = subscribeMotionCapabilities(() => {
       applyMotionPreference(motion);
+      motionFeedback = canAnimateFeedback();
     });
-    const stopDisclosure = listenForHeaderDisclosure("display", () => open = false);
-    return () => {
-      stopCapabilities();
-      stopDisclosure();
-    };
+    return stopCapabilities;
   });
 
-  function setMotion(value: MotionPreference) {
-    motion = value;
-    setMotionPreference(value);
+  function cycleMotion() {
+    motion = nextMotion;
+    setMotionPreference(motion);
   }
 </script>
 
-<Collapsible.Root class="settings" data-ready={ready} bind:open>
-  <Collapsible.Trigger class="settings-trigger">
-    <Icon name={interfaceIcons.display} />Display
-  </Collapsible.Trigger>
-  <Collapsible.Content class="panel">
-    <div class="motion-options" role="group" aria-label="Motion">
-      <span>Motion</span>
-      {#each [["full", "Full"], ["reduced", "Reduced"], ["off", "Off"]] as option}
-        <button
-          type="button"
-          aria-pressed={motion === option[0]}
-          onclick={() => setMotion(option[0] as MotionPreference)}
-        >
-          {option[1]}
-        </button>
-      {/each}
-    </div>
-  </Collapsible.Content>
-</Collapsible.Root>
+<button
+  class="settings-trigger"
+  type="button"
+  data-ready={ready}
+  data-mode={motion}
+  data-motion-feedback={motionFeedback}
+  aria-label={`Display: ${modeLabels[motion]}。${modeLabels[nextMotion]}に切り替える`}
+  title={`Display: ${modeLabels[motion]}`}
+  onclick={cycleMotion}
+>
+  <MotionGlyph mode={motion} />
+</button>
 
 <style>
-  :global(.settings) {
-    position: relative;
-  }
-
-  :global(.settings-trigger) {
-    display: flex;
-    min-width: var(--control-size);
+  .settings-trigger {
+    display: grid;
+    width: var(--control-size);
     min-height: var(--control-size);
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    font-size: var(--text-caption);
-    list-style: none;
-    color: var(--color-muted);
-  }
-
-  :global(.settings-trigger:hover),
-  :global(.settings-trigger[data-state="open"]) { color: var(--color-foreground); }
-
-  :global(.settings-trigger svg) {
-    font-size: var(--text-small);
-  }
-
-  :global(.panel) {
-    position: absolute;
-    right: 0;
-    top: calc(100% + var(--space-2));
-    display: grid;
-    justify-items: end;
-    min-width: 8rem;
-    gap: var(--space-3);
-    transform-origin: top right;
-  }
-
-  :global(.panel[data-state="open"]) {
-    animation: disclosure-in var(--motion-duration-base) var(--motion-ease-enter);
-  }
-
-  :global(.panel[data-state="closed"]) {
-    animation: disclosure-out var(--motion-duration-fast) var(--motion-ease-exit);
-  }
-
-  .motion-options {
-    display: grid;
-    justify-items: end;
-    gap: var(--space-3);
-    font-size: var(--text-small);
-  }
-
-  .motion-options > span {
-    color: var(--color-muted);
-    font-size: var(--text-caption);
-  }
-
-  .motion-options button {
+    place-items: center;
     border: 0;
     padding: 0;
     background: transparent;
-    color: var(--color-muted);
     cursor: pointer;
-    font: inherit;
-    text-decoration-line: underline;
-    text-decoration-color: transparent;
-    text-underline-offset: var(--space-2);
-    transition: color var(--motion-duration-fast) var(--motion-ease-standard),
-      text-decoration-color var(--motion-duration-fast) var(--motion-ease-standard);
+    color: var(--color-muted);
+    transition:
+      color var(--motion-duration-fast) var(--motion-ease-standard),
+      background var(--motion-duration-fast) var(--motion-ease-standard);
   }
 
-  .motion-options button:hover,
-  .motion-options button:focus-visible,
-  .motion-options button[aria-pressed="true"] {
-    color: var(--color-foreground);
-    text-decoration-color: currentColor;
+  .settings-trigger:hover,
+  .settings-trigger:focus-visible {
+    color: var(--color-background);
+    background: var(--color-foreground);
   }
 
-  .motion-options button[aria-pressed="true"]::before {
-    content: "";
-    display: inline-block;
-    width: var(--space-2);
-    height: 1px;
-    margin-right: var(--space-2);
-    background: currentColor;
-    vertical-align: middle;
+  :global(html[data-motion-preference="full"][data-motion="full"])
+    .settings-trigger[data-mode="full"][data-motion-feedback="true"]:hover
+    :global(.motion-glyph path),
+  :global(html[data-motion-preference="reduced"][data-motion="reduced"])
+    .settings-trigger[data-mode="reduced"][data-motion-feedback="true"]:hover
+    :global(.motion-glyph path) {
+    animation: motion-wave-phase var(--motion-duration-resume) linear infinite;
+    animation-duration: var(--motion-duration-resume) !important;
+    animation-iteration-count: infinite !important;
   }
 
-  @keyframes disclosure-in {
-    from {
-      opacity: 0;
-      transform: translateY(calc(var(--space-2) * -1));
-    }
-  }
-
-  @keyframes disclosure-out {
+  @keyframes motion-wave-phase {
     to {
-      opacity: 0;
-      transform: translateY(calc(var(--space-2) * -1));
-    }
-  }
-
-  @media (max-width: 34rem) {
-    :global(.settings-trigger) {
-      width: var(--control-size);
-      overflow: hidden;
-      white-space: nowrap;
+      transform: translateX(-24px);
     }
   }
 </style>

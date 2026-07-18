@@ -53,7 +53,7 @@ export function applyMotionPreference(motionPreference = readMotionPreference())
 
 export function setThemePreference(preference: ThemePreference) {
   localStorage.setItem(themeKey, preference);
-  const state = { ...applyThemePreference(preference), ...applyMotionPreference() };
+  const state = applyThemePreference(preference);
   globalThis.dispatchEvent(new CustomEvent("lunacea:theme", { detail: state }));
   return state;
 }

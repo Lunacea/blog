@@ -17,7 +17,7 @@
   } = $props();
 </script>
 
-<div class="page shell">
+<div class="page shell content-shell">
   <header class="index-header" data-reveal>
     <p class="eyebrow">{eyebrow}</p>
     <h1 class="page-title">{title}</h1>

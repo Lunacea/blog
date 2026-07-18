@@ -55,25 +55,22 @@
     color: var(--color-muted);
     cursor: pointer;
     font-size: var(--space-5);
-    transform-origin: center;
-    transition: color var(--motion-duration-fast) var(--motion-ease-standard),
-      transform var(--motion-duration-fast) var(--motion-ease-enter);
+    transition: color var(--motion-duration-fast) var(--motion-ease-standard);
   }
 
-  .theme-toggle:hover,
   .theme-toggle[aria-pressed="true"] {
     color: var(--color-foreground);
   }
 
-  .theme-toggle:hover {
-    transform: rotate(8deg) scale(1.08);
+  .theme-toggle:hover,
+  .theme-toggle:focus-visible {
+    color: var(--color-accent);
   }
 
-  .theme-toggle:active {
-    transform: rotate(2deg) scale(.94);
-  }
-
-  .title-toggle {
+  .title-toggle,
+  .title-toggle:hover,
+  .title-toggle:focus-visible,
+  .title-toggle[aria-pressed="true"] {
     width: 100%;
     min-height: 100%;
     color: var(--color-accent);
@@ -82,7 +79,6 @@
   }
 
   .title-toggle:hover {
-    color: var(--color-primary);
     transform: rotate(6deg) scale(1.04);
   }
 

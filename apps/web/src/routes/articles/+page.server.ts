@@ -36,6 +36,11 @@ export function load({ url, setHeaders }) {
         | Article
         | undefined)?.cover,
   }));
+  const categories = [
+    ...new Set(documents.flatMap((entry) => entry.category ? [entry.category] : [])),
+  ]
+    .sort();
+  const tags = [...new Set(documents.flatMap((entry) => entry.tags))].sort();
 
   return {
     query,
@@ -43,6 +48,22 @@ export function load({ url, setHeaders }) {
     sort,
     view,
     entries,
+    facets: {
+      categories,
+      tags,
+      categoryCounts: Object.fromEntries(
+        categories.map((category) => [
+          category,
+          documents.filter((entry) => entry.category === category).length,
+        ]),
+      ),
+      tagCounts: Object.fromEntries(
+        tags.map((candidate) => [
+          candidate,
+          documents.filter((entry) => entry.tags.includes(candidate)).length,
+        ]),
+      ),
+    },
     isFiltered: Boolean(query || filters.category || filters.tag || sort !== "published"),
   };
 }

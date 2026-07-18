@@ -1,5 +1,6 @@
 import { parse as parseYaml } from "@std/yaml";
 import { type Content, contentId, contentSchema } from "@lunacea/schemas";
+import linkPreviews from "./link-previews.json" with { type: "json" };
 
 async function collectFiles(directory: string): Promise<string[]> {
   const files: string[] = [];
@@ -34,6 +35,13 @@ for (const path of files) {
     const source = await Deno.readTextFile(path);
     if (/!\[[^\]]*\]\(https?:\/\//u.test(source) || /<img[^>]+src=["']https?:\/\//u.test(source)) {
       errors.push(`${path}: remote images are not allowed`);
+    }
+    for (
+      const match of source.matchAll(/<LinkCard\b[^>]*\bhref=["'](https?:\/\/[^"']+)["']/gu)
+    ) {
+      if (!(match[1] in linkPreviews)) {
+        errors.push(`${path}: link preview cache is missing: ${match[1]}`);
+      }
     }
     const parsed = contentSchema.parse(frontmatter(source, path)) as Content;
     const id = contentId(parsed);

@@ -24,6 +24,7 @@
     "fonts:generate": "deno run -A packages/ui/scripts/generate-fonts.ts",
     "fonts:check": "deno run -A packages/ui/scripts/check-fonts.ts",
     "images:generate": "deno run -A apps/web/scripts/generate-images.ts",
+    "links:refresh": "deno run -A apps/web/scripts/refresh-link-previews.ts",
     "content:generate": "deno run --allow-read --allow-write packages/content/generate.ts",
     "budget:check": "deno run --allow-read apps/web/scripts/check-budget.ts",
     "design:check": "deno run --allow-read scripts/check-design-system.ts",

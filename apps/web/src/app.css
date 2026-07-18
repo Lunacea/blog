@@ -2,7 +2,23 @@
 
 .page {
   min-height: 65vh;
-  padding-block: var(--section-space);
+  padding-block: var(--page-start-clearance) var(--section-space);
+}
+
+.catalog-page {
+  min-height: calc(100vh + 24rem);
+}
+
+.content-shell {
+  width: min(
+    calc(100% - (2 * var(--layout-gutter)) - var(--header-inline-reserve)),
+    var(--content-width)
+  );
+  margin-inline-start: max(
+    var(--layout-gutter),
+    calc((100% - var(--content-width) - var(--header-inline-reserve)) / 2)
+  );
+  margin-inline-end: auto;
 }
 
 .eyebrow {
@@ -60,6 +76,13 @@
 @media (max-width: 44rem) {
   body {
     background: var(--color-background);
+  }
+}
+
+@media (max-width: 52rem) {
+  .content-shell {
+    width: min(calc(100% - (2 * var(--layout-gutter))), var(--content-width));
+    margin-inline: auto;
   }
 }
 

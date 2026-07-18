@@ -1,19 +1,21 @@
 <script lang="ts">
   import { dev } from "$app/environment";
   import { page } from "$app/state";
-  import { siteConfig, visualAssets } from "@lunacea/config";
-  import ThemeToggle from "$ui/components/ThemeToggle.svelte";
-  import { EngineeringProfile, GlassProfileCard } from "$ui/patterns";
-  import type { ApprovedIconName } from "$ui/icons";
-  import AmbientHero from "$ui/visuals/AmbientHero.svelte";
-  import { parseWeatherVisualOverride } from "$ui/visuals";
-  import { getWeatherContext } from "$lib/weather-context.ts";
-  import PageHead from "$lib/components/PageHead.svelte";
   import HomeSnapController from "$lib/components/HomeSnapController.svelte";
+  import PageHead from "$lib/components/PageHead.svelte";
+  import { getWeatherContext } from "$lib/weather-context.ts";
+  import ThemeToggle from "$ui/components/ThemeToggle.svelte";
+  import type { ApprovedIconName } from "$ui/icons";
+  import { EngineeringProfile, GlassProfileCard } from "$ui/patterns";
+  import { MediaSlot, parseWeatherVisualOverride } from "$ui/visuals";
+  import AmbientHero from "$ui/visuals/AmbientHero.svelte";
+  import { siteConfig, visualAssets } from "@lunacea/config";
 
   const weather = getWeatherContext();
   const devWeather = $derived(
-    dev ? parseWeatherVisualOverride(page.url.searchParams.get("weather")) : null,
+    dev
+      ? parseWeatherVisualOverride(page.url.searchParams.get("weather"))
+      : null,
   );
   const engineeringCategories: readonly {
     title: string;
@@ -76,30 +78,61 @@
   const structured = {
     "@context": "https://schema.org",
     "@graph": [
-      { "@type": "WebSite", name: siteConfig.name, url: siteConfig.url, description: siteConfig.description },
-      { "@type": "Person", name: siteConfig.author.name, url: siteConfig.url, ...(sameAs.length ? { sameAs } : {}) },
+      {
+        "@type": "WebSite",
+        name: siteConfig.name,
+        url: siteConfig.url,
+        description: siteConfig.description,
+      },
+      {
+        "@type": "Person",
+        name: siteConfig.author.name,
+        url: siteConfig.url,
+        ...(sameAs.length ? { sameAs } : {}),
+      },
     ],
   };
 </script>
 
-<PageHead title={siteConfig.title} description={siteConfig.description} path="/" />
+<PageHead
+  title={siteConfig.title}
+  description={siteConfig.description}
+  path="/"
+/>
 <HomeSnapController />
-<svelte:head><script type="application/ld+json">{JSON.stringify(structured)}</script></svelte:head>
+<svelte:head
+  ><script type="application/ld+json">
+{JSON.stringify(structured)}
+  </script></svelte:head
+>
 
 <div class="home-continuum">
-  <div class="visual-surface"><AmbientHero weather={devWeather ?? $weather.visual} /></div>
+  <div class="visual-surface">
+    <AmbientHero weather={devWeather ?? $weather.visual} />
+  </div>
+  {#if visualAssets.heroOrganic.src}
+    <div class="foliage">
+      <MediaSlot asset={visualAssets.heroOrganic} showPlaceholder={false} />
+    </div>
+  {/if}
 
-  <section class="home-section intro" aria-labelledby="home-title" data-home-opening>
-    <p class="intro-copy">
-      コード、研究、写真、土地の記憶を、<br />静かに読み継げる形へ。
-    </p>
+  <section
+    class="home-section intro"
+    aria-labelledby="home-title"
+    data-home-intro
+  >
+    <p class="intro-copy">Web Developer</p>
     <div class="title-block">
       <h1 id="home-title" aria-label="Lunacea">
-        <span aria-hidden="true">Luna</span><span class="title-glyph"><ThemeToggle placement="title" /></span><span aria-hidden="true">ea</span>
+        <span aria-hidden="true">Luna</span><span class="title-glyph"
+          ><ThemeToggle placement="title" /></span
+        ><span aria-hidden="true">ea</span>
       </h1>
       <p>Quiet structures, durable records.</p>
     </div>
-    <a class="about-link" href="#about">プロフィールを見る</a>
+    <a class="about-link" href="#about">
+      <i aria-hidden="true"></i><span>View profile</span>
+    </a>
   </section>
 
   <section
@@ -119,7 +152,8 @@
         email={siteConfig.author.email}
       />
       <p class="about-introduction">
-        計算機と空間の間にあるインターフェースを研究し、長く読めるソフトウェアと記録の形を作ります。
+        Cold Logic, Warm UX.<br />
+        静かで、確かな、インタラクティブな体験を。
       </p>
       <EngineeringProfile categories={engineeringCategories} />
     </div>
@@ -145,6 +179,43 @@
     pointer-events: auto;
   }
 
+  .foliage {
+    position: absolute;
+    z-index: calc(var(--z-visual) + 1);
+    top: calc(var(--space-12) * -1);
+    right: calc(var(--space-8) * -1);
+    width: min(34vw, 31rem);
+    pointer-events: none;
+    transform-origin: 100% 0;
+  }
+
+  .foliage :global(.media-slot) {
+    overflow: visible;
+  }
+
+  :global(html[data-motion="full"]) .foliage {
+    animation: foliage-grow var(--motion-duration-opening) var(--motion-ease-enter) both;
+  }
+
+  :global(html[data-motion="full"]) .foliage :global(img) {
+    animation: foliage-breathe calc(var(--motion-duration-ambient) * 1.5)
+      var(--motion-ease-standard) infinite alternate;
+    transform-origin: 86% 8%;
+  }
+
+  @keyframes foliage-grow {
+    from {
+      opacity: 0;
+      transform: scale(.72) rotate(4deg);
+    }
+  }
+
+  @keyframes foliage-breathe {
+    to {
+      transform: rotate(-1.2deg) scale(1.012);
+    }
+  }
+
   .home-section {
     position: relative;
     z-index: var(--z-visual);
@@ -166,6 +237,7 @@
   }
 
   .intro-copy {
+    font-family: var(--font-serif);
     max-width: 25rem;
     margin: env(safe-area-inset-top) 0 0;
     color: var(--color-muted);
@@ -189,14 +261,14 @@
 
   .title-glyph {
     display: inline-flex;
-    width: .792em;
-    height: .792em;
-    margin-inline: -.02em -.04em;
+    width: 0.792em;
+    height: 0.792em;
+    margin-inline: -0.02em -0.04em;
     align-items: center;
     justify-content: center;
     color: var(--color-accent);
     font-size: var(--text-title-glyph);
-    vertical-align: .03em;
+    vertical-align: 0.03em;
   }
 
   .title-glyph :global(.theme-glyph) {
@@ -212,12 +284,43 @@
   }
 
   .about-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
     align-self: end;
     justify-self: end;
     min-height: var(--control-size);
     color: var(--color-muted);
-    font-size: var(--text-small);
+    font-family: var(--font-serif);
+    font-size: var(--text-body);
     text-decoration: none;
+  }
+
+  .about-link i {
+    position: relative;
+    width: 2px;
+    height: var(--space-10);
+    overflow: hidden;
+    background: var(--color-line);
+  }
+
+  .about-link i::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    height: 45%;
+    background: currentColor;
+    content: "";
+  }
+
+  :global(html[data-motion="full"]) .about-link i::after {
+    animation: scroll-indicator var(--motion-duration-resume) var(--motion-ease-standard) infinite;
+  }
+
+  @keyframes scroll-indicator {
+    from { transform: translateY(-110%); }
+    to { transform: translateY(240%); }
   }
 
   .about {
@@ -243,7 +346,6 @@
     max-width: var(--prose-width);
     margin: 0;
     padding: var(--space-3) var(--space-4);
-    background: color-mix(in srgb, var(--color-background) 72%, transparent);
     color: var(--color-foreground);
     line-height: var(--leading-copy);
     text-align: center;
@@ -256,6 +358,12 @@
 
     .about-content {
       gap: var(--space-10);
+    }
+
+    .foliage {
+      top: calc(var(--space-8) * -1);
+      right: calc(var(--space-10) * -1);
+      width: min(48vw, 22rem);
     }
 
   }
@@ -275,6 +383,5 @@
       background: transparent;
       font-size: var(--text-small);
     }
-
   }
 </style>

@@ -98,7 +98,7 @@ async function assertStory(
       waitUntil: "networkidle",
     });
     if (!response?.ok()) throw new Error(`${story.id}: HTTP ${response?.status() ?? "unknown"}`);
-    if (!(await page.locator("body").innerText()).trim()) {
+    if (!(await page.locator("#storybook-root > *").count())) {
       throw new Error(`${story.id}: empty body`);
     }
     if (runtimeErrors.length) throw new Error(`${story.id}: ${runtimeErrors.join(" | ")}`);
@@ -281,7 +281,9 @@ async function checkHeaderKeyboard(
   }
   const links = await page.getByRole("navigation", { name: "主要ナビゲーション（モバイル）" })
     .getByRole("link").allTextContents();
-  if (links.map((label) => label.replace(/^\d+/u, "")).join(",") !== "Articles,Works,Archive") {
+  if (
+    links.map((label) => label.replace(/^\d+/u, "")).join(",") !== "Home,Articles,Works,Archive"
+  ) {
     throw new Error(`SiteHeader mobile menu has unexpected links: ${links.join(", ")}`);
   }
   await page.keyboard.press("Escape");

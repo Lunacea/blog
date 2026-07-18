@@ -13,9 +13,9 @@ are public identifiers. `legacyIds` and `legacyPaths` preserve deliberately migr
 aliases must be globally unique and must never point to more than one entry.
 
 Talks are Articles with `category: talk`. Migrated Talks use `article:slug` canonically and retain
-`talk:slug` plus `/talks/slug` as aliases. Their RSS GUID and Atom ID remain the old absolute Talk
-URL. Their anonymous-reaction storage target also remains the legacy ID so no KV actor state is
-copied.
+`talk:slug` plus `/talks/slug` as data aliases for feed identity and storage lookup only; deleted
+`/talks` public routes are not served. Their RSS GUID and Atom ID remain the old absolute Talk URL.
+Their anonymous-reaction storage target also remains the legacy ID so no KV actor state is copied.
 
 ## Types
 
@@ -40,5 +40,8 @@ never triggers generated decorative artwork.
 ## Validation
 
 Build validation checks frontmatter, stable and legacy ID uniqueness, slug/directory agreement,
-related IDs, internal links, local cover assets, and remote image hotlinks. It does not perform
-network requests or weaken schemas to accommodate invalid content.
+related IDs, internal links, local cover assets, remote image hotlinks, and a Git-managed preview
+cache entry for every external `LinkCard` URL. It does not perform network requests or weaken
+schemas to accommodate invalid content. Preview metadata is refreshed only through
+`deno task links:refresh`; generated metadata JSON and local WebP assets are reviewed and committed
+with the content that references them.

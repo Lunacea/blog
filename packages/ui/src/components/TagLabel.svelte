@@ -31,9 +31,10 @@
     min-height: var(--space-8);
     align-items: center;
     gap: var(--space-1);
-    border-bottom: 1px solid var(--color-line);
+    border: 1px solid var(--color-foreground);
     padding-inline: var(--space-2);
-    color: var(--color-muted);
+    color: var(--color-background);
+    background: var(--color-foreground);
     font-family: var(--font-sans);
     font-size: var(--text-caption);
     text-decoration: none;
@@ -47,6 +48,7 @@
   a.tag-label:hover,
   a.tag-label:focus-visible {
     border-color: var(--color-accent);
-    color: var(--color-foreground);
+    color: var(--color-black);
+    background: var(--color-accent);
   }
 </style>

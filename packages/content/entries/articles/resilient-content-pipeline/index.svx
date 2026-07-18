@@ -74,11 +74,6 @@ $t = \max(1, \lceil w / r \rceil)$ と表せる。数式を含まない記事に
 検証エラーは黙って補完しない。該当ファイルとフィールドを示してCIを失敗させることで、
 壊れた一覧やOGPが本番へ到達する前に修正できる。
 
-<LinkCard
-  href="https://docs.deno.com/deploy/reference/frameworks/"
-  site="docs.deno.com"
-  title="Frameworks — Deno Deploy"
-  description="SvelteKitのネイティブ対応を確認するための公式資料。表示内容はfrontmatterと同様に執筆者が手動で管理する。"
-/>
+<LinkCard href="https://docs.deno.com/deploy/reference/frameworks/" />
 
 <p class="source-note"><sup>1</sup> 参照: <cite><a href="https://docs.deno.com/deploy/reference/builds/">Deno Deploy Builds</a></cite>（2026-07-10確認）。</p>

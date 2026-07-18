@@ -4,6 +4,7 @@
   import { siteConfig } from "@lunacea/config";
   import { parseFilterQuery, updateFilterQuery } from "@lunacea/core/filter-query.ts";
   import { FilterSelector } from "$ui/components";
+  import CatalogControls from "$lib/components/CatalogControls.svelte";
   import PageHead from "$lib/components/PageHead.svelte";
   import ResponsiveImage from "$lib/components/ResponsiveImage.svelte";
 
@@ -53,6 +54,10 @@
       (!filters.tag || entry.tags.includes(filters.tag));
   }
 
+  const activeFilterCount = $derived(
+    [filters.q, filters.kind, filters.year, filters.tag].filter(Boolean).length,
+  );
+
   onMount(() => {
     const handlePopstate = () => readLocation();
     enhanced = true;
@@ -68,25 +73,27 @@
   path="/archive"
 />
 
-<div class="page shell">
+<div class="page shell content-shell catalog-page">
   <header class="archive-header" data-reveal>
-    <p class="eyebrow">Fragments / Personal records</p>
     <h1 class="page-title">Archive</h1>
-    <p class="lead">日記、写真、場所、ワイン、瞬間を、時間と場所の手掛かりとともに残します。</p>
   </header>
 
-  <section class="catalog-controls" aria-label="アーカイブの検索と絞り込み">
-    <form method="GET" role="search" onsubmit={apply}>
-      <label for="archive-query">記録を検索</label>
-      <div class="search-row"><input id="archive-query" type="search" name="q" value={filters.q} maxlength="120" /><button type="submit">検索</button></div>
-    </form>
-    <FilterSelector label="Kind" options={kinds.map((kind) => ({ label: kind, href: href({ kind: filters.kind === kind ? "" : kind }), active: filters.kind === kind }))} />
-    <FilterSelector label="Tag" options={representativeTags.map((tag) => ({ label: tag, href: href({ tag: filters.tag === tag ? "" : tag }), active: filters.tag === tag }))} />
-    <details><summary>年で絞り込む</summary><FilterSelector label="Year" options={years.map((year) => ({ label: year, href: href({ year: filters.year === year ? "" : year }), active: filters.year === year }))} /></details>
-    {#if filters.q || filters.kind || filters.year || filters.tag}<a class="clear" href="/archive">条件を解除</a>{/if}
-  </section>
+  <CatalogControls
+    searchId="archive-query"
+    searchLabel="記録を検索"
+    searchValue={filters.q}
+    resultCount={entries.filter((entry) => !enhanced || matches(entry)).length}
+    {activeFilterCount}
+    clearHref={filters.q || filters.kind || filters.year || filters.tag
+      ? href({ q: "", kind: "", year: "", tag: "" })
+      : undefined}
+    onsubmit={apply}
+  >
+    <FilterSelector label="Kind" options={kinds.map((kind) => ({ label: kind, href: href({ kind: filters.kind === kind ? "" : kind }), active: filters.kind === kind, count: entries.filter((entry) => entry.kind === kind).length }))} />
+    <FilterSelector label="Tag" options={(representativeTags.length ? representativeTags : tags).map((tag) => ({ label: tag, href: href({ tag: filters.tag === tag ? "" : tag }), active: filters.tag === tag, count: entries.filter((entry) => entry.tags.includes(tag)).length }))} />
+    <FilterSelector label="Year" options={years.map((year) => ({ label: year, href: href({ year: filters.year === year ? "" : year }), active: filters.year === year, count: entries.filter((entry) => entry.publishedAt.startsWith(year)).length }))} />
+  </CatalogControls>
 
-  <p class="result-count" aria-live="polite">{entries.filter((entry) => !enhanced || matches(entry)).length} records</p>
   <div class="preview-grid">
     {#each entries as entry, index}
       {@const visible = !enhanced || matches(entry)}
@@ -103,21 +110,8 @@
 </div>
 
 <style>
-  .archive-header { display: grid; grid-template-columns: 1.2fr 1fr; margin-bottom: var(--section-space); }
-  .archive-header .eyebrow { grid-column: 1 / -1; }
-  .archive-header .lead { align-self: end; }
-  .catalog-controls { display: grid; gap: var(--space-4); margin-bottom: var(--space-12); }
-  form { display: grid; max-width: 46rem; gap: var(--space-2); }
-  form > label, summary { color: var(--color-muted); font-size: var(--text-caption); letter-spacing: var(--tracking-ui); }
-  .search-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-  input, button { min-height: var(--control-size); border: 1px solid var(--color-line); background: var(--color-background); color: var(--color-foreground); font: inherit; }
-  input { min-width: 0; padding-inline: var(--space-3); }
-  button { padding-inline: var(--space-5); background: var(--color-foreground); color: var(--color-background); }
-  details { width: fit-content; }
-  summary { min-height: var(--control-size); cursor: pointer; }
-  .clear { width: fit-content; color: var(--color-muted); font-size: var(--text-small); }
-  .result-count, .date { color: var(--color-muted); font-size: var(--text-caption); font-variant-numeric: tabular-nums; }
-  .result-count { margin: 0 0 var(--space-8); }
+  .archive-header { margin-bottom: var(--space-10); }
+  .date { color: var(--color-muted); font-size: var(--text-caption); font-variant-numeric: tabular-nums; }
   .preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(var(--space-8), 6vw, var(--space-20)); }
   .preview-grid a { display: block; align-self: start; text-decoration: none; }
   .preview-grid a.hidden { display: none; }
@@ -127,5 +121,5 @@
   .date { display: block; margin-top: var(--space-4); }
   h2 { margin: var(--space-1) 0; font-family: var(--font-serif); font-size: var(--text-h3); font-weight: var(--weight-regular); }
   .preview-grid p { max-width: 34rem; margin: 0; color: var(--color-muted); }
-  @media (max-width: 52rem) { .archive-header, .preview-grid { grid-template-columns: 1fr; } .archive-header .lead { margin-top: var(--space-8); } figure, figure[data-ratio="1"], figure[data-ratio="2"] { aspect-ratio: 4 / 3; } }
+  @media (max-width: 52rem) { .preview-grid { grid-template-columns: 1fr; } figure, figure[data-ratio="1"], figure[data-ratio="2"] { aspect-ratio: 4 / 3; } }
 </style>
