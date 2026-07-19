@@ -5,10 +5,10 @@ Deno.test("Deno KV repository persists selections, totals, and rate limits", asy
   const kv = await Deno.openKv(":memory:");
   try {
     const repository = createDenoKvReactionRepository(() => Promise.resolve(kv), 1);
-    const active = await repository.set("article:test", "actor", "useful", true);
-    assertEquals(active.counts.useful, 1);
-    assertEquals(active.selected, ["useful"]);
-    assertEquals((await repository.set("article:test", "actor", "useful", true)).counts.useful, 1);
+    const active = await repository.set("article:test", "actor", true);
+    assertEquals(active.count, 1);
+    assertEquals(active.selected, true);
+    assertEquals((await repository.set("article:test", "actor", true)).count, 1);
     assertEquals(await repository.consume("actor"), true);
     assertEquals(await repository.consume("actor"), false);
   } finally {

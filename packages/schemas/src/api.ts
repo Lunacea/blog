@@ -1,14 +1,10 @@
 import { z } from "zod";
 import { contentTypeSchema } from "./content.ts";
 
-export const reactionKindSchema = z.enum(["useful", "inspiring", "love"]);
-export type ReactionKind = z.infer<typeof reactionKindSchema>;
-
-export const reactionCountsSchema = z.record(reactionKindSchema, z.number().int().nonnegative());
 export const reactionSummarySchema = z.object({
   contentId: z.string(),
-  counts: reactionCountsSchema,
-  selected: z.array(reactionKindSchema),
+  count: z.number().int().nonnegative(),
+  selected: z.boolean(),
 });
 
 export const reactionRequestSchema = z.object({
@@ -18,7 +14,6 @@ export const reactionRequestSchema = z.object({
 export const reactionTargetSchema = z.object({
   type: contentTypeSchema,
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  kind: reactionKindSchema.optional(),
 });
 
 export const locationSchema = z.object({

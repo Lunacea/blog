@@ -22,6 +22,9 @@
     if (cursorStates.includes(explicit as CursorState)) {
       return { state: explicit as CursorState, label };
     }
+    if (element?.closest(".article-record .prose")) {
+      return { state: "reading-text", label };
+    }
     if (element?.closest("p, h1, h2, h3, h4, blockquote, code, pre, dt, dd")) {
       return { state: "text", label };
     }
@@ -116,7 +119,8 @@
   :global(html[data-custom-cursor] a),
   :global(html[data-custom-cursor] button),
   :global(html[data-custom-cursor] summary),
-  :global(html[data-custom-cursor] label) {
+  :global(html[data-custom-cursor] label),
+  :global(html[data-custom-cursor] .article-record .prose) {
     cursor: none;
   }
   .cursor {
@@ -139,7 +143,7 @@
     height: var(--space-5);
     place-items: center;
     overflow: hidden;
-    border: 3px solid var(--color-foreground);
+    border: var(--cursor-stroke-width) solid var(--color-foreground);
     border-radius: var(--radius-none);
     background: transparent;
     color: inherit;
@@ -162,6 +166,17 @@
     height: var(--space-6);
     background: transparent;
     animation: cursor-settle-diamond var(--motion-duration-fast)
+      var(--motion-ease-enter) both;
+  }
+
+  .cursor:not(.has-label)[data-state="reading-text"] .cursor-shape {
+    width: 0;
+    height: var(--space-6);
+    border-style: solid;
+    border-color: var(--color-foreground);
+    border-width: 0 var(--cursor-stroke-width) 0 0;
+    background: transparent;
+    animation: cursor-settle-text var(--motion-duration-fast)
       var(--motion-ease-enter) both;
   }
 
@@ -230,6 +245,27 @@
       rotate: 45deg;
     }
     to {
+      rotate: 0deg;
+    }
+  }
+
+  @keyframes cursor-settle-text {
+    0% {
+      width: var(--space-5);
+      height: var(--space-5);
+      border-width: var(--cursor-stroke-width);
+      rotate: 45deg;
+    }
+    55% {
+      width: var(--space-5);
+      height: var(--space-5);
+      border-width: var(--cursor-stroke-width);
+      rotate: 0deg;
+    }
+    100% {
+      width: 0;
+      height: var(--space-6);
+      border-width: 0 var(--cursor-stroke-width) 0 0;
       rotate: 0deg;
     }
   }

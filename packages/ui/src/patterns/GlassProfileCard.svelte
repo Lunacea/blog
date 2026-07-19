@@ -23,6 +23,13 @@
   const emailHref = $derived(
     email ? (email.startsWith("mailto:") ? email : `mailto:${email}`) : null,
   );
+  const roles = $derived(
+    field
+      .split(/\s+\/\s+|,\s*|\s+·\s+/u)
+      .map((role) => role.trim())
+      .filter(Boolean)
+      .slice(0, 2),
+  );
 
   let card: HTMLElement;
   let surface: HTMLElement;
@@ -61,6 +68,10 @@
 
   function clamp(value: number, minimum: number, maximum: number) {
     return minimum > maximum ? (minimum + maximum) / 2 : Math.max(minimum, Math.min(maximum, value));
+  }
+
+  function rotationAroundRestingTilt(delta: number) {
+    return `calc(var(--profile-card-resting-tilt) + ${delta.toFixed(2)}deg)`;
   }
 
   function offsetBounds() {
@@ -188,7 +199,7 @@
     if (motionIsFull()) {
       surface.style.setProperty(
         "--card-rotate-z",
-        `${clamp(horizontalDelta * .05, -1.2, 1.2).toFixed(2)}deg`,
+        rotationAroundRestingTilt(clamp(horizontalDelta * .05, -1.2, 1.2)),
       );
     }
     pointerX = event.clientX;
@@ -267,7 +278,7 @@
       }
       surface.style.setProperty(
         "--card-rotate-z",
-        `${clamp(velocityX * 2.6, -1.8, 1.8).toFixed(2)}deg`,
+        rotationAroundRestingTilt(clamp(velocityX * 2.6, -1.8, 1.8)),
       );
       const damping = Math.pow(.86, elapsed / 16);
       velocityX *= damping;
@@ -396,7 +407,11 @@
       </div>
       <div class="identity-copy">
         <h2 id="about-title">{name}</h2>
-        <p>{field}</p>
+        <p class="roles">
+          {#each roles as role}
+            <span>{role}</span>
+          {/each}
+        </p>
       </div>
     </header>
 
@@ -452,7 +467,7 @@
   .card-surface {
     --card-rotate-x: 0deg;
     --card-rotate-y: 0deg;
-    --card-rotate-z: 0deg;
+    --card-rotate-z: var(--profile-card-resting-tilt);
     --card-light-x: 50%;
     --card-light-y: 50%;
     display: grid;
@@ -573,16 +588,19 @@
     line-height: var(--leading-snug);
   }
 
-  .identity-copy p {
-    display: -webkit-box;
+  .identity-copy .roles {
+    display: grid;
     overflow: hidden;
     margin: var(--space-1) 0 0;
     color: var(--color-muted);
     font-size: var(--text-caption);
     line-height: var(--leading-compact);
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+  }
+
+  .roles span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .contact-list {
@@ -659,6 +677,11 @@
       transform: none;
       transition-duration: var(--motion-duration-immediate);
     }
+  }
+
+  :global(html[data-motion="reduced"]) .card-surface,
+  :global(html[data-motion="off"]) .card-surface {
+    --card-rotate-z: 0deg;
   }
 
   @media (forced-colors: active) {

@@ -402,7 +402,7 @@
   a {
     display: block;
     color: var(--color-muted);
-    font-size: var(--text-caption);
+    font-size: var(--text-small);
     line-height: var(--leading-ui);
     text-decoration: none;
   }
@@ -523,7 +523,7 @@
       color: inherit;
       cursor: pointer;
       font-family: var(--font-sans);
-      font-size: var(--text-caption);
+      font-size: var(--text-small);
       letter-spacing: var(--tracking-label);
       text-transform: uppercase;
     }
@@ -564,5 +564,13 @@
   :global(html[data-motion="reduced"]) :global(.mobile-toc-content),
   :global(html[data-motion="off"]) :global(.mobile-toc-content) {
     animation-duration: var(--motion-duration-immediate);
+  }
+
+  :global(html[data-motion="reduced"] .mermaid-diagram),
+  :global(html[data-motion="reduced"] .mermaid-diagram *),
+  :global(html[data-motion="off"] .mermaid-diagram),
+  :global(html[data-motion="off"] .mermaid-diagram *) {
+    animation: none !important;
+    transition: none !important;
   }
 </style>

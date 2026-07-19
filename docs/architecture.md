@@ -92,9 +92,8 @@ KiBを超えたら失敗します。MermaidとWebGLのdynamic importはこの集
 graphはgzip 230 KiBを上限とします。
 
 Articles SSRを戻す場合はquery parserを残したまま一覧をprerenderへ戻し、`/search`のGET実装を
-復元します。互換routeは独立して戻せます。Talk reactionはaliasで旧KV keyを使い続けるため、 content
-routeのrollbackでKV data migrationは発生しません。Home WebGLはdynamic scene/controllerを
-外すだけで静的geometryとHTML contentへ戻せます。
+復元します。互換routeは独立して戻せます。Home WebGLはdynamic scene/controllerを外すだけで
+静的geometryとHTML contentへ戻せます。
 
 ## コンテンツと検索
 
@@ -113,7 +112,10 @@ text化して生成します。クエリは`Intl.Segmenter("ja")`の語と正規
 Cookieです。KVにはactorごとの選択、コンテンツ別集計、時間bucketの操作数だけを保存します。IP、User-Agent、位置情報、メールアドレスは保存しません。
 
 PUTは同一origin、Zod入力、256 byte上限、actorあたり10分30操作で保護します。KV更新はversionstamp
-checkを使ったatomic retryで集計と選択を同時に更新します。
+checkを使ったatomic retryで集計と選択を同時に更新します。公開モデルは称賛を表す1種類だけで、
+レスポンスは`count`とactor自身の`selected`を返します。PUTはGETと同じ
+`/api/v1/reactions/:type/:slug`へ`active`を送ります。旧3種類のreaction keyは移行・参照せず、
+単一称賛用の新しいKV keyを正本とします。
 
 ## 障害時の縮退
 

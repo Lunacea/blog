@@ -13,9 +13,9 @@ are public identifiers. `legacyIds` and `legacyPaths` preserve deliberately migr
 aliases must be globally unique and must never point to more than one entry.
 
 Talks are Articles with `category: talk`. Migrated Talks use `article:slug` canonically and retain
-`talk:slug` plus `/talks/slug` as data aliases for feed identity and storage lookup only; deleted
-`/talks` public routes are not served. Their RSS GUID and Atom ID remain the old absolute Talk URL.
-Their anonymous-reaction storage target also remains the legacy ID so no KV actor state is copied.
+`talk:slug` plus `/talks/slug` as data aliases for feed identity; deleted `/talks` public routes are
+not served. Their RSS GUID and Atom ID remain the old absolute Talk URL. Reactions use the canonical
+content ID and do not migrate the retired multi-kind reaction state.
 
 ## Types
 

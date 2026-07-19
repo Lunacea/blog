@@ -15,8 +15,8 @@ html {
 }
 
 html[data-motion="off"],
-html[data-motion="off"] *,
-html[data-motion="reduced"] * {
+html[data-motion="off"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *),
+html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   scroll-behavior: auto !important;
   animation-duration: var(--motion-duration-immediate) !important;
   animation-iteration-count: 1 !important;

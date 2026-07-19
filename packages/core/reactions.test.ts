@@ -3,13 +3,13 @@ import { emptyReactionSummary, toggleReaction } from "./reactions.ts";
 
 Deno.test("reaction toggle is idempotent and never produces negative counts", () => {
   const initial = emptyReactionSummary("article:test");
-  const active = toggleReaction(initial, "useful", true);
-  assertEquals(active.counts.useful, 1);
-  assertEquals(active.selected, ["useful"]);
-  assertEquals(toggleReaction(active, "useful", true), active);
+  const active = toggleReaction(initial, true);
+  assertEquals(active.count, 1);
+  assertEquals(active.selected, true);
+  assertEquals(toggleReaction(active, true), active);
 
-  const inactive = toggleReaction(active, "useful", false);
-  assertEquals(inactive.counts.useful, 0);
-  assertEquals(inactive.selected, []);
-  assertEquals(toggleReaction(inactive, "useful", false).counts.useful, 0);
+  const inactive = toggleReaction(active, false);
+  assertEquals(inactive.count, 0);
+  assertEquals(inactive.selected, false);
+  assertEquals(toggleReaction(inactive, false).count, 0);
 });

@@ -5,5 +5,4 @@ export type { ApprovedIconName } from "./Icon.svelte";
 export { default as ThemeGlyph } from "./ThemeGlyph.svelte";
 export { default as LeafIcon } from "./LeafIcon.svelte";
 export { default as LightbulbIcon } from "./LightbulbIcon.svelte";
-export { reactionIcons } from "./reactions.ts";
 export { interfaceIcons, socialIcons, tagIconName } from "./semantic.ts";

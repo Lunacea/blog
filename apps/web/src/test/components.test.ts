@@ -148,7 +148,9 @@ describe("Home profile card", () => {
     });
 
     expect(view.getByRole("heading", { level: 2, name: "Lunacea" })).toBeTruthy();
-    expect(view.getByText("Interactive Systems / Design Research")).toBeTruthy();
+    expect(view.getByText("Interactive Systems")).toBeTruthy();
+    expect(view.getByText("Design Research")).toBeTruthy();
+    expect(view.container.querySelectorAll(".roles > span")).toHaveLength(2);
     expect(view.getByRole("link", { name: "GitHub" }).getAttribute("href")).toBe(
       "https://github.com/example",
     );
@@ -273,20 +275,20 @@ describe("reactions", () => {
       .mockResolvedValueOnce(
         new Response(JSON.stringify({
           contentId: "article:test-article",
-          counts: { useful: 0, inspiring: 0, love: 0 },
-          selected: [],
+          count: 0,
+          selected: false,
         })),
       )
       .mockResolvedValueOnce(
         new Response(JSON.stringify({
           contentId: "article:test-article",
-          counts: { useful: 1, inspiring: 0, love: 0 },
-          selected: ["useful"],
+          count: 1,
+          selected: true,
         })),
       );
     vi.stubGlobal("fetch", fetchMock);
     const view = render(ReactionBar, { content: article });
-    const button = await view.findByRole("button", { name: /参考になった/ });
+    const button = await view.findByRole("button", { name: "称賛する" });
     expect(view.queryByText("Response")).toBeNull();
     expect(view.queryByText("この記録をどう感じましたか")).toBeNull();
     expect(button.querySelector("svg")).toBeTruthy();
@@ -295,6 +297,6 @@ describe("reactions", () => {
 
     await waitFor(() => expect(button.getAttribute("aria-pressed")).toBe("true"));
     expect(fetchMock.mock.calls[1][1]).toMatchObject({ method: "PUT" });
-    expect(view.getByText("リアクションを追加しました")).toBeTruthy();
+    expect(view.getByText("称賛しました")).toBeTruthy();
   });
 });

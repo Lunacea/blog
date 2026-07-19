@@ -26,11 +26,6 @@ export const siteConfig = {
     longitude: 141.1527,
     timezone: "Asia/Tokyo",
   },
-  reactions: [
-    { id: "useful", label: "参考になった" },
-    { id: "inspiring", label: "刺激を受けた" },
-    { id: "love", label: "好き" },
-  ],
 } as const;
 
 export const primaryNavigation = [

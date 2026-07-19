@@ -53,15 +53,6 @@ export function canonicalContentId(id: string): string | undefined {
   return content ? `${content.type}:${content.slug}` : undefined;
 }
 
-/**
- * A migrated target keeps writing to its pre-migration KV key. This is injected
- * into the API boundary; no KV records or anonymous actor IDs are copied.
- */
-export function resolveReactionTarget(id: string): string {
-  const content = findContentById(id);
-  return content?.legacyIds.find((legacyId) => legacyId.startsWith("talk:")) ?? id;
-}
-
 export async function loadContentModule(type: ContentType, slug: string): Promise<ContentModule> {
   const key = Object.keys(contentModules).find((path) =>
     path.endsWith(`/${type}s/${slug}/index.svx`) ||

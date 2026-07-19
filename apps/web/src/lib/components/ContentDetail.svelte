@@ -8,6 +8,7 @@
   import { ContentList, ReadingSurface } from "$ui/patterns";
   import ReactionBar from "./ReactionBar.svelte";
   import ResponsiveImage from "./ResponsiveImage.svelte";
+  import ShareActions from "./ShareActions.svelte";
 
   let {
     metadata,
@@ -64,6 +65,7 @@
 <article
   class:article-record={metadata.type === "article"}
   class:work-record={metadata.type === "work"}
+  class:archive-record={metadata.type !== "article" && metadata.type !== "work"}
 >
   <header class="page shell content-shell article-header" data-reveal>
     {#if metadata.type === "article"}
@@ -130,6 +132,25 @@
         {/each}
       </ul>
     {:else}
+      <dl class="archive-meta">
+        <div><dt>Kind</dt><dd>{metadata.type}</dd></div>
+        <div><dt>Published</dt><dd><time datetime={metadata.publishedAt}>{metadata.publishedAt}</time></dd></div>
+        {#if metadata.location}<div><dt>Location</dt><dd>{metadata.location}</dd></div>{/if}
+        {#if metadata.type === "photo" && metadata.camera}
+          <div><dt>Camera</dt><dd>{metadata.camera}</dd></div>
+        {/if}
+        {#if metadata.type === "photo" && metadata.lens}
+          <div><dt>Lens</dt><dd>{metadata.lens}</dd></div>
+        {/if}
+        {#if metadata.type === "wine"}
+          <div><dt>Producer</dt><dd>{metadata.producer}</dd></div>
+          <div><dt>Region</dt><dd>{metadata.region}</dd></div>
+          {#if metadata.vintage}<div><dt>Vintage</dt><dd>{metadata.vintage}</dd></div>{/if}
+          {#if metadata.grapes.length}
+            <div><dt>Grapes</dt><dd>{metadata.grapes.join(" / ")}</dd></div>
+          {/if}
+        {/if}
+      </dl>
       <ul class="tag-list" aria-label="タグ">
         {#each metadata.tags as tag}
           <li><TagLabel {tag} href={"/tags/" + encodeURIComponent(tag)} /></li>
@@ -157,7 +178,12 @@
     </div>
   {/if}
 
-  <ReadingSurface component={ContentComponent} {headings} {linkPreviews} />
+  <ReadingSurface
+    component={ContentComponent}
+    {headings}
+    {linkPreviews}
+    class={metadata.type === "article" ? "article-reading" : "media-led-reading"}
+  />
 
   <div class="shell article-tail">
     {#if metadata.revisions.length}
@@ -170,7 +196,10 @@
         </ol>
       </section>
     {/if}
-    <ReactionBar content={metadata} />
+    <div class="engagement">
+      <ReactionBar content={metadata} />
+      <ShareActions title={metadata.title} url={canonical} />
+    </div>
     {#if related.length}
       <section class="related" data-reveal>
         <h2 class="detail-section-title">関連記事</h2>
@@ -240,6 +269,12 @@
     gap: var(--space-2);
   }
 
+  .article-record .article-header h1,
+  .article-record .article-header .lead,
+  .article-record .article-header .article-dates {
+    text-shadow: var(--shadow-text-mask);
+  }
+
   .article-flags {
     display: flex;
     flex-wrap: wrap;
@@ -277,7 +312,8 @@
     margin-top: var(--space-2);
   }
 
-  .work-record .article-header {
+  .work-record .article-header,
+  .archive-record .article-header {
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
     justify-items: start;
@@ -285,11 +321,13 @@
     padding-bottom: var(--space-10);
   }
 
-  .work-record .article-header h1 {
+  .work-record .article-header h1,
+  .archive-record .article-header h1 {
     max-width: 22ch;
   }
 
-  .work-record .article-header .lead {
+  .work-record .article-header .lead,
+  .archive-record .article-header .lead {
     display: block;
   }
 
@@ -304,15 +342,25 @@
     width: min(100%, var(--prose-width));
   }
 
-  .work-record .cover {
+  .archive-record .article-header .meta,
+  .archive-record .article-header h1,
+  .archive-record .article-header .lead,
+  .archive-record .article-header .archive-meta,
+  .archive-record .article-header .tag-list {
+    grid-column: 1;
+    width: min(100%, var(--prose-width));
+  }
+
+  .work-record .cover,
+  .archive-record .cover {
     width: min(calc(100% - (2 * var(--layout-gutter))), 92rem);
   }
 
-  .work-meta, .event-meta { display: grid; grid-template-columns: 1fr; gap: 0; margin: var(--space-2) 0 0; }
-  .work-meta div, .event-meta div { border-top: 1px solid var(--color-line); padding-top: var(--space-2); }
-  .work-meta div { display: grid; grid-template-columns: minmax(6rem, .22fr) 1fr; align-items: baseline; padding-block: var(--space-3); }
-  .work-meta dt, .event-meta dt { color: var(--color-muted); font-size: var(--text-caption); }
-  .work-meta dd, .event-meta dd { margin: var(--space-1) 0 0; }
+  .work-meta, .archive-meta, .event-meta { display: grid; grid-template-columns: 1fr; gap: 0; margin: var(--space-2) 0 0; }
+  .work-meta div, .archive-meta div, .event-meta div { border-top: 1px solid var(--color-line); padding-top: var(--space-2); }
+  .work-meta div, .archive-meta div { display: grid; grid-template-columns: minmax(6rem, .22fr) 1fr; align-items: baseline; padding-block: var(--space-3); }
+  .work-meta dt, .archive-meta dt, .event-meta dt { color: var(--color-muted); font-size: var(--text-caption); }
+  .work-meta dd, .archive-meta dd, .event-meta dd { margin: var(--space-1) 0 0; }
   .work-technologies > p { margin: 0 0 var(--space-2); color: var(--color-muted); font-size: var(--text-caption); }
   .work-technologies ul { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
   .work-technologies li { display: inline-flex; min-height: var(--space-8); align-items: center; gap: var(--space-2); border: 1px solid var(--color-line); padding-inline: var(--space-2); font-size: var(--text-caption); }
@@ -346,6 +394,22 @@
 
   .article-tail {
     padding-block: var(--section-space);
+  }
+
+  .engagement {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-12);
+    border-block: 1px solid var(--color-line);
+    padding-block: var(--space-4);
+  }
+
+  .article-record .detail-section-title,
+  .article-record .revisions li,
+  .article-record .related {
+    text-shadow: var(--shadow-text-mask);
   }
 
   .revisions,
@@ -398,7 +462,8 @@
       grid-column: 1;
     }
 
-    .work-record .article-header {
+    .work-record .article-header,
+    .archive-record .article-header {
       grid-template-columns: 1fr;
     }
 

@@ -5,6 +5,7 @@
   min-width: 0;
   font-size: var(--text-body);
   line-height: var(--leading-copy);
+  text-shadow: var(--shadow-text-mask);
 }
 
 .prose h2,
@@ -102,6 +103,7 @@
   border: 1px solid var(--color-line);
   background: var(--color-code-background);
   color: var(--color-code-foreground);
+  text-shadow: none;
 }
 
 .code-block pre,
@@ -143,6 +145,11 @@
   padding: var(--space-5);
   background: var(--color-surface);
   white-space: pre-wrap;
+  text-shadow: none;
+}
+
+.prose :where(.annotation, .code-block, .mermaid-source, .mermaid-diagram, .link-card) {
+  text-shadow: none;
 }
 
 .katex-display {

@@ -6,6 +6,7 @@ export const cursorStates = [
   "default",
   "interactive",
   "text",
+  "reading-text",
   "media",
   "webgl",
   "drag",

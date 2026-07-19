@@ -57,8 +57,11 @@
 <style>
   a { position: relative; display: block; color: inherit; text-decoration: none; }
   figure { overflow: hidden; margin: 0 0 var(--space-5); aspect-ratio: 16 / 10; background: var(--color-surface); }
+  .copy { position: relative; z-index: var(--z-content); text-shadow: var(--shadow-text-mask); }
+  a.grid .copy { padding: var(--space-3) 0; }
   a.list { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 5.5rem; align-items: center; border-top: 1px solid var(--color-line); padding: var(--space-3) var(--space-4); transition: color var(--motion-duration-micro) var(--motion-ease-standard), background var(--motion-duration-micro) var(--motion-ease-standard); }
   a.list:hover, a.list:focus-visible { color: var(--color-white); background: color-mix(in srgb, var(--color-black) 32%, transparent); text-shadow: 0 1px 1rem rgb(0 0 0 / 45%); }
+  a.list:hover .copy, a.list:focus-visible .copy { text-shadow: 0 1px 1rem rgb(0 0 0 / 45%); }
   .list-media { position: fixed; z-index: var(--z-backdrop); inset: 0; width: 100vw; height: 100dvh; margin: 0; opacity: 0; pointer-events: none; transition: opacity var(--motion-duration-base) var(--motion-ease-enter); }
   .list-media :global(picture), .list-media :global(img) { width: 100%; height: 100%; object-fit: cover; }
   a.list:hover .list-media, a.list:focus-visible .list-media { opacity: .92; }

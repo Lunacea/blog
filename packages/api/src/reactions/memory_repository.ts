@@ -1,12 +1,12 @@
-import { emptyReactionSummary, reactionKinds } from "@lunacea/core/reactions.ts";
-import type { ReactionKind, ReactionSummary } from "@lunacea/schemas";
+import { emptyReactionSummary } from "@lunacea/core/reactions.ts";
+import type { ReactionSummary } from "@lunacea/schemas";
 import type { ReactionRepository } from "./repository.ts";
 
 export function createMemoryReactionRepository(
   limit = 30,
   windowMs = 10 * 60_000,
 ): ReactionRepository {
-  const selections = new Map<string, Set<ReactionKind>>();
+  const selections = new Set<string>();
   const rateLimits = new Map<string, { count: number; expiresAt: number }>();
 
   function actorKey(contentId: string, actorId: string): string {
@@ -15,13 +15,8 @@ export function createMemoryReactionRepository(
 
   function summary(contentId: string, actorId: string): ReactionSummary {
     const result = emptyReactionSummary(contentId);
-    result.selected = reactionKinds.filter((kind) =>
-      selections.get(actorKey(contentId, actorId))?.has(kind)
-    );
-    for (const [key, selected] of selections) {
-      if (!key.startsWith(`${contentId}:`)) continue;
-      for (const kind of selected) result.counts[kind] += 1;
-    }
+    result.selected = selections.has(actorKey(contentId, actorId));
+    result.count = [...selections].filter((key) => key.startsWith(`${contentId}:`)).length;
     return result;
   }
 
@@ -29,12 +24,10 @@ export function createMemoryReactionRepository(
     get(contentId, actorId) {
       return Promise.resolve(summary(contentId, actorId));
     },
-    set(contentId, actorId, kind, active) {
+    set(contentId, actorId, active) {
       const key = actorKey(contentId, actorId);
-      const selected = selections.get(key) ?? new Set<ReactionKind>();
-      if (active) selected.add(kind);
-      else selected.delete(kind);
-      selections.set(key, selected);
+      if (active) selections.add(key);
+      else selections.delete(key);
       return Promise.resolve(summary(contentId, actorId));
     },
     consume(actorId, now = new Date()) {

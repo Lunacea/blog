@@ -157,8 +157,8 @@ Archive, and About.
   mobile composition replaced.
 - `SettingsPanel`: storage keys, events, labels, and form controls retained; glass scope and
   placement refined.
-- `ContentList`, `ContentIndexPage`, and `ContentDetail`: data contracts retained; hierarchy,
-  spacing, shared transitions, and reveal hooks rebuilt.
+- `ContentList`, the tag catalog, and `ContentDetail`: data contracts retained; hierarchy, spacing,
+  shared transitions, and reveal hooks rebuilt.
 - `WeatherWidget`, `ReactionBar`, and `ReadingEnhancements`: behavior and tests retained; semantic
   tokens and small-screen surfaces aligned.
 - `AmbientHero`: dynamic-import and deterministic-fallback boundary retained; organic SVG and scene

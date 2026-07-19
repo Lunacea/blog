@@ -90,6 +90,7 @@
   header,
   .settings,
   .reactions,
+  .share-actions,
   .reading-progress {
     display: none !important;
   }

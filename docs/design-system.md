@@ -99,15 +99,16 @@ one wide diagonal band travels through it on an exact repeating tile. Fine-point
 identify the whole draggable profile card, Article-list links, external previews, and code-copy
 actions as “Drag it!”, “View more”, “Open external”, and “Copy code” respectively; native cursors
 remain in all capability fallbacks. The profile card is a compact 18–22rem identity surface
-containing only the authored profile asset, name, short field, and vertical GitHub/X/Email links.
-Pointer movement is clamped to the Home About section, yields to links, text selection, and vertical
-touch scrolling, and does not persist. Full motion may continue with short damped inertia, allow a
-token-bounded rubber-band overshoot, and spring back inside the boundary; Reduced/Off removes
-inertia, overshoot, and tilt. The first in-view appearance uses one restrained sub-15-degree
-rotation to suggest optional drag without adding instructions; that one-shot animation is cleared
-before drag so opacity and transform remain continuous into inertia. Introduction remains centered
-below the movable card, and the category based Engineering list follows in a four/two/one-column
-responsive grid without card or pill chrome.
+containing only the authored profile asset, name, two short roles on separate lines, and vertical
+GitHub/X/Email links. At rest in Full motion it retains a subtle authored tilt instead of settling
+horizontally. Pointer movement is clamped to the Home About section, yields to links, text
+selection, and vertical touch scrolling, and does not persist. Full motion may continue with short
+damped inertia, allow a token-bounded rubber-band overshoot, and spring back inside the boundary;
+Reduced/Off removes inertia, overshoot, and tilt. The first in-view appearance uses one restrained
+sub-15-degree rotation to suggest optional drag without adding instructions; that one-shot animation
+is cleared before drag so opacity and transform remain continuous into inertia. Introduction remains
+centered below the movable card, and the category based Engineering list follows in a
+four/two/one-column responsive grid without card or pill chrome.
 
 The shared Theme glyph uses tight local SVG bounds: a crescent for Dark and one filled circle for
 Light. Both shapes use the same visible outer square and center, without hidden viewBox padding.
@@ -168,30 +169,39 @@ site, and optional repository-local OGP WebP from the generated preview registry
 props remain optional overrides for fixtures and stories. Their responsive minimum block size keeps
 the clamped title, description, and site label visible under text enlargement; no arrow is shown.
 Mermaid retains its source and rerenders every diagram on light/dark changes, with source fallback
-after a render failure. Mobile table-of-contents disclosure animates height and opacity in both
-directions in Full motion and becomes immediate in Reduced/Off; without JavaScript it remains a
-native `details`. Desktop TOC uses one connected 1px vertical track and a 2px active segment that
-slides to the current heading in Full motion and snaps in Reduced/Off. It shares the prose heading
-anchor offset with scrollspy.
+after a render failure. Reduced/Off explicitly remove animation and transition from the generated
+Mermaid SVG tree. Mermaid's temporary measurement tree is exempt from the global duration override
+so its generated viewBox and compact geometry match Full mode. Mobile table-of-contents disclosure
+animates height and opacity in both directions in Full motion and becomes immediate in Reduced/Off;
+without JavaScript it remains a native `details`. Desktop TOC uses one connected 1px vertical track
+and a 2px active segment that slides to the current heading in Full motion and snaps in Reduced/Off.
+It shares the prose heading anchor offset with scrollspy.
 
 All routes use one visible fixed sprayed-noise image that multiplies in Light and screens in Dark.
 It sits above weather ambience but below `main`, so opaque content surfaces reliably mask it while
 transparent page regions retain the texture. Full motion shifts the tile at a low step frequency;
 Reduced/Off and save-data keep it static, while print and forced colors remove it. Article-detail
 routes always use the static Reduced noise state. Catalog search fields and facets, annotations,
-code blocks, Mermaid surfaces, and link cards use opaque semantic theme colors so texture never
-impairs controls or technical content. Home keeps one stable linear fallback behind WebGL and never
-shows condition-specific radial blobs during startup. The Home profile anchor uses a serif “View
-profile” label with a thicker indicator on its left. An optional transparent foliage composition may
-grow and breathe from the upper edge only when an owned `config.visualAssets.heroOrganic` asset is
-supplied; the site never synthesizes leaves while that authored slot is empty. Article tags combine
-their semantic icon with a square filled label; 更新履歴 and 関連記事 share compact ruled-list
-headings and vertically aligned dates. Reading surfaces remain transparent. Reaction controls omit
-introductory copy and use only compact icon, label, count, and selection state. Public status labels
-are 公開済み, 更新中, 断片, and 旧版 while their stored enum values remain unchanged. Work details
-are image-led and left-aligned: Role, Period, and Field form a vertical definition list,
-technologies use semantic icons, and configured GitHub/site URLs appear as View source and Visit
-site actions.
+code blocks, Mermaid surfaces, and link cards use opaque semantic theme colors. Article catalog and
+detail typography use a tight theme-colored glyph shadow that masks texture only immediately behind
+the letters, without turning the surrounding layout into an opaque block. Home keeps one stable
+linear fallback behind WebGL and never shows condition-specific radial blobs during startup. The
+Home profile anchor uses a serif “View profile” label with a thicker indicator on its left. An
+optional transparent foliage composition may grow and breathe from the upper edge only when an owned
+`config.visualAssets.heroOrganic` asset is supplied; the site never synthesizes leaves while that
+authored slot is empty. Article tags combine their semantic icon with a square filled label;
+更新履歴 and 関連記事 share compact ruled-list headings and vertically aligned dates. Article TOC
+labels use the small UI scale rather than caption text, and the optional cursor becomes a vertical
+caret over Article prose by visibly settling and collapsing the existing rotating square. Reactions
+use one unlabelled praise icon and count; selection fills the heart itself without inverting the
+button surface and runs a short heart pulse/burst on hover and selection. An adjacent X icon with a
+visible Share label uses a plain intent link without third-party scripts. Public status labels are
+公開済み, 更新中, 断片, and 旧版 while their stored enum values remain unchanged. Work and Archive
+details are image-led and left-aligned; their metadata uses a vertical definition list and the
+reading surface does not draw a second rule directly below the cover. Work technologies use semantic
+icons, and configured GitHub/site URLs appear as View source and Visit site actions. Tag pages
+retain their stable URL while using the same compact heading, applied-filter summary, and ruled
+records as catalog pages.
 
 ## Storybook
 

@@ -21,6 +21,7 @@
   import code from "@iconify-icons/solar/code-linear.js";
   import copy from "@iconify-icons/solar/copy-linear.js";
   import documentText from "@iconify-icons/solar/document-text-linear.js";
+  import heartBold from "@iconify-icons/solar/heart-bold.js";
   import heart from "@iconify-icons/solar/heart-linear.js";
   import leaf from "@iconify-icons/solar/leaf-linear.js";
   import letter from "@iconify-icons/solar/letter-linear.js";
@@ -41,6 +42,7 @@
     | "solar:code-linear"
     | "solar:copy-linear"
     | "solar:document-text-linear"
+    | "solar:heart-bold"
     | "solar:heart-linear"
     | "solar:leaf-linear"
     | "solar:letter-linear"
@@ -75,6 +77,7 @@
     "solar:code-linear": code,
     "solar:copy-linear": copy,
     "solar:document-text-linear": documentText,
+    "solar:heart-bold": heartBold,
     "solar:heart-linear": heart,
     "solar:leaf-linear": leaf,
     "solar:letter-linear": letter,

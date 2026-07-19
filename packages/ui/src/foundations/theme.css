@@ -152,11 +152,13 @@
   --layout-grid-compact: 12rem;
   --layout-grid-standard: 18rem;
   --layout-grid-wide: 24rem;
-  --profile-card-width: 21rem;
+  --profile-card-width: 20rem;
   --profile-card-media: 3.5rem;
   --profile-card-padding: var(--space-5);
   --profile-card-gap: var(--space-4);
   --profile-card-boundary: var(--layout-gutter);
+  --profile-card-resting-tilt: -2deg;
+  --cursor-stroke-width: 3px;
   --control-size: 2.75rem;
   --site-header-block: 4.3125rem;
   --header-inline-reserve: 11rem;
@@ -169,6 +171,7 @@
   --shadow-overlay: 0 0.75rem 2.5rem light-dark(rgb(16 47 35 / 14%), rgb(0 0 0 / 34%));
   --shadow-profile: 0 0.5rem 1.5rem light-dark(rgb(16 47 35 / 10%), rgb(0 0 0 / 24%));
   --shadow-accent-rule: inset 3px 0 var(--color-accent);
+  --shadow-text-mask: 0 0 0.18em var(--color-background);
   --glass-blur: 0.625rem;
   --focus-ring: 0 0 0 0.1875rem light-dark(rgb(112 88 0 / 36%), rgb(226 198 84 / 38%));
 

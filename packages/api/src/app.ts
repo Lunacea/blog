@@ -1,11 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import {
-  locationSchema,
-  reactionKindSchema,
-  reactionRequestSchema,
-  reactionTargetSchema,
-} from "@lunacea/schemas";
+import { locationSchema, reactionRequestSchema, reactionTargetSchema } from "@lunacea/schemas";
 import { signedActor } from "./cookie.ts";
 import { createDenoKvReactionRepository } from "./reactions/deno_kv_repository.ts";
 import type { ReactionRepository } from "./reactions/repository.ts";
@@ -15,7 +10,6 @@ export type ApiOptions = {
   reactions?: ReactionRepository;
   signingSecret?: string;
   fetcher?: typeof fetch;
-  resolveReactionTarget?: (contentId: string) => string;
 };
 
 type ApiEnvironment = {
@@ -36,7 +30,6 @@ function sameOrigin(request: Request): boolean {
 export function createApi(options: ApiOptions = {}): Hono<ApiEnvironment> {
   const app = new Hono<ApiEnvironment>().basePath("/api/v1");
   const reactions = options.reactions ?? createDenoKvReactionRepository();
-  const resolveReactionTarget = options.resolveReactionTarget ?? ((contentId: string) => contentId);
   const secret = options.signingSecret ??
     Deno.env.get("REACTION_SIGNING_SECRET") ??
     "local-development-secret-change-before-production";
@@ -83,21 +76,20 @@ export function createApi(options: ApiOptions = {}): Hono<ApiEnvironment> {
     if (!target.success) return context.json({ error: "invalid_target" }, 400);
     const actor = await signedActor(context.req.header("cookie"), secret);
     if (actor.cookie) context.header("set-cookie", actor.cookie);
-    const id = resolveReactionTarget(`${target.data.type}:${target.data.slug}`);
+    const id = `${target.data.type}:${target.data.slug}`;
     return context.json(await reactions.get(id, actor.actorId), 200, {
       "cache-control": "private, no-store",
     });
   });
 
-  app.put("/reactions/:type/:slug/:kind", async (context) => {
+  app.put("/reactions/:type/:slug", async (context) => {
     if (!sameOrigin(context.req.raw)) return context.json({ error: "invalid_origin" }, 403);
     if (Number(context.req.header("content-length") ?? 0) > 256) {
       return context.json({ error: "payload_too_large" }, 413);
     }
     const target = reactionTargetSchema.safeParse(context.req.param());
-    const kind = reactionKindSchema.safeParse(context.req.param("kind"));
     const body = reactionRequestSchema.safeParse(await context.req.json().catch(() => null));
-    if (!target.success || !kind.success || !body.success) {
+    if (!target.success || !body.success) {
       return context.json({ error: "invalid_request" }, 400);
     }
     const actor = await signedActor(context.req.header("cookie"), secret);
@@ -105,9 +97,9 @@ export function createApi(options: ApiOptions = {}): Hono<ApiEnvironment> {
       return context.json({ error: "rate_limited" }, 429, { "retry-after": "600" });
     }
     if (actor.cookie) context.header("set-cookie", actor.cookie);
-    const id = resolveReactionTarget(`${target.data.type}:${target.data.slug}`);
+    const id = `${target.data.type}:${target.data.slug}`;
     return context.json(
-      await reactions.set(id, actor.actorId, kind.data, body.data.active),
+      await reactions.set(id, actor.actorId, body.data.active),
       200,
       { "cache-control": "private, no-store" },
     );

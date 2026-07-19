@@ -36,6 +36,10 @@
     background: transparent;
   }
 
+  .reading-surface.media-led-reading {
+    border-top: 0;
+  }
+
   .reading-start {
     position: absolute;
     top: 0;
