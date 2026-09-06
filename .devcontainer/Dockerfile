@@ -1,4 +1,4 @@
-FROM denoland/deno:2.8.3
+FROM denoland/deno:2.9.3
 
 USER root
 
@@ -54,4 +54,4 @@ RUN deno run -A npm:playwright install-deps chromium \
     && deno run -A npm:playwright install chromium
 
 # 開発プロセスで使用するポートをコンテナ外へEXPOSE
-EXPOSE 8000 5173 6006 8787 9323 51204
+EXPOSE 8000 5173 6006 8787 9323 51204 51205

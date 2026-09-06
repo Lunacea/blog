@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ja" data-theme="light" data-motion="reduced">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (() => {
+        document.documentElement.dataset.js = "true";
+        try {
+          const themePreference = localStorage.getItem("lunacea-theme") || "auto";
+          const motionPreference = localStorage.getItem("lunacea-motion") || "full";
+          const theme = themePreference === "auto"
+            ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+            : themePreference;
+          const connection = navigator.connection;
+          const limited = matchMedia("(prefers-reduced-motion: reduce)").matches ||
+            matchMedia("(forced-colors: active)").matches || connection?.saveData;
+          const motion = motionPreference === "off"
+            ? "off"
+            : (motionPreference === "reduced" || limited ? "reduced" : "full");
+          const root = document.documentElement;
+          root.dataset.themePreference = themePreference;
+          root.dataset.theme = theme;
+          root.dataset.motionPreference = motionPreference;
+          root.dataset.motion = motion;
+          if (
+            location.pathname === "/" && motion === "full" &&
+            !sessionStorage.getItem("lunacea-home-opening")
+          ) {
+            sessionStorage.setItem("lunacea-home-opening", "started");
+            root.dataset.homeOpening = "pending";
+          }
+        } catch {
+          document.documentElement.dataset.motion = "reduced";
+        }
+      })();
+    </script>
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

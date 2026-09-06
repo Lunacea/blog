@@ -1,0 +1,681 @@
+@import "../../.generated/fonts/fonts.css";
+
+@property --color-background {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #d7dbd5;
+}
+
+@property --color-surface {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #eef0eb;
+}
+
+@property --color-foreground {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #151a17;
+}
+
+@property --color-primary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #173d2d;
+}
+
+@property --color-secondary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #466451;
+}
+
+@property --color-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #705800;
+}
+
+@property --color-muted {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #46524c;
+}
+
+@property --paper-dogear {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0.375rem;
+}
+
+@theme inline {
+  --color-weather-water-shadow: #152c3b;
+  --color-weather-snow: #f4f7f8;
+  --color-weather-light: #eedbb0;
+  --color-weather-cloud: light-dark(#586975, #8b9ba7);
+  --color-weather-rain: light-dark(#647d8d, #b4c8d6);
+  --color-canvas: var(--color-background);
+  --color-panel: var(--color-surface);
+  --color-ink: var(--color-foreground);
+  --color-action: var(--color-primary);
+  --color-support: var(--color-secondary);
+  --color-signal: var(--color-accent);
+  --color-quiet: var(--color-muted);
+  --color-rule: var(--color-line);
+  --font-interface: var(--font-sans);
+  --font-editorial: var(--font-serif);
+  --font-code: var(--font-mono);
+  --font-weight-regular: var(--weight-regular);
+  --font-weight-component: var(--weight-component);
+  --font-weight-emphasis: var(--weight-emphasis);
+  --font-weight-strong: var(--weight-strong);
+  --font-weight-label: var(--weight-label);
+  --text-display: var(--type-size-display);
+  --text-h1: var(--type-size-h1);
+  --text-h2: var(--type-size-h2);
+  --text-h3: var(--type-size-h3);
+  --text-prose-h2: var(--type-size-prose-h2);
+  --text-prose-h3: var(--type-size-prose-h3);
+  --text-body: var(--type-size-body);
+  --text-quote: var(--type-size-quote);
+  --text-small: var(--type-size-small);
+  --text-caption: var(--type-size-caption);
+  --text-title-glyph: var(--type-size-title-glyph);
+  --leading-none: var(--type-leading-none);
+  --leading-display: var(--type-leading-display);
+  --leading-title: var(--type-leading-title);
+  --leading-tight: var(--type-leading-tight);
+  --leading-snug: var(--type-leading-snug);
+  --leading-heading: var(--type-leading-heading);
+  --leading-compact: var(--type-leading-compact);
+  --leading-profile: var(--type-leading-profile);
+  --leading-ui: var(--type-leading-ui);
+  --leading-card: var(--type-leading-card);
+  --leading-body: var(--type-leading-body);
+  --leading-copy: var(--type-leading-copy);
+  --leading-relaxed: var(--type-leading-relaxed);
+  --leading-hero-copy: var(--type-leading-hero-copy);
+  --tracking-display: var(--type-tracking-display);
+  --tracking-heading: var(--type-tracking-heading);
+  --tracking-prose-heading: var(--type-tracking-prose-heading);
+  --tracking-label: var(--type-tracking-label);
+  --tracking-ui: var(--type-tracking-ui);
+  --spacing-gutter: var(--layout-gutter);
+  --spacing-section: var(--section-space);
+  --spacing-control: var(--control-size);
+  --container-content: var(--content-width);
+  --container-prose: var(--prose-width);
+  --container-grid-compact: var(--layout-grid-compact);
+  --container-grid-standard: var(--layout-grid-standard);
+  --container-grid-wide: var(--layout-grid-wide);
+  --radius-sharp: var(--radius-none);
+  --radius-subtle: var(--radius-small);
+  --radius-ui-round: var(--radius-round);
+  --shadow-ui-overlay: var(--shadow-overlay);
+  --shadow-ui-profile: var(--shadow-profile);
+  --text-shadow-ui-mask: var(--shadow-text-mask);
+  --blur-glass: var(--glass-blur);
+  --ease-standard: var(--motion-ease-standard);
+  --ease-enter: var(--motion-ease-enter);
+  --ease-exit: var(--motion-ease-exit);
+  --breakpoint-xs: 34rem;
+  --breakpoint-sm: 44rem;
+  --breakpoint-md: 52rem;
+  --breakpoint-lg: 60rem;
+
+  --animate-praise-hover: praise-heart-hover var(--motion-duration-base) var(--motion-ease-standard) infinite alternate;
+  --animate-praise-select: praise-heart-select var(--motion-duration-base) var(--motion-ease-enter) both;
+  --animate-praise-burst: praise-burst var(--motion-duration-base) var(--motion-ease-enter) both;
+  --animate-praise-bloom: praise-bloom 900ms var(--motion-ease-standard) both;
+  --animate-praise-clear: praise-clear 1000ms var(--motion-ease-exit) both;
+  --animate-hand-write: hand-write 200ms var(--motion-ease-standard) calc(320ms + var(--stroke-order) * 22ms) both;
+  --animate-thanks-linger: thanks-linger 1200ms var(--motion-ease-exit) 300ms both;
+  --animate-motion-wave: motion-wave-phase var(--motion-duration-resume) linear infinite;
+  --animate-home-opening-line: home-opening-line 400ms var(--motion-ease-enter) both;
+  --animate-home-opening-exit: home-opening-exit 120ms var(--motion-ease-exit) 400ms both;
+  --animate-weather-snowfall: weather-snowfall var(--snow-duration) linear var(--snow-delay) infinite;
+  --animate-weather-sway: weather-sway var(--snow-sway-duration) ease-in-out var(--snow-delay) infinite alternate;
+  --animate-weather-slide: weather-slide var(--drop-duration) linear var(--drop-delay) infinite;
+  --animate-weather-breathe: weather-breathe calc(var(--motion-duration-ambient) * 3) var(--motion-ease-standard) infinite alternate;
+  --animate-weather-drift: weather-drift calc(var(--motion-duration-ambient) * 4) var(--motion-ease-standard) infinite alternate;
+  --animate-weather-rain: weather-rain calc(var(--motion-duration-ambient) * 4) linear infinite;
+  --animate-weather-snow: weather-snow calc(var(--motion-duration-ambient) * 5) linear infinite;
+  --animate-site-noise: site-noise-shift var(--motion-duration-ambient) steps(8, end) infinite;
+  --animate-home-header-enter: home-header-enter 500ms var(--motion-ease-enter) 1300ms both;
+  --animate-disclosure-in: disclosure-in var(--motion-duration-base) var(--motion-ease-enter);
+  --animate-disclosure-out: disclosure-out var(--motion-duration-fast) var(--motion-ease-exit);
+  --animate-compact-control-in: compact-control-in var(--motion-duration-micro) var(--motion-ease-enter);
+  --animate-toc-open: toc-open var(--motion-duration-base) var(--motion-ease-enter);
+  --animate-toc-close: toc-close var(--motion-duration-fast) var(--motion-ease-exit);
+  --animate-profile-card-arrive: profile-card-arrive var(--motion-duration-opening) var(--motion-ease-enter) 1;
+  --animate-cursor-square-spin: cursor-square-spin calc(var(--motion-duration-opening) * 1.4) linear infinite;
+  --animate-cursor-settle-diamond: cursor-settle-diamond var(--motion-duration-fast) var(--motion-ease-enter) both;
+  --animate-cursor-settle-square: cursor-settle-square var(--motion-duration-fast) var(--motion-ease-enter) both;
+  --animate-cursor-settle-text: cursor-settle-text var(--motion-duration-fast) var(--motion-ease-enter) both;
+  --animate-cursor-message-enter: cursor-message-enter var(--motion-duration-fast) var(--motion-ease-enter) var(--motion-duration-base) both;
+  --animate-cursor-view-more-fill: cursor-view-more-fill 2400ms linear var(--motion-duration-base) infinite;
+  --animate-home-visual-enter: home-visual-enter 500ms var(--motion-ease-enter) 400ms both;
+  --animate-home-title-enter: home-title-enter 400ms var(--motion-ease-enter) 900ms both;
+  --animate-home-other-enter: home-other-enter 500ms var(--motion-ease-enter) 1300ms both;
+  --animate-foliage-grow: foliage-grow var(--motion-duration-opening) var(--motion-ease-enter) both;
+  --animate-foliage-breathe: foliage-breathe calc(var(--motion-duration-ambient) * 1.5) var(--motion-ease-standard) infinite alternate;
+  --animate-scroll-indicator: scroll-indicator var(--motion-duration-resume) var(--motion-ease-standard) infinite;
+
+  @keyframes praise-heart-hover {
+    to {
+      transform: scale(1.12);
+    }
+  }
+
+  @keyframes praise-heart-select {
+    0% {
+      transform: scale(0.72);
+    }
+    58% {
+      transform: scale(1.28);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes praise-burst {
+    0% {
+      border-color: var(--color-accent);
+      opacity: 0.9;
+      transform: rotate(45deg) scale(0.4);
+    }
+    100% {
+      border-color: var(--color-accent);
+      opacity: 0;
+      transform: rotate(45deg) scale(2.2);
+    }
+  }
+
+  @keyframes praise-bloom {
+    0% {
+      scale: 0.012;
+    }
+    78%,
+    100% {
+      scale: 1;
+    }
+  }
+
+  @keyframes praise-clear {
+    0% {
+      scale: 0.02;
+    }
+    100% {
+      scale: 260;
+    }
+  }
+
+  @keyframes hand-write {
+    0% {
+      opacity: 0;
+      stroke-dashoffset: 1;
+    }
+    10% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes thanks-linger {
+    0%,
+    68% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes motion-wave-phase {
+    to {
+      transform: translateX(-24px);
+    }
+  }
+
+  @keyframes home-opening-line {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  @keyframes home-opening-exit {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes weather-snowfall {
+    from {
+      transform: translate(0, -80px);
+    }
+    to {
+      transform: translate(var(--snow-drift), 1080px);
+    }
+  }
+  @keyframes weather-sway {
+    from {
+      transform: translateX(calc(var(--snow-sway) * -1));
+    }
+    to {
+      transform: translateX(var(--snow-sway));
+    }
+  }
+  @keyframes weather-slide {
+    0%,
+    62% {
+      transform: translate(0, 0);
+      opacity: 1;
+    }
+    85% {
+      transform: translate(calc(var(--drop-drift) * .4), calc(var(--drop-slide) * .3));
+      opacity: 1;
+    }
+    97% {
+      transform: translate(var(--drop-drift), var(--drop-slide));
+      opacity: 0;
+    }
+    98%,
+    100% {
+      transform: translate(0, 0);
+      opacity: 0;
+    }
+  }
+  @keyframes weather-breathe {
+    to {
+      transform: scale(1.025) translate3d(1%, 0, 0);
+    }
+  }
+  @keyframes weather-drift {
+    to {
+      transform: translate3d(3%, 1%, 0);
+    }
+  }
+  @keyframes weather-rain {
+    to {
+      background-position: 0 32rem, 4rem 50rem;
+    }
+  }
+  @keyframes weather-snow {
+    to {
+      background-position: 12rem 18rem, 23rem 34rem;
+    }
+  }
+  @keyframes site-noise-shift {
+    0% {
+      background-position: 0 0;
+    }
+    25% {
+      background-position: 47px -31px;
+    }
+    50% {
+      background-position: -23px 61px;
+    }
+    75% {
+      background-position: 73px 21px;
+    }
+    100% {
+      background-position: 192px 192px;
+    }
+  }
+  @keyframes home-header-enter {
+    from {
+      opacity: 0;
+      transform: translateY(calc(var(--space-2) * -1));
+    }
+  }
+  @keyframes disclosure-in {
+    from {
+      opacity: 0;
+      transform: translateY(calc(var(--space-2) * -1));
+    }
+  }
+  @keyframes disclosure-out {
+    to {
+      opacity: 0;
+      transform: translateY(calc(var(--space-2) * -1));
+    }
+  }
+  @keyframes compact-control-in {
+    from {
+      opacity: 0;
+      transform: translateY(calc(var(--space-2) * -1));
+    }
+  }
+  @keyframes toc-open {
+    from {
+      height: 0;
+      opacity: 0;
+    }
+    to {
+      height: var(--bits-collapsible-content-height);
+      opacity: 1;
+    }
+  }
+  @keyframes toc-close {
+    from {
+      height: var(--bits-collapsible-content-height);
+      opacity: 1;
+    }
+    to {
+      height: 0;
+      opacity: 0;
+    }
+  }
+  @keyframes profile-card-arrive {
+    0% {
+      opacity: 0;
+      transform: perspective(60rem) rotateX(4deg) rotateY(-7deg) rotateZ(-14deg) scale(.96);
+    }
+    58% {
+      opacity: 1;
+      transform: perspective(60rem) rotateX(-1deg) rotateY(2deg) rotateZ(2.5deg) scale(1.008);
+    }
+    100% {
+      opacity: 1;
+      transform: perspective(60rem) rotateX(var(--card-rotate-x)) rotateY(var(--card-rotate-y))
+        rotateZ(var(--card-rotate-z));
+    }
+  }
+  @keyframes cursor-square-spin {
+    to {
+      rotate: 360deg;
+    }
+  }
+  @keyframes cursor-settle-diamond {
+    from {
+      rotate: 0deg;
+    }
+    to {
+      rotate: 45deg;
+    }
+  }
+  @keyframes cursor-settle-square {
+    from {
+      rotate: 45deg;
+    }
+    to {
+      rotate: 0deg;
+    }
+  }
+  @keyframes cursor-settle-text {
+    0% {
+      width: var(--space-5);
+      height: var(--space-5);
+      border-width: var(--cursor-stroke-width);
+      rotate: 45deg;
+    }
+    55% {
+      width: var(--space-5);
+      height: var(--space-5);
+      border-width: var(--cursor-stroke-width);
+      rotate: 0deg;
+    }
+    100% {
+      width: 0;
+      height: var(--space-6);
+      border-width: 0 var(--cursor-stroke-width) 0 0;
+      rotate: 0deg;
+    }
+  }
+  @keyframes cursor-message-enter {
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes cursor-view-more-fill {
+    to {
+      background-position: calc(var(--space-32) + var(--space-16) + var(--space-4)) 0;
+    }
+  }
+  @keyframes home-visual-enter {
+    from {
+      opacity: 0;
+      transform: scale(.985);
+    }
+  }
+  @keyframes home-title-enter {
+    from {
+      opacity: 0;
+      transform: translateY(var(--space-3));
+    }
+  }
+  @keyframes home-other-enter {
+    from {
+      opacity: 0;
+      transform: translateY(var(--space-2));
+    }
+  }
+  @keyframes foliage-grow {
+    from {
+      opacity: 0;
+      transform: scale(.72) rotate(4deg);
+    }
+  }
+  @keyframes foliage-breathe {
+    to {
+      transform: rotate(-1.2deg) scale(1.012);
+    }
+  }
+  @keyframes scroll-indicator {
+    from {
+      transform: translateY(-110%);
+    }
+    to {
+      transform: translateY(240%);
+    }
+  }
+}
+
+@custom-variant theme-dark (&:where(html[data-theme="dark"] *));
+@custom-variant motion-full (&:where(html[data-motion="full"] *));
+@custom-variant motion-reduced (&:where(html[data-motion="reduced"] *));
+@custom-variant motion-off (&:where(html[data-motion="off"] *));
+@custom-variant home-opening (&:where(html[data-home-opening="active"] *));
+
+@utility scrollbar-hidden {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+:root {
+  color-scheme: light dark;
+
+  /* Semantic values use light-dark() so each role is declared exactly once. */
+  --color-background: light-dark(#d7dbd5, #0c110f);
+  --color-surface: light-dark(#eef0eb, #151b18);
+  --color-foreground: light-dark(#151a17, #e7ede8);
+  --color-primary: light-dark(#173d2d, #a1c9b2);
+  --color-secondary: light-dark(#466451, #83a58f);
+  --color-accent: light-dark(#705800, #e2c654);
+  --color-muted: light-dark(#46524c, #aab5ae);
+  --color-line: light-dark(rgb(21 26 23 / 24%), rgb(231 237 232 / 20%));
+  --color-glass: light-dark(rgb(244 247 242 / 72%), rgb(20 31 26 / 76%));
+  --color-glass-solid: light-dark(rgb(246 248 244), rgb(23 33 28));
+  --color-positive: light-dark(#245d40, #8bc6a1);
+  --color-negative: light-dark(#8a343c, #e69aa0);
+  --color-concrete: light-dark(#adb5ae, #68726c);
+  --color-forest: light-dark(#102f23, #173e2d);
+  --color-moss: light-dark(#587460, #739880);
+  --color-neon: light-dark(#c3a92f, #e2c654);
+  --color-white: #f7f8f4;
+  --color-black: #090c0a;
+  --color-graph-marker: var(--color-white);
+  --color-code-background: #0b100e;
+  --color-code-foreground: #e7ede8;
+  --color-print-background: #fff;
+  --color-print-foreground: #000;
+
+  --font-sans: "Manrope", "Manrope Fallback", "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-serif: "Newsreader", "Newsreader Fallback", "Zen Old Mincho", "Zen Old Mincho Fallback", "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
+  --font-accent: "DotGothic16", "MS Gothic", "Japanese gothic", monospace;
+  --font-mono: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --type-size-display: clamp(3.75rem, 8.1vw, 7.5rem);
+  --type-size-h1: clamp(2.625rem, 6.5vw, 6rem);
+  --type-size-h2: clamp(1.75rem, 3.6vw, 3.25rem);
+  --type-size-h3: clamp(1.25rem, 2vw, 1.625rem);
+  --type-size-prose-h2: clamp(1.5rem, 2.5vw, 2.25rem);
+  --type-size-prose-h3: clamp(1.2rem, 1.45vw, 1.5rem);
+  --type-size-body: clamp(1.0625rem, 0.25vw + 1rem, 1.125rem);
+  --type-size-quote: clamp(1.125rem, 0.6vw + 1rem, 1.375rem);
+  --type-size-small: 0.875rem;
+  --type-size-caption: 0.75rem;
+  --type-size-title-glyph: .74em;
+  --weight-regular: 500;
+  --weight-quiet: 500;
+  --weight-display: 700;
+  --weight-component: 700;
+  --weight-title: 700;
+  --weight-emphasis: 700;
+  --weight-strong: 800;
+  --weight-label: 800;
+  --type-leading-none: 1;
+  --type-leading-display: 0.88;
+  --type-leading-title: 0.96;
+  --type-leading-tight: 1.04;
+  --type-leading-snug: 1.2;
+  --type-leading-heading: 1.25;
+  --type-leading-compact: 1.35;
+  --type-leading-profile: 1.42;
+  --type-leading-ui: 1.5;
+  --type-leading-card: 1.6;
+  --type-leading-body: 1.86;
+  --type-leading-copy: 1.7;
+  --type-leading-relaxed: 1.75;
+  --type-leading-hero-copy: 1.8;
+  --type-tracking-display: -0.055em;
+  --type-tracking-heading: -0.045em;
+  --type-tracking-prose-heading: -0.025em;
+  --type-tracking-label: 0.1em;
+  --type-tracking-ui: 0.035em;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-14: 3.5rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-28: 7rem;
+  --space-32: 8rem;
+  --space-40: 10rem;
+  --layout-gutter: clamp(1.125rem, 4vw, 3.75rem);
+  --section-space: clamp(4rem, 9vw, 8rem);
+  --content-width: 78rem;
+  --prose-width: 72ch;
+  --layout-grid-compact: 12rem;
+  --layout-grid-standard: 18rem;
+  --layout-grid-wide: 24rem;
+  --profile-card-width: 20rem;
+  --profile-card-media: 3.5rem;
+  --profile-card-padding: var(--space-5);
+  --profile-card-gap: var(--space-4);
+  --profile-card-boundary: var(--layout-gutter);
+  --profile-card-resting-tilt: -2deg;
+  --paper-mark-width: 1.125rem;
+  --paper-mark-height: 1.5rem;
+  --paper-mark-step: 0.1875rem;
+  --paper-dogear-rest: 0.375rem;
+  --paper-dogear-open: 0.6875rem;
+  --border-width-rule: 1px;
+  --cursor-stroke-width: 3px;
+  --control-size: 2.75rem;
+  --header-menu-width: var(--space-28);
+  --site-header-block: 4.3125rem;
+  --header-inline-reserve: 17rem;
+  --page-start-clearance: calc(env(safe-area-inset-top) + var(--layout-gutter));
+  --article-anchor-offset: var(--space-28);
+
+  --radius-none: 0;
+  --radius-small: 0.1875rem;
+  --radius-round: 999px;
+  --shadow-overlay: 0 0.75rem 2.5rem light-dark(rgb(16 47 35 / 14%), rgb(0 0 0 / 34%));
+  --shadow-profile: 0 0.5rem 1.5rem light-dark(rgb(16 47 35 / 10%), rgb(0 0 0 / 24%));
+  --shadow-accent-rule: inset 3px 0 var(--color-accent);
+  --shadow-text-mask: 0 0 0.18em var(--color-background);
+  --glass-blur: 0.625rem;
+  --focus-ring: 0 0 0 0.1875rem light-dark(rgb(112 88 0 / 36%), rgb(226 198 84 / 38%));
+
+  --motion-duration-immediate: 1ms;
+  --motion-duration-fast: 140ms;
+  --motion-duration-micro: 240ms;
+  --motion-duration-exit: 280ms;
+  --motion-duration-base: 420ms;
+  --motion-duration-page: 520ms;
+  --motion-duration-slow: 760ms;
+  --motion-duration-status: 1500ms;
+  --motion-duration-opening: 1200ms;
+  --motion-duration-resume: 1500ms;
+  --motion-duration-ambient: 8s;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+
+  --z-base: 0;
+  --z-backdrop: -1;
+  --z-weather: 1;
+  --z-weather-glass: 21;
+  --z-content: 2;
+  --z-visual: 3;
+  --z-controls: 10;
+  --z-header: 20;
+  --z-overlay: 30;
+  --z-progress: 40;
+  --z-skip-link: 100;
+
+  transition:
+    --color-background var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-surface var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-foreground var(--motion-duration-base) var(--motion-ease-standard),
+    --color-primary var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-secondary var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-accent var(--motion-duration-slow) var(--motion-ease-standard),
+    --color-muted var(--motion-duration-base) var(--motion-ease-standard);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-graph-marker: var(--color-white);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-graph-marker: var(--color-black);
+}
+
+@media (max-width: 44rem) {
+  :root {
+    --layout-gutter: 1.125rem;
+    --section-space: clamp(3.5rem, 14vw, 5rem);
+    --type-size-display: clamp(3.2rem, 18vw, 5.8rem);
+  }
+}
+
+@media (max-width: 52rem) {
+  :root {
+    --header-inline-reserve: 0rem;
+    --page-start-clearance: calc(
+      env(safe-area-inset-top) + var(--layout-gutter) + var(--control-size) + var(--space-8)
+    );
+  }
+}
+
+@theme {
+  --color-paper: var(--color-surface);
+  --shadow-paper: 0 1px 0 var(--color-rule), 0 4px 12px light-dark(rgb(16 47 35 / 12%), rgb(0 0 0 / 46%));
+}
