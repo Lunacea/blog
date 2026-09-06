@@ -1,4 +1,4 @@
-import adapter from "@sveltejs/adapter-auto";
+import adapter from "@deno/svelte-adapter";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import { createEditorialPreprocessor } from "../../packages/ui/mdsvex.config.js";
 

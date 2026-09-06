@@ -16,8 +16,7 @@
     "hono": "npm:hono@4.12.27",
     "hono/": "npm:hono@4.12.27/",
     "svelte": "npm:svelte@5.56.4",
-    "zod": "npm:zod@4.4.3",
-    "@deno/svelte-adapter": "jsr:@deno/svelte-adapter"
+    "zod": "npm:zod@4.4.3"
   },
   "tasks": {
     "dev": "deno task --cwd apps/web dev",
