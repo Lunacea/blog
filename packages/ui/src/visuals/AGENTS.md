@@ -150,6 +150,11 @@ Do not import the WebGL dependency graph into Article or other content routes.
 
 The Home page's essential text and navigation must exist before WebGL loads.
 
+Visual Svelte components use the same Tailwind-only styling contract as the rest of `ui` and must
+not contain `<style>` blocks. Generated aspect ratios and renderer coordinates may cross the DOM
+boundary as CSS custom properties; reusable palette, sizing, motion, and depth values remain in
+`foundations/theme.css`.
+
 ## GIF
 
 Use GIF only when supplied by the user.

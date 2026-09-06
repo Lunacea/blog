@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { AuthoredMedia } from "@lunacea/config";
   import AssetPlaceholder from "./AssetPlaceholder.svelte";
+  import { cn } from "../utils.ts";
 
   let {
     asset,
@@ -16,8 +17,11 @@
 </script>
 
 <figure
-  class={`media-slot ${className}`}
-  class:can-move={asset.allowMotion}
+  class={cn(
+    "relative m-0 aspect-(--media-aspect) w-full overflow-hidden [&>picture]:size-full [&>img]:size-full [&_.asset-placeholder]:size-full [&_img]:object-cover [&_img]:object-(--media-position) [&_img]:opacity-(--media-opacity) [&_img]:filter-[saturate(.82)_contrast(.96)] max-sm:[&_img]:object-(--media-mobile-position)",
+    asset.allowMotion && "motion-full:motion-safe:[&_img]:transition-[filter] motion-full:motion-safe:[&_img]:duration-(--motion-duration-base) motion-full:motion-safe:[&_img]:ease-standard",
+    className,
+  )}
   data-variant={asset.variant}
   style={`--media-aspect:${asset.aspectRatio};--media-position:${asset.objectPosition};--media-mobile-position:${asset.mobileObjectPosition ?? asset.objectPosition};--media-opacity:${asset.opacity}`}
 >
@@ -46,39 +50,3 @@
     />
   {/if}
 </figure>
-
-<style>
-  figure {
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    aspect-ratio: var(--media-aspect);
-    margin: 0;
-  }
-
-  picture,
-  img,
-  :global(.asset-placeholder) {
-    width: 100%;
-    height: 100%;
-  }
-
-  img {
-    object-fit: cover;
-    object-position: var(--media-position);
-    opacity: var(--media-opacity);
-    filter: saturate(0.82) contrast(0.96);
-  }
-
-  @media (max-width: 44rem) {
-    img {
-      object-position: var(--media-mobile-position);
-    }
-  }
-
-  @media (prefers-reduced-motion: no-preference) {
-    :global(html[data-motion="full"]) .can-move img {
-      transition: filter var(--motion-duration-base) var(--motion-ease-standard);
-    }
-  }
-</style>

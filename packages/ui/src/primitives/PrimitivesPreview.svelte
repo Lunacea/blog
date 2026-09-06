@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { Button, Input, NativeSelect } from "./index.ts";
+  import { Button, Input } from "./index.ts";
   import * as Collapsible from "./collapsible/index.ts";
   import * as ToggleGroup from "./toggle-group/index.ts";
 
   let selected = $state(["research"]);
 </script>
 
-<main class="primitives-preview">
-  <section aria-labelledby="buttons-heading">
-    <h2 id="buttons-heading">Button</h2>
-    <div class="row">
+<main class="grid gap-12">
+  <section class="grid gap-4 border-t border-rule pt-4" aria-labelledby="buttons-heading">
+    <h2 class="m-0 font-editorial text-(length:--text-h3) font-regular" id="buttons-heading">Button</h2>
+    <div class="flex flex-wrap gap-2">
       <Button>Default</Button>
       <Button variant="primary">Primary</Button>
       <Button variant="ghost">Ghost</Button>
@@ -17,125 +17,39 @@
     </div>
   </section>
 
-  <section aria-labelledby="fields-heading">
-    <h2 id="fields-heading">Native fields</h2>
-    <div class="fields">
+  <section class="grid gap-4 border-t border-rule pt-4" aria-labelledby="fields-heading">
+    <h2 class="m-0 font-editorial text-(length:--text-h3) font-regular" id="fields-heading">Native fields</h2>
+    <div class="grid max-w-xl grid-cols-[minmax(8rem,.35fr)_minmax(0,1fr)] items-center gap-3 max-sm:grid-cols-1 [&>label]:text-(length:--text-small) [&>label]:text-quiet">
       <label for="preview-input">Input</label>
       <Input id="preview-input" value="盛岡" />
       <label for="preview-query">Query variant</label>
       <Input id="preview-query" variant="query" value="静かな記録" />
-      <label for="preview-select">Select</label>
-      <NativeSelect id="preview-select" value="auto">
-        <option value="auto">Auto</option>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </NativeSelect>
     </div>
   </section>
 
-  <section aria-labelledby="disclosure-heading">
-    <h2 id="disclosure-heading">Collapsible</h2>
-    <Collapsible.Root class="preview-collapsible">
-      <Collapsible.Trigger class="preview-trigger">詳細を表示</Collapsible.Trigger>
-      <Collapsible.Content class="preview-content">
+  <section class="grid gap-4 border-t border-rule pt-4" aria-labelledby="disclosure-heading">
+    <h2 class="m-0 font-editorial text-(length:--text-h3) font-regular" id="disclosure-heading">Collapsible</h2>
+    <Collapsible.Root class="max-w-xl">
+      <Collapsible.Trigger class="min-h-control cursor-pointer border border-rule bg-panel px-3 text-ink data-[state=open]:border-signal data-[state=open]:bg-[color-mix(in_srgb,var(--color-accent)_10%,var(--color-surface))]">詳細を表示</Collapsible.Trigger>
+      <Collapsible.Content class="border border-t-0 border-rule p-4 text-quiet">
         ネイティブの読み順を保ちながら、開閉状態とARIAをBits UIが管理します。
       </Collapsible.Content>
     </Collapsible.Root>
   </section>
 
-  <section aria-labelledby="toggle-heading">
-    <h2 id="toggle-heading">Toggle group</h2>
+  <section class="grid gap-4 border-t border-rule pt-4" aria-labelledby="toggle-heading">
+    <h2 class="m-0 font-editorial text-(length:--text-h3) font-regular" id="toggle-heading">Toggle group</h2>
     <ToggleGroup.Root
-      class="preview-toggle-group"
+      class="flex flex-wrap gap-2 **:data-[slot=toggle-group-item]:min-h-control **:data-[slot=toggle-group-item]:cursor-pointer **:data-[slot=toggle-group-item]:border **:data-[slot=toggle-group-item]:border-rule **:data-[slot=toggle-group-item]:bg-panel **:data-[slot=toggle-group-item]:px-3 **:data-[slot=toggle-group-item]:text-ink [&_[data-slot=toggle-group-item][data-state=on]]:border-signal [&_[data-slot=toggle-group-item][data-state=on]]:bg-[color-mix(in_srgb,var(--color-accent)_10%,var(--color-surface))]"
       type="multiple"
-      bind:value={selected}
+      value={selected}
+      onValueChange={(value) => selected = value}
       aria-label="記録の分類"
     >
       <ToggleGroup.Item value="research">Research</ToggleGroup.Item>
       <ToggleGroup.Item value="design">Design</ToggleGroup.Item>
       <ToggleGroup.Item value="archive">Archive</ToggleGroup.Item>
     </ToggleGroup.Root>
-    <p class="selection" aria-live="polite">Selected: {selected.join(", ") || "none"}</p>
+    <p class="m-0 min-h-6 font-code text-(length:--text-small) text-quiet" aria-live="polite">Selected: {selected.join(", ") || "none"}</p>
   </section>
 </main>
-
-<style>
-  .primitives-preview {
-    display: grid;
-    gap: var(--space-12);
-  }
-
-  section {
-    display: grid;
-    gap: var(--space-4);
-    border-top: 1px solid var(--color-line);
-    padding-top: var(--space-4);
-  }
-
-  h2 {
-    margin: 0;
-    font-family: var(--font-serif);
-    font-size: var(--text-h3);
-    font-weight: var(--weight-regular);
-  }
-
-  .row,
-  :global(.preview-toggle-group) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-  }
-
-  .fields {
-    display: grid;
-    max-width: 36rem;
-    grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
-    align-items: center;
-    gap: var(--space-3);
-  }
-
-  label,
-  .selection {
-    color: var(--color-muted);
-    font-size: var(--text-small);
-  }
-
-  :global(.preview-collapsible) {
-    max-width: 36rem;
-  }
-
-  :global(.preview-trigger),
-  :global(.preview-toggle-group [data-slot="toggle-group-item"]) {
-    min-height: var(--control-size);
-    border: 1px solid var(--color-line);
-    padding-inline: var(--space-3);
-    background: var(--color-surface);
-    color: var(--color-foreground);
-    cursor: pointer;
-  }
-
-  :global(.preview-trigger[data-state="open"]),
-  :global(.preview-toggle-group [data-state="on"]) {
-    border-color: var(--color-accent);
-    background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
-  }
-
-  :global(.preview-content) {
-    border: 1px solid var(--color-line);
-    border-top: 0;
-    padding: var(--space-4);
-    color: var(--color-muted);
-  }
-
-  .selection {
-    min-height: var(--space-6);
-    margin: 0;
-    font-family: var(--font-mono);
-  }
-
-  @media (max-width: 44rem) {
-    .fields {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>

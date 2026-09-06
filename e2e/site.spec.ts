@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-const primaryRoutes = ["/", "/articles", "/works", "/archive"];
+const primaryRoutes = ["/", "/articles"];
 
 test("all primary routes render on desktop and mobile", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name === "no-javascript");
@@ -34,6 +34,9 @@ test("theme and motion preferences survive navigation", async ({ page }, testInf
   await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true", { timeout: 20_000 });
   const titleTheme = page.locator("#home-title .theme-toggle");
   const headerTheme = page.locator(".header-theme .theme-toggle");
+  const headerThemeGlyph = await headerTheme.locator(".theme-glyph").boundingBox();
+  expect(headerThemeGlyph?.width).toBeGreaterThanOrEqual(16);
+  expect(headerThemeGlyph?.height).toBeGreaterThanOrEqual(16);
   await headerTheme.hover();
   await expect.poll(() =>
     headerTheme.evaluate((element) => ({
@@ -67,7 +70,11 @@ test("theme and motion preferences survive navigation", async ({ page }, testInf
       accent: getComputedStyle(document.documentElement).getPropertyValue("--color-accent").trim(),
     }))
   ).toEqual(expect.objectContaining({ color: "rgb(226, 198, 84)", accent: "rgb(226, 198, 84)" }));
-  const display = page.getByRole("button", { name: /Display: Full/ });
+  const display = page.getByRole("button", { name: /モーション: フル/ });
+  await expect(display.locator(".wave-primary")).toHaveCSS(
+    "transition-property",
+    "scale, translate, opacity",
+  );
   await display.hover();
   await expect(display).toHaveCSS("transform", "none");
   const headerControlAlignment = await page.locator(
@@ -80,10 +87,47 @@ test("theme and motion preferences survive navigation", async ({ page }, testInf
   );
   expect(Math.abs(headerControlAlignment[0] - headerControlAlignment[1])).toBeLessThanOrEqual(1);
   await display.click();
-  await page.getByRole("button", { name: /Display: Reduced/ }).click();
+  await page.getByRole("button", { name: /モーション: 控えめ/ }).click();
   await page.goto("/articles");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
+});
+
+test("dark Read more cursor keeps white text off the yellow band", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.addInitScript(() => localStorage.setItem("lunacea-motion", "full"));
+  await page.goto("/articles");
+  await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true", {
+    timeout: 20_000,
+  });
+  await page.waitForTimeout(750);
+  await page.getByRole("button", { name: "ダークテーマに切り替える" }).first().click();
+  const preview = page.locator('main a[data-cursor-label="Read more"]').first();
+  const box = await preview.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+  const cursor = page.locator('.cursor[data-label="Read more"]');
+  const label = cursor.locator(".cursor-label");
+  const mask = cursor.locator(".cursor-label-mask");
+  await expect(cursor).toContainText("Read more");
+  await expect(label).toHaveCSS("opacity", "1");
+  await expect(mask).toHaveCount(1);
+  const contrast = await mask.evaluate(
+    (element) => {
+      const maskStyle = getComputedStyle(element);
+      return {
+        backgroundImage: maskStyle.backgroundImage,
+        color: maskStyle.color,
+        inset: [maskStyle.top, maskStyle.right, maskStyle.bottom, maskStyle.left],
+        position: maskStyle.position,
+      };
+    },
+  );
+  expect(contrast.position).toBe("absolute");
+  expect(contrast.inset).toEqual(["0px", "0px", "0px", "0px"]);
+  expect(contrast.color).toBe("rgba(0, 0, 0, 0)");
+  expect(contrast.backgroundImage).toContain("rgb(231, 237, 232)");
+  expect(contrast.backgroundImage).toContain("rgb(9, 12, 10)");
 });
 
 test("desktop header is a transparent fixed control region with vertical navigation", async (
@@ -104,12 +148,37 @@ test("desktop header is a transparent fixed control region with vertical navigat
   const navigationWidths = await header.locator(".desktop-nav a").evaluateAll((links) =>
     links.map((link) => link.getBoundingClientRect().width)
   );
+  const navigationHeights = await header.locator(".desktop-nav a").evaluateAll((links) =>
+    links.map((link) => link.getBoundingClientRect().height)
+  );
   expect(Math.max(...navigationWidths) - Math.min(...navigationWidths)).toBeLessThanOrEqual(1);
+  expect(Math.max(...navigationHeights) - Math.min(...navigationHeights)).toBeLessThanOrEqual(1);
+  const menuWidth = await header.locator(".menu-trigger").evaluate((element) =>
+    element.getBoundingClientRect().width
+  );
+  expect(Math.abs(menuWidth - navigationWidths[0])).toBeLessThanOrEqual(1);
   await expect(header).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  const actionPositions = await header.locator(
+    ".header-actions > :is(.header-theme, .header-display)",
+  )
+    .evaluateAll((items) => items.map((item) => item.getBoundingClientRect().x));
   const before = await header.locator(".control-region").boundingBox();
   await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
   const after = await header.locator(".control-region").boundingBox();
   expect(Math.abs((after?.y ?? 0) - (before?.y ?? 0))).toBeLessThanOrEqual(1);
+  expect(
+    await header.locator(".header-actions > :is(.header-theme, .header-display)")
+      .evaluateAll((items) => items.map((item) => item.getBoundingClientRect().x)),
+  ).toEqual(actionPositions);
+  const controlHeight = await header.locator(".header-display button").evaluate((element) =>
+    element.getBoundingClientRect().height
+  );
+  expect(Math.abs(navigationHeights[0] - controlHeight)).toBeLessThanOrEqual(1);
+  await page.goto("/");
+  const homeCornerHeights = await page.locator(":is(.intro-copy, .about-link)").evaluateAll(
+    (items) => items.map((item) => item.getBoundingClientRect().height),
+  );
+  expect(homeCornerHeights.every((height) => Math.abs(height - controlHeight) <= 1)).toBe(true);
 });
 
 test("mobile navigation dismisses with Escape and returns focus", async ({ page }, testInfo) => {
@@ -120,6 +189,7 @@ test("mobile navigation dismisses with Escape and returns focus", async ({ page 
   });
   const menu = page.getByRole("button", { name: /メニュー/ });
   const actions = page.locator(".header-actions > *");
+  // Home carries Theme, Display and the menu; the catalog adds Search.
   await expect(actions).toHaveCount(3);
   const menuAlignment = await menu.evaluate((button) => {
     const buttonBox = button.getBoundingClientRect();
@@ -141,6 +211,39 @@ test("mobile navigation dismisses with Escape and returns focus", async ({ page 
   await page.keyboard.press("Escape");
   await expect(menu).toHaveAttribute("aria-expanded", "false");
   await expect(menu).toBeFocused();
+});
+
+test("mobile catalog filters start collapsed and remain keyboard-operable", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile");
+  await page.goto("/articles?view=list");
+  const disclosure = page.locator(".filter-disclosure");
+  await expect(disclosure).not.toHaveAttribute("open", "", { timeout: 20_000 });
+  await expect(page.locator(".filter-groups")).toBeHidden();
+  await disclosure.locator("summary").click();
+  await expect(disclosure).toHaveAttribute("open", "");
+  await expect(page.locator(".filter-groups")).toBeVisible();
+  await expect(page.locator(".control-heading > .clear-slot")).toHaveCount(1);
+  await expect.poll(() =>
+    disclosure.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element, "::details-content").opacity)
+    )
+  ).toBe(1);
+  const expandedHeight = await disclosure.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element, "::details-content").height)
+  );
+  await disclosure.locator("summary").click();
+  const closingHeight = await disclosure.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element, "::details-content").height)
+  );
+  expect(closingHeight).toBeGreaterThan(0);
+  expect(closingHeight).toBeLessThanOrEqual(expandedHeight);
+  await expect.poll(() =>
+    disclosure.evaluate((element) =>
+      Number.parseFloat(getComputedStyle(element, "::details-content").height)
+    )
+  ).toBe(0);
 });
 
 test(
@@ -213,8 +316,6 @@ test("non-Home initial content clears the fixed Header controls", async ({ page 
   for (
     const [path, selector] of [
       ["/articles", ".page > header"],
-      ["/works", ".page > header"],
-      ["/archive", ".page > header"],
       ["/articles/resilient-content-pipeline", ".article-header h1"],
     ] as const
   ) {
@@ -254,10 +355,10 @@ test("Grid and List use an item layout transition only in Full motion", async ({
       return original(update);
     };
   });
-  await page.goto("/articles");
+  await page.goto("/articles?view=list");
   await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true");
-  await page.getByRole("link", { name: "グリッド表示" }).click();
-  await expect(page).toHaveURL(/view=grid/u);
+  await page.getByRole("link", { name: "新聞" }).click();
+  await expect(page).toHaveURL(/\/articles$/u);
   await expect.poll(() =>
     page.evaluate(() =>
       Number(
@@ -270,7 +371,7 @@ test("Grid and List use an item layout transition only in Full motion", async ({
   await page.evaluate(() => {
     document.documentElement.dataset.motion = "off";
   });
-  await page.getByRole("link", { name: "リスト表示" }).click();
+  await page.getByRole("link", { name: "リスト" }).click();
   await expect(page).toHaveURL(/view=list/u);
   await expect.poll(() =>
     page.evaluate(() =>
@@ -282,14 +383,94 @@ test("Grid and List use an item layout transition only in Full motion", async ({
   ).toBe(1);
 });
 
+test(
+  "Home opening runs once per tab and reduced motion skips it",
+  async ({ browser }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop");
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.addInitScript(() => {
+      localStorage.setItem("lunacea-motion", "full");
+      sessionStorage.clear();
+    });
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-home-opening", /active|pending/u);
+    await expect(page.locator(".home-opening")).toHaveCount(0, { timeout: 3_000 });
+    await page.reload();
+    await expect(page.locator("html")).not.toHaveAttribute("data-home-opening", /.+/u);
+    await context.close();
+
+    const reduced = await browser.newContext({ reducedMotion: "reduce" });
+    const reducedPage = await reduced.newPage();
+    await reducedPage.goto("/");
+    await expect(reducedPage.locator("html")).not.toHaveAttribute("data-home-opening", /.+/u);
+    await reduced.close();
+  },
+);
+
+test("desktop Article TOC uses a vertical composition graph with bounded rows", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.goto("/articles/resilient-content-pipeline");
+  const toc = page.locator(".desktop-toc");
+  await expect(toc.locator("[data-composition-graph]")).toBeVisible();
+  const rows = await toc.locator(".toc-list > li").evaluateAll((items) =>
+    items.map((item) => item.getBoundingClientRect().height)
+  );
+  expect(Math.min(...rows)).toBeGreaterThanOrEqual(44);
+  const graphAlignment = await toc.locator(".toc-composition").evaluate((composition) => {
+    const list = composition.querySelector<HTMLElement>(".toc-list")!;
+    const graph = composition.querySelector<SVGElement>("[data-composition-graph]")!;
+    const firstLink = list.querySelector<HTMLAnchorElement>("a")!;
+    const marker = getComputedStyle(list, "::after");
+    return {
+      graphWidth: graph.getBoundingClientRect().width,
+      graphOpacity: getComputedStyle(graph.parentElement!).opacity,
+      linkGap: firstLink.getBoundingClientRect().left - graph.getBoundingClientRect().right,
+      markerTransform: marker.transform,
+      markerWidth: marker.width,
+      trackLeft: list.getBoundingClientRect().left,
+    };
+  });
+  expect(graphAlignment.graphWidth).toBe(48);
+  expect(graphAlignment.graphOpacity).toBe("1");
+  expect(graphAlignment.linkGap).toBeGreaterThanOrEqual(16);
+  expect(graphAlignment.markerWidth).toBe("2px");
+  expect(graphAlignment.markerTransform).not.toContain("-2");
+  await expect.poll(() =>
+    toc.locator(".toc-list").evaluate((list) => getComputedStyle(list, "::after").backgroundColor)
+  ).toBe("rgb(247, 248, 244)");
+  await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true", {
+    timeout: 20_000,
+  });
+  await page.getByRole("button", { name: "ダークテーマに切り替える" }).first().click();
+  await expect.poll(() =>
+    toc.locator(".toc-list").evaluate((list) => getComputedStyle(list, "::after").backgroundColor)
+  ).toBe("rgb(9, 12, 10)");
+  expect(await toc.locator("[data-composition-graph] rect").count()).toBeGreaterThan(0);
+  await toc.locator(".toc-list a").nth(1).click();
+  await expect(toc.locator(".toc-list a").nth(1)).toHaveAttribute("aria-current", "location");
+  const marker = await toc.locator(".toc-list").evaluate((list) => {
+    const current = list.querySelector('a[aria-current="location"]')?.closest("li");
+    return {
+      expected: (current as HTMLElement | null)?.offsetTop ?? -1,
+      actual: Number.parseFloat((list as HTMLElement).style.getPropertyValue("--toc-marker-y")),
+    };
+  });
+  expect(marker.actual).toBeCloseTo(marker.expected, 1);
+});
+
 test("catalog controls preserve scroll and reserve reset space", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
-  await page.goto("/articles");
+  await page.goto("/articles?view=list");
   await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true");
+  await page.getByRole("button", { name: "記事を検索", exact: true }).first().click();
+  await expect(page.getByRole("searchbox")).toBeVisible();
   const catalogProtection = await page.evaluate(() => {
     const noise = document.querySelector<HTMLElement>(".site-noise");
     const elements = [
-      document.querySelector<HTMLElement>(".search-row"),
+      document.querySelector<HTMLElement>(".search-panel .header-search-form input[type=search]"),
       document.querySelector<HTMLElement>(".filter-selector a"),
     ];
     return {
@@ -298,7 +479,10 @@ test("catalog controls preserve scroll and reserve reset space", async ({ page }
         const style = getComputedStyle(element!);
         return {
           background: style.backgroundColor,
-          z: Number.parseInt(style.zIndex, 10),
+          z: Number.parseInt(
+            getComputedStyle(element!.closest(".search-panel") ?? element!).zIndex,
+            10,
+          ),
         };
       }),
     };
@@ -307,11 +491,31 @@ test("catalog controls preserve scroll and reserve reset space", async ({ page }
     expect(surface.background).not.toBe("rgba(0, 0, 0, 0)");
     expect(surface.z).toBeGreaterThan(catalogProtection.noiseZ);
   }
-  const clearSlot = page.locator(".clear-slot");
+  const clearSlot = page.locator(".control-heading > .clear-slot");
+  await expect(clearSlot).toHaveCount(1);
+  await expect(clearSlot.locator("a")).toHaveCount(0);
   const initialHeight = await clearSlot.evaluate((element) =>
     element.getBoundingClientRect().height
   );
-  await expect(page.getByRole("button", { name: "解除する条件はありません" })).toBeDisabled();
+  expect(initialHeight).toBeGreaterThan(0);
+  const submitGeometry = await page.locator(".search-panel .header-search-form button[type=submit]")
+    .evaluate(
+      (control) => {
+        const controlBox = control.getBoundingClientRect();
+        const iconBox = control.querySelector("svg")!.getBoundingClientRect();
+        return {
+          width: controlBox.width,
+          height: controlBox.height,
+          iconCenterOffset: Math.hypot(
+            controlBox.x + controlBox.width / 2 - (iconBox.x + iconBox.width / 2),
+            controlBox.y + controlBox.height / 2 - (iconBox.y + iconBox.height / 2),
+          ),
+        };
+      },
+    );
+  expect(submitGeometry.width).toBeCloseTo(submitGeometry.height, 1);
+  expect(submitGeometry.iconCenterOffset).toBeLessThanOrEqual(1);
+  await page.keyboard.press("Escape");
 
   const before = await page.evaluate(() => {
     scrollTo(0, Math.min(240, document.documentElement.scrollHeight - innerHeight));
@@ -321,8 +525,16 @@ test("catalog controls preserve scroll and reserve reset space", async ({ page }
   await page.locator(".filter-selector a").first().evaluate((element: HTMLAnchorElement) =>
     element.click()
   );
-  await expect(page).toHaveURL(/category=/u);
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(before, 0);
+  await expect(page).toHaveURL(/tag=/u);
+  // A filtered catalog can be shorter than the scroll position it inherits, so the guarantee is
+  // that navigation keeps as much of it as the new document allows rather than jumping to the top.
+  const filteredLimit = await page.evaluate(() =>
+    Math.max(0, document.documentElement.scrollHeight - innerHeight)
+  );
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(
+    Math.min(before, filteredLimit),
+    0,
+  );
   expect(await clearSlot.evaluate((element) => element.getBoundingClientRect().height)).toBe(
     initialHeight,
   );
@@ -330,8 +542,11 @@ test("catalog controls preserve scroll and reserve reset space", async ({ page }
   await page.getByRole("link", { name: "条件を解除" }).evaluate(
     (element: HTMLAnchorElement) => element.click(),
   );
-  await expect(page).not.toHaveURL(/category=/u);
-  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(before, 0);
+  await expect(page).not.toHaveURL(/tag=/u);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeCloseTo(
+    Math.min(before, filteredLimit),
+    0,
+  );
 });
 
 test("article header compacts at the reading surface and restores on return", async ({
@@ -396,12 +611,12 @@ test("article header compacts at the reading surface and restores on return", as
 test("back and forward navigation preserve route usability", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
   await page.goto("/articles");
-  await page.goto("/works");
+  await page.goto("/articles?view=list");
   await page.goBack();
   await expect(page).toHaveURL(/\/articles$/u);
   await expect(page.locator("main")).toBeVisible();
   await page.goForward();
-  await expect(page).toHaveURL(/\/works$/u);
+  await expect(page).toHaveURL(/\/articles\?view=list$/u);
   await expect(page.locator("main")).toBeVisible();
 });
 
@@ -463,7 +678,7 @@ test("home is a continuous document with About and a deterministic non-WebGL fal
   await expect(page.getByRole("heading", { level: 1, name: "Lunacea" })).toBeVisible();
   await expect(page.locator(".sample-banner")).toHaveCount(0);
   await expect(page.getByText(/Environment|°C|地点/)).toHaveCount(0);
-  await expect(page.locator(".profile-card").getByText("Engineering")).toHaveCount(0);
+  await expect(page.locator(".profile-card").getByText("Web Engineering")).toBeVisible();
   await expect(page.locator(".about-introduction")).toBeVisible();
   await expect(page.getByRole("link", { name: "View profile" })).toBeVisible();
   await expect(page.locator("[data-home-opening]")).toHaveCount(0);
@@ -530,9 +745,23 @@ test("Home profile card drag stays optional and inside the About region", async 
   });
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(600);
   await expect(card).toBeVisible();
+  const glass = await card.locator(".card-surface").evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      background: style.backgroundColor,
+      backdrop: style.backdropFilter,
+      border: style.borderTopWidth,
+      shadow: style.boxShadow,
+    };
+  });
+  // The card is paper now: opaque surface, hairline rule and a restrained shadow, no glass blur.
+  expect(glass.background).not.toBe("rgba(0, 0, 0, 0)");
+  expect(glass.backdrop).toBe("none");
+  expect(glass.border).toBe("1px");
+  expect(glass.shadow).not.toBe("none");
   await expect(card.locator(".roles > span")).toHaveText([
-    "Interactive Systems",
-    "Design Research",
+    "Web Engineering",
+    "Graphic Design",
   ]);
 
   const before = await card.boundingBox();
@@ -793,7 +1022,10 @@ test("article has reading tools but never creates a WebGL canvas", async ({ page
         const style = getComputedStyle(element!);
         return {
           background: style.backgroundColor,
-          z: Number.parseInt(style.zIndex, 10),
+          z: Number.parseInt(
+            getComputedStyle(element!.closest(".search-row") ?? element!).zIndex,
+            10,
+          ),
         };
       }),
     };
@@ -892,13 +1124,23 @@ test("article TOC tracks clicked headings and mobile disclosure animates", async
     expect(track.activeTransform).not.toBe("none");
     return;
   }
-  const trigger = page.locator(".mobile-toc-trigger");
+  const trigger = page.locator(".mobile-toc-js .mobile-toc-trigger");
   await expect(trigger).toHaveCSS("font-size", "14px");
+  await expect(trigger).toContainText("目次");
+  await expect(trigger).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  const rules = trigger.locator(".index-glyph path");
+  await expect(rules).toHaveCount(3);
+  const foldedMiddle = await rules.nth(1).evaluate((rule) => rule.getBoundingClientRect().width);
   await expect(page.locator(".desktop-toc")).toBeHidden();
   await expect(page.locator(".mobile-toc-region")).toHaveAttribute("data-ready", "true");
   await trigger.click();
   await expect(trigger).toHaveAttribute("data-state", "open");
   await expect(page.locator(".mobile-toc-content")).toHaveAttribute("data-state", "open");
+  await expect(page.locator(".mobile-toc-content ol")).toHaveCSS("border-left-width", "1px");
+  // The three index rules collapse into the single full-width rule while the list is open.
+  await expect(rules.first()).toHaveCSS("opacity", "0");
+  await expect.poll(() => rules.nth(1).evaluate((rule) => rule.getBoundingClientRect().width))
+    .toBeGreaterThan(foldedMiddle);
   await trigger.click();
   await expect(page.locator(".mobile-toc-content")).toHaveAttribute("data-state", "closed");
 });
@@ -933,33 +1175,19 @@ test("Mermaid geometry stays intact in Reduced and Off", async ({ page }, testIn
   }
 });
 
-test("Work detail uses vertical metadata and conditional external actions", async ({
-  page,
-}, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop");
-  await page.goto("/works/quiet-archive");
-  await expect(page.locator(".work-meta dt")).toHaveText(["Role", "Period", "Field"]);
-  await expect(page.getByRole("link", { name: /View source/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Visit site/ })).toHaveCount(0);
-  await expect(page.locator(".work-technologies li").first().locator("svg")).toBeVisible();
-  await expect(page.locator(".reading-surface")).toHaveCSS("border-top-width", "0px");
-});
-
-test("Archive detail follows the media-led Work layout", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop");
-  await page.goto("/archive/photos/after-rain");
-  await expect(page.locator("article")).toHaveClass(/archive-record/u);
-  await expect(page.locator(".archive-meta dt")).toContainText(["Kind", "Published"]);
-  await expect(page.locator(".reading-surface")).toHaveCSS("border-top-width", "0px");
-});
-
-test("tag route uses the compact filtered catalog layout", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop");
-  await page.goto("/tags/Design");
-  await expect(page.getByRole("heading", { level: 1, name: "Tags" })).toBeVisible();
-  await expect(page.locator(".tag-filter")).toContainText("Design");
-  await expect(page.locator(".tag-filter")).toContainText(/records/u);
-});
+test(
+  "tag pages are retired and detail labels target filtered catalogs",
+  async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop");
+    const response = await page.goto("/tags/Design");
+    expect(response?.status()).toBe(404);
+    await page.goto("/articles/resilient-content-pipeline");
+    await expect(page.getByRole("link", { name: "Deno", exact: true })).toHaveAttribute(
+      "href",
+      "/articles?view=list&tag=Deno",
+    );
+  },
+);
 
 test("anonymous praise and share actions remain available", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop");
@@ -972,29 +1200,28 @@ test("anonymous praise and share actions remain available", async ({ page }, tes
     getComputedStyle(element).backgroundColor
   );
   await praise.hover();
-  expect(
-    Number.parseFloat(
-      await praise.locator("svg").evaluate((element) => getComputedStyle(element).fontSize),
-    ),
-  ).toBeGreaterThan(20);
-  await expect(praise.locator("svg")).toHaveCSS(
-    "animation-name",
-    /praise-heart-hover/u,
-  );
+  const glyphBox = await praise.locator(".heart-glyph").boundingBox();
+  expect(glyphBox?.width ?? 0).toBeGreaterThan(32);
+  // Hover scales the heart through a transition rather than a permanent animation.
+  await expect(praise.locator(".heart-glyph")).toHaveCSS("transition-property", /transform/);
   await praise.click();
   await expect(praise).toHaveAttribute("aria-pressed", "true");
   await expect(praise).toHaveCSS("background-color", idleBackground);
-  await expect(praise.locator("svg")).toHaveAttribute(
-    "data-icon-name",
-    "solar:heart-bold",
-  );
-  await expect(praise.locator("svg")).toHaveCSS(
+  // The praise glyph is drawn locally, so selection is carried by its filled state.
+  await expect(praise.locator(".heart-glyph")).toHaveAttribute("data-filled", "true");
+  await expect(praise.locator(".heart-glyph")).toHaveCSS("animation-name", /praise-heart-select/u);
+  // The celebration blooms across the viewport and leaves nothing behind.
+  const celebration = page.locator("[data-praise-celebration]");
+  await expect(celebration).toHaveCount(1);
+  await expect(celebration.locator(".heart-bloom")).toHaveCSS(
     "animation-name",
-    /praise-heart-select/u,
+    /praise-bloom/u,
   );
-  await expect.poll(() =>
-    praise.evaluate((element) => getComputedStyle(element, "::after").animationName)
-  ).toMatch(/praise-burst/u);
+  await expect(celebration.locator("[data-thank-you] path").first()).toHaveCSS(
+    "animation-name",
+    /hand-write/u,
+  );
+  await expect(celebration).toHaveCount(0, { timeout: 5_000 });
   await page.reload();
   await expect(page.getByRole("button", { name: "称賛を取り消す" })).toHaveAttribute(
     "aria-pressed",
@@ -1013,10 +1240,10 @@ test("keyboard focus reaches navigation and display settings", async ({ page }, 
   await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true");
   await page.keyboard.press("Tab");
   await expect(page.locator(":focus")).toHaveAttribute("href", "#main-content");
-  const display = page.getByRole("button", { name: /Display:/ });
+  const display = page.getByRole("button", { name: /モーション:/ });
   await display.focus();
   await page.keyboard.press("Enter");
-  await expect(display).toHaveAttribute("aria-label", /Display: (Reduced|Off)/);
+  await expect(display).toHaveAttribute("aria-label", /モーション: (控えめ|なし)/);
 });
 
 test(
@@ -1024,7 +1251,7 @@ test(
   async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop");
     await page.addInitScript(() => localStorage.setItem("lunacea-motion", "full"));
-    await page.goto("/articles");
+    await page.goto("/articles?view=list");
     await expect(page.locator(".article-collection .copy").first()).toHaveCSS(
       "background-color",
       "rgba(0, 0, 0, 0)",
@@ -1043,7 +1270,13 @@ test(
       /cursor-square-spin/u,
     );
 
+    await page.getByRole("button", { name: "記事を検索", exact: true }).first().click();
     const search = page.getByRole("searchbox");
+    await expect(search).toBeVisible();
+    // The disclosure animates in, so the field only settles into place after it finishes.
+    await page.locator(".search-panel").evaluate((panel) =>
+      Promise.all(panel.getAnimations().map((animation) => animation.finished.catch(() => {})))
+    );
     const searchBox = await search.boundingBox();
     expect(searchBox).not.toBeNull();
     await page.mouse.move(searchBox!.x + 4, searchBox!.y + 4);
@@ -1063,14 +1296,14 @@ test(
       getSelection()?.removeAllRanges();
       document.dispatchEvent(new Event("selectionchange"));
     });
-    const articlePreview = page.locator('main a[data-cursor-label="View more"]').first();
+    const articlePreview = page.locator('main a[data-cursor-label="Read more"]').first();
     const articlePreviewBox = await articlePreview.boundingBox();
     expect(articlePreviewBox).not.toBeNull();
     await page.mouse.move(
       articlePreviewBox!.x + articlePreviewBox!.width / 2,
       articlePreviewBox!.y + articlePreviewBox!.height / 2,
     );
-    await expect(page.locator(".cursor")).toContainText("View more");
+    await expect(page.locator(".cursor")).toContainText("Read more");
     const cursorShape = page.locator(".cursor-shape");
     await expect(cursorShape).toHaveCSS("border-top-width", "3px");
     await expect(cursorShape).toHaveCSS("border-radius", "0px");
@@ -1078,7 +1311,7 @@ test(
       "animation-name",
       /cursor-settle-square/u,
     );
-    const viewMoreShape = page.locator('.cursor[data-label="View more"] .cursor-shape');
+    const viewMoreShape = page.locator('.cursor[data-label="Read more"] .cursor-shape');
     await page.waitForTimeout(700);
     const expandedWidth = await viewMoreShape.evaluate((element) =>
       element.getBoundingClientRect().width
@@ -1091,11 +1324,13 @@ test(
       const style = getComputedStyle(element, "::before");
       return {
         animationName: style.animationName,
+        backgroundImage: style.backgroundImage,
         backgroundRepeat: style.backgroundRepeat,
         backgroundSize: style.backgroundSize,
       };
     });
     expect(viewMoreFill.animationName).toMatch(/cursor-view-more-fill/u);
+    expect(viewMoreFill.backgroundImage).toContain("rgb(112, 88, 0)");
     expect(viewMoreFill.backgroundRepeat).toContain("repeat");
     expect(viewMoreFill.backgroundSize).toBe("208px 100%");
     expect(Number.parseFloat(viewMoreFill.backgroundSize)).toBeGreaterThan(expandedWidth);
@@ -1177,9 +1412,9 @@ test(
       /cursor-settle-diamond/u,
     );
 
-    await page.goto("/articles");
-    await page.getByRole("button", { name: "Display: Full" }).click();
-    const reducedPreview = page.locator('main a[data-cursor-label="View more"]').first();
+    await page.goto("/articles?view=list");
+    await page.getByRole("button", { name: "モーション: フル。控えめに切り替える" }).click();
+    const reducedPreview = page.locator('main a[data-cursor-label="Read more"]').first();
     const reducedPreviewBox = await reducedPreview.boundingBox();
     expect(reducedPreviewBox).not.toBeNull();
     await page.mouse.move(
@@ -1187,7 +1422,7 @@ test(
       reducedPreviewBox!.y + reducedPreviewBox!.height / 2,
     );
     await expect(page.locator("html")).toHaveAttribute("data-motion", "reduced");
-    await expect(page.locator(".cursor")).toContainText("View more");
+    await expect(page.locator(".cursor")).toContainText("Read more");
   },
 );
 
@@ -1211,7 +1446,7 @@ test("JavaScript-disabled reading and GET search remain usable", async ({ page }
     .toBeVisible();
   await expect(page.locator('.prose h2[id="正本を一つにする"]')).toBeVisible();
 
-  await page.goto("/articles");
+  await page.goto("/articles?view=list");
   await page.getByRole("searchbox").fill("天候");
   await page.getByRole("button", { name: "記事を検索" }).click();
   await expect(page).toHaveURL(/q=%E5%A4%A9%E5%80%99/u);
@@ -1239,9 +1474,8 @@ test("legacy URLs use one-hop permanent redirects", async ({ page }, testInfo) =
     ["/about?ref=legacy", "/?ref=legacy#about"],
     [
       "/search?q=天候&tag=Deno&category=engineering&sort=updated&view=grid",
-      "/articles?q=%E5%A4%A9%E5%80%99&tag=Deno&category=engineering&sort=updated&view=grid",
+      "/articles?q=%E5%A4%A9%E5%80%99&tag=Deno&category=engineering&sort=updated&view=list",
     ],
-    ["/archive/photos", "/archive?kind=photos"],
   ];
   for (const [from, to] of cases) {
     const response = await page.request.get(from, { maxRedirects: 0 });
@@ -1266,17 +1500,4 @@ test("404, feeds, sitemap, OGP, and health endpoint respond", async ({ page }, t
   const siteOg = await page.request.get("/og/site.png");
   expect(siteOg.ok()).toBe(true);
   expect(siteOg.headers()["content-type"]).toBe("image/png");
-});
-
-test("responsive archive images are emitted at their public URLs", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop");
-  await page.goto("/archive");
-  const source = page.locator('source[type="image/avif"]').first();
-  const srcset = await source.getAttribute("srcset");
-  expect(srcset).toContain("/images/generated/");
-  const path = srcset?.split(",")[0].trim().split(" ")[0];
-  expect(path).toBeTruthy();
-  const image = await page.request.get(path!);
-  expect(image.status()).toBe(200);
-  expect(image.headers()["content-type"]).toBe("image/avif");
 });

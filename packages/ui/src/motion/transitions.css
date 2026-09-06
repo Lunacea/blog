@@ -1,20 +1,22 @@
 /* One-shot enhancements. The non-JS frame remains visible. */
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal] {
   opacity: 0;
-  transform: translateY(var(--space-2));
+  transform: translateY(calc(var(--space-2) + var(--reveal-parallax, 0px)));
   transition:
     opacity var(--motion-duration-page) var(--motion-ease-enter),
     transform var(--motion-duration-page) var(--motion-ease-enter);
+  transition-delay: var(--reveal-delay, 0ms);
+  animation-delay: var(--reveal-delay, 0ms);
 }
 
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal][data-visible="true"] {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(var(--reveal-parallax, 0px));
   animation: reveal-mask var(--motion-duration-slow) var(--motion-ease-enter) both;
 }
 
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal="line"] {
-  transform: none;
+  transform: translateY(0);
 }
 
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal="line"][data-visible="true"] {
@@ -22,7 +24,7 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="line"][data-vis
 }
 
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"] {
-  transform: translateY(var(--space-1));
+  transform: translateY(calc(var(--space-1) + var(--reveal-parallax, 0px)));
   filter: saturate(0.72) contrast(0.92);
 }
 
@@ -88,9 +90,29 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"][data-vi
   animation-duration: calc(var(--motion-duration-exit) + var(--motion-duration-base));
 }
 
-html[data-catalog-transition="true"]::view-transition-old(page-content),
+/* Switching view keeps the records morphing, but the surrounding controls cross-fade
+   instead of standing on top of each other. */
+html[data-catalog-transition="true"]::view-transition-old(page-content) {
+  animation: catalog-exit var(--motion-duration-fast) var(--motion-ease-exit) both;
+}
+
 html[data-catalog-transition="true"]::view-transition-new(page-content) {
-  animation: none;
+  animation: catalog-enter var(--motion-duration-base) var(--motion-ease-enter) both;
+}
+
+@keyframes catalog-exit {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes catalog-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 html[data-catalog-transition="true"]::view-transition-group(*) {
@@ -108,6 +130,88 @@ html[data-catalog-transition="true"]::view-transition-group(*) {
   from {
     opacity: 0;
     transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html[data-content-direction="next"]::view-transition-old(page-content) {
+  animation: content-exit-next var(--motion-duration-exit) var(--motion-ease-exit) both;
+}
+
+html[data-content-direction="next"]::view-transition-new(page-content) {
+  animation: content-enter-next var(--motion-duration-base) var(--motion-ease-enter)
+    var(--motion-duration-exit) both;
+}
+
+html[data-content-direction="previous"]::view-transition-old(page-content) {
+  animation: content-exit-previous var(--motion-duration-exit) var(--motion-ease-exit) both;
+}
+
+html[data-content-direction="previous"]::view-transition-new(page-content) {
+  animation: content-enter-previous var(--motion-duration-base) var(--motion-ease-enter)
+    var(--motion-duration-exit) both;
+}
+
+html[data-content-direction="next"]::view-transition-old(content-sequence-number),
+html[data-content-direction="previous"]::view-transition-new(content-sequence-number) {
+  animation: count-up-old var(--motion-duration-base) var(--motion-ease-enter) both;
+}
+
+html[data-content-direction="next"]::view-transition-new(content-sequence-number),
+html[data-content-direction="previous"]::view-transition-old(content-sequence-number) {
+  animation: count-up-new var(--motion-duration-base) var(--motion-ease-enter) both;
+}
+
+@keyframes content-exit-next {
+  to {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
+}
+
+@keyframes content-enter-next {
+  from {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes content-exit-previous {
+  to {
+    opacity: 0;
+    transform: translateX(2rem);
+  }
+}
+
+@keyframes content-enter-previous {
+  from {
+    opacity: 0;
+    transform: translateX(-2rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes count-up-old {
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes count-up-new {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
   }
   to {
     opacity: 1;

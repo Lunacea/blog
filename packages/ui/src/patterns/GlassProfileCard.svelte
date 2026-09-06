@@ -320,8 +320,6 @@
       const vertical = (event.clientY - rect.top) / rect.height - .5;
       surface.style.setProperty("--card-rotate-x", `${(-vertical * 3).toFixed(2)}deg`);
       surface.style.setProperty("--card-rotate-y", `${(horizontal * 3).toFixed(2)}deg`);
-      surface.style.setProperty("--card-light-x", `${((horizontal + .5) * 100).toFixed(1)}%`);
-      surface.style.setProperty("--card-light-y", `${((vertical + .5) * 100).toFixed(1)}%`);
     });
   }
 
@@ -330,8 +328,6 @@
     surface.style.removeProperty("--card-rotate-x");
     surface.style.removeProperty("--card-rotate-y");
     surface.style.removeProperty("--card-rotate-z");
-    surface.style.removeProperty("--card-light-x");
-    surface.style.removeProperty("--card-light-y");
   }
 
   function finishIntroduction(event: AnimationEvent) {
@@ -386,36 +382,34 @@
 </script>
 
 <article
-  class="profile-card"
-  class:dragging
-  class:inertial
-  class:introduced
+  class="profile-card group/profile relative w-[min(var(--profile-card-width),calc(100vw-(var(--layout-gutter)*2)))] max-w-(--layout-grid-wide) touch-pan-y [--card-x:0px] [--card-y:0px] [transform:translate3d(var(--card-x),var(--card-y),0)] max-xs:w-[min(var(--profile-card-width),calc(100vw-(var(--profile-card-boundary)*2)))]"
   data-dragging={dragging}
   data-inertial={inertial}
+  data-introduced={introduced}
   data-cursor="drag"
   data-cursor-label="Drag it!"
   bind:this={card}
 >
   <div
-    class="card-surface"
+    class="card-surface relative isolate grid origin-[48%_52%] transform-3d gap-(--profile-card-gap) overflow-hidden rounded-sharp border border-rule bg-paper p-(--profile-card-padding) shadow-paper before:pointer-events-none before:absolute before:inset-0 before:bg-[url('/textures/editorial-noise.svg')] before:bg-size-[192px_192px] before:bg-repeat before:opacity-30 before:mix-blend-multiply before:content-[''] theme-dark:before:opacity-20 theme-dark:before:invert theme-dark:before:mix-blend-screen forced-colors:before:hidden print:before:hidden *:relative [--card-rotate-x:0deg] [--card-rotate-y:0deg] [--card-rotate-z:var(--profile-card-resting-tilt)] [transform:perspective(60rem)_rotateX(var(--card-rotate-x))_rotateY(var(--card-rotate-y))_rotateZ(var(--card-rotate-z))] transition-transform duration-(--motion-duration-fast) ease-enter group-data-[introduced=true]/profile:animate-profile-card-arrive group-data-[dragging=true]/profile:animate-none group-data-[dragging=true]/profile:[transform:perspective(60rem)_rotateX(var(--card-rotate-x))_rotateY(var(--card-rotate-y))_rotateZ(var(--card-rotate-z))_scale(1.012)] group-data-[dragging=true]/profile:transition-none group-data-[inertial=true]/profile:animate-none group-data-[inertial=true]/profile:[transform:perspective(60rem)_rotateX(var(--card-rotate-x))_rotateY(var(--card-rotate-y))_rotateZ(var(--card-rotate-z))_scale(1.006)] motion-reduced:[--card-rotate-z:0deg] motion-reduced:transform-none motion-reduced:duration-(--motion-duration-immediate) motion-off:[--card-rotate-z:0deg] forced-colors:border forced-colors:border-[CanvasText] forced-colors:bg-[Canvas] forced-colors:shadow-none forced-colors:backdrop-blur-none forced-colors:transform-none"
     bind:this={surface}
     onanimationend={finishIntroduction}
   >
-    <header class="identity">
-      <div class="profile-media">
+    <header class="identity grid grid-cols-[var(--profile-card-media)_minmax(0,1fr)] items-center gap-(--space-3)">
+      <div class="profile-media w-(--profile-card-media) cursor-grab select-none group-data-[dragging=true]/profile:cursor-grabbing [&_.media-slot]:aspect-square [&_.media-slot]:rounded-none [&_[data-asset-placeholder]]:aspect-square [&_[data-asset-placeholder]]:rounded-none [&_img]:object-contain [&_img]:filter-none">
         <MediaSlot {asset} showPlaceholder={!asset.src} label="Profile character / replace" />
       </div>
-      <div class="identity-copy">
-        <h2 id="about-title">{name}</h2>
-        <p class="roles">
+      <div class="identity-copy min-w-0">
+        <h2 class="m-0 font-serif text-h3 leading-snug font-regular" id="about-title">{name}</h2>
+        <p class="roles mt-(--space-1) mb-0 grid overflow-hidden text-caption leading-compact text-quiet">
           {#each roles as role}
-            <span>{role}</span>
+            <span class="overflow-hidden text-ellipsis whitespace-nowrap">{role}</span>
           {/each}
         </p>
       </div>
     </header>
 
-    <nav class="contact-list" aria-label="連絡先">
+    <nav class="contact-list grid gap-(--space-2) text-small [&_a]:grid [&_a]:min-h-(--space-6) [&_a]:w-fit [&_a]:grid-cols-[var(--space-5)_minmax(0,1fr)] [&_a]:items-center [&_a]:gap-(--space-2) [&_a]:leading-ui [&_a]:text-inherit [&_a]:no-underline [&_a]:transition-[color,transform] [&_a]:duration-(--motion-duration-fast) [&_a]:ease-standard [&_a]:hover:translate-x-(--space-1) [&_a]:hover:text-action [&_a]:focus-visible:text-action [&_a]:focus-visible:outline-none [&_a]:focus-visible:shadow-(--focus-ring) motion-reduce:[&_a]:transform-none motion-reduce:[&_a]:duration-(--motion-duration-immediate) [&_.contact-row]:grid [&_.contact-row]:min-h-(--space-6) [&_.contact-row]:grid-cols-[var(--space-5)_minmax(0,1fr)] [&_.contact-row]:items-center [&_.contact-row]:gap-(--space-2) [&_.contact-row]:leading-ui [&_.contact-icon]:grid [&_.contact-icon]:w-(--space-4) [&_.contact-icon]:place-items-center [&_.contact-icon]:justify-self-center [&_.contact-icon_svg]:size-[1em] [&_.email-icon_svg]:scale-[1.12] [&_.unavailable]:text-quiet" aria-label="連絡先">
       {#if github}
         <a href={github} rel="me" data-cursor="interactive">
           <span class="contact-icon"><Icon name={socialIcons.github} /></span>
@@ -452,245 +446,3 @@
     </nav>
   </div>
 </article>
-
-<style>
-  .profile-card {
-    --card-x: 0px;
-    --card-y: 0px;
-    position: relative;
-    width: min(var(--profile-card-width), calc(100vw - (var(--layout-gutter) * 2)));
-    max-width: var(--layout-grid-wide);
-    touch-action: pan-y;
-    transform: translate3d(var(--card-x), var(--card-y), 0);
-  }
-
-  .card-surface {
-    --card-rotate-x: 0deg;
-    --card-rotate-y: 0deg;
-    --card-rotate-z: var(--profile-card-resting-tilt);
-    --card-light-x: 50%;
-    --card-light-y: 50%;
-    display: grid;
-    gap: var(--profile-card-gap);
-    overflow: hidden;
-    padding: var(--profile-card-padding);
-    border-radius: var(--radius-small);
-    background:
-      radial-gradient(
-        circle at var(--card-light-x) var(--card-light-y),
-        color-mix(in srgb, var(--color-white) 13%, transparent),
-        transparent 42%
-      ),
-      var(--color-glass);
-    box-shadow: var(--shadow-profile);
-    backdrop-filter: blur(var(--glass-blur));
-    transform:
-      perspective(60rem)
-      rotateX(var(--card-rotate-x))
-      rotateY(var(--card-rotate-y))
-      rotateZ(var(--card-rotate-z));
-    transform-style: preserve-3d;
-    transform-origin: 48% 52%;
-    transition: transform var(--motion-duration-fast) var(--motion-ease-enter);
-  }
-
-  .profile-card.introduced .card-surface {
-    animation: profile-card-arrive var(--motion-duration-opening) var(--motion-ease-enter) 1;
-  }
-
-  .profile-card.dragging .card-surface {
-    transform:
-      perspective(60rem)
-      rotateX(var(--card-rotate-x))
-      rotateY(var(--card-rotate-y))
-      rotateZ(var(--card-rotate-z))
-      scale(1.012);
-    animation: none;
-    transition: none;
-  }
-
-  .profile-card.inertial .card-surface {
-    transform:
-      perspective(60rem)
-      rotateX(var(--card-rotate-x))
-      rotateY(var(--card-rotate-y))
-      rotateZ(var(--card-rotate-z))
-      scale(1.006);
-    animation: none;
-  }
-
-  @keyframes profile-card-arrive {
-    0% {
-      opacity: 0;
-      transform:
-        perspective(60rem)
-        rotateX(4deg)
-        rotateY(-7deg)
-        rotateZ(-14deg)
-        scale(.96);
-    }
-    58% {
-      opacity: 1;
-      transform:
-        perspective(60rem)
-        rotateX(-1deg)
-        rotateY(2deg)
-        rotateZ(2.5deg)
-        scale(1.008);
-    }
-    100% {
-      opacity: 1;
-      transform:
-        perspective(60rem)
-        rotateX(var(--card-rotate-x))
-        rotateY(var(--card-rotate-y))
-        rotateZ(var(--card-rotate-z));
-    }
-  }
-
-  .identity {
-    display: grid;
-    grid-template-columns: var(--profile-card-media) minmax(0, 1fr);
-    align-items: center;
-    gap: var(--space-3);
-  }
-
-  .profile-media {
-    width: var(--profile-card-media);
-    cursor: grab;
-    user-select: none;
-  }
-
-  .profile-card.dragging .profile-media {
-    cursor: grabbing;
-  }
-
-  :global(.profile-media .media-slot),
-  :global(.profile-media [data-asset-placeholder]) {
-    aspect-ratio: 1;
-    border-radius: var(--radius-none);
-  }
-
-  :global(.profile-media img) {
-    object-fit: contain;
-    filter: none;
-  }
-
-  .identity-copy {
-    min-width: 0;
-  }
-
-  h2 {
-    margin: 0;
-    font-family: var(--font-serif);
-    font-size: var(--text-h3);
-    font-weight: var(--weight-regular);
-    line-height: var(--leading-snug);
-  }
-
-  .identity-copy .roles {
-    display: grid;
-    overflow: hidden;
-    margin: var(--space-1) 0 0;
-    color: var(--color-muted);
-    font-size: var(--text-caption);
-    line-height: var(--leading-compact);
-  }
-
-  .roles span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .contact-list {
-    display: grid;
-    gap: var(--space-2);
-    font-size: var(--text-small);
-  }
-
-  .contact-list a,
-  .contact-row {
-    display: grid;
-    min-height: var(--space-6);
-    grid-template-columns: var(--space-5) minmax(0, 1fr);
-    align-items: center;
-    gap: var(--space-2);
-    color: inherit;
-    line-height: var(--leading-ui);
-    text-decoration: none;
-  }
-
-  .contact-list a {
-    width: fit-content;
-    transition:
-      color var(--motion-duration-fast) var(--motion-ease-standard),
-      transform var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-
-  .contact-list a:hover {
-    color: var(--color-primary);
-    transform: translateX(var(--space-1));
-  }
-
-  .contact-list a:focus-visible {
-    color: var(--color-primary);
-    outline: none;
-    box-shadow: var(--focus-ring);
-  }
-
-  .contact-icon {
-    display: grid;
-    width: var(--space-4);
-    place-items: center;
-    justify-self: center;
-  }
-
-  .contact-icon :global(svg) {
-    display: block;
-    width: 1em;
-    height: 1em;
-  }
-
-  .email-icon :global(svg) {
-    transform: scale(1.12);
-  }
-
-  .unavailable {
-    color: var(--color-muted);
-  }
-
-  @media (max-width: 34rem) {
-    .profile-card {
-      width: min(
-        var(--profile-card-width),
-        calc(100vw - (var(--profile-card-boundary) * 2))
-      );
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .card-surface,
-    .profile-card.dragging .card-surface,
-    .profile-card.inertial .card-surface,
-    .contact-list a {
-      transform: none;
-      transition-duration: var(--motion-duration-immediate);
-    }
-  }
-
-  :global(html[data-motion="reduced"]) .card-surface,
-  :global(html[data-motion="off"]) .card-surface {
-    --card-rotate-z: 0deg;
-  }
-
-  @media (forced-colors: active) {
-    .card-surface {
-      border: 1px solid CanvasText;
-      background: Canvas;
-      box-shadow: none;
-      backdrop-filter: none;
-      transform: none;
-    }
-  }
-</style>

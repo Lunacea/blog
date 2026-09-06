@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "../";
+@source "../../../../apps/web/src";
 @import "./theme.css";
 @import "./editorial.css";
 @import "../motion/transitions.css";
@@ -11,6 +13,7 @@
 
 html {
   scrollbar-color: var(--color-muted) var(--color-background);
+  scrollbar-gutter: stable;
   background: var(--color-background);
 }
 
@@ -33,76 +36,278 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 }
 
-body {
-  font-synthesis: none;
-  min-height: 100vh;
-  min-height: 100dvh;
-  margin: 0;
-  color: var(--color-foreground);
-  background:
-    radial-gradient(
-    circle at 78% 12%,
-    color-mix(in srgb, var(--color-secondary) 8%, transparent),
-    transparent 30rem
-  ),
-    var(--color-background);
-  font-family: var(--font-sans);
-  font-size: var(--text-body);
-  line-height: var(--leading-body);
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+@media (prefers-reduced-motion: no-preference) {
+  html[data-motion="reduced"] .motion-preference-feedback[data-motion-feedback="true"] .wave,
+  html[data-motion="off"] .motion-preference-feedback[data-motion-feedback="true"] .wave {
+    transition-duration: var(--motion-duration-fast) !important;
+  }
 }
 
-::selection {
-  color: var(--color-background);
-  background: var(--color-primary);
+@layer base {
+  body {
+    font-synthesis: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    color: var(--color-foreground);
+    background:
+      radial-gradient(
+      circle at 78% 12%,
+      color-mix(in srgb, var(--color-secondary) 8%, transparent),
+      transparent 30rem
+    ),
+      var(--color-background);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-body);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    color: var(--color-background);
+    background: var(--color-primary);
+  }
+
+  a {
+    color: inherit;
+    text-decoration-color: var(--color-secondary);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.24em;
+  }
+
+  a:hover {
+    text-decoration-color: var(--color-accent);
+  }
+
+  html[data-custom-cursor] body,
+  html[data-custom-cursor] a,
+  html[data-custom-cursor] button,
+  html[data-custom-cursor] summary,
+  html[data-custom-cursor] label,
+  html[data-custom-cursor] .article-record .prose {
+    cursor: none;
+  }
+
+  button,
+  select,
+  input,
+  textarea {
+    color: inherit;
+    font: inherit;
+  }
+
+  button,
+  select,
+  input[type="submit"] {
+    min-height: var(--control-size);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: var(--space-1);
+    box-shadow: var(--focus-ring);
+  }
+
+  img,
+  svg,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  img {
+    height: auto;
+  }
 }
 
-a {
-  color: inherit;
-  text-decoration-color: var(--color-secondary);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.24em;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  /* design-literal: visually hidden content follows the standard one-pixel clipping recipe. */
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
-a:hover {
-  text-decoration-color: var(--color-accent);
-}
-
-button,
-select,
-input,
-textarea {
-  color: inherit;
-  font: inherit;
-}
-
-button,
-select,
-input[type="submit"] {
-  min-height: var(--control-size);
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: var(--space-1);
-  box-shadow: var(--focus-ring);
-}
-
-img,
-svg,
-canvas {
-  display: block;
-  max-width: 100%;
-}
-
-img {
-  height: auto;
-}
-
-.shell {
+@utility shell {
   width: min(calc(100% - (2 * var(--layout-gutter))), var(--content-width));
   margin-inline: auto;
+}
+
+@utility code-copy {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: grid;
+  width: var(--space-8);
+  min-height: var(--space-8);
+  place-items: center;
+  border: var(--border-width-rule) solid color-mix(in srgb, var(--color-code-foreground) 32%,
+    transparent);
+  padding: 0;
+  background: var(--color-code-background);
+  color: var(--color-code-foreground);
+  cursor: pointer;
+
+  .code-block[data-title] & {
+    top: calc((var(--space-10) - var(--space-8)) / 2);
+  }
+
+  &::before,
+  &::after {
+    position: absolute;
+    width: 0.55rem;
+    height: 0.65rem;
+    border: var(--border-width-rule) solid currentColor;
+    content: "";
+  }
+
+  &::before {
+    transform: translate(-2px, 2px);
+  }
+  &::after {
+    background: var(--color-code-background);
+    transform: translate(2px, -2px);
+  }
+  &[data-copied]::before {
+    width: 0.65rem;
+    height: 0.35rem;
+    border-width: 0 0 var(--border-width-rule) var(--border-width-rule);
+    transform: rotate(-45deg);
+  }
+  &[data-copied]::after,
+  &[data-failed]::after {
+    display: none;
+  }
+  &[data-failed] {
+    color: var(--color-negative);
+  }
+}
+
+@utility mermaid-diagram {
+  position: relative;
+  z-index: calc(var(--z-controls) + 1);
+  overflow-x: auto;
+  margin: var(--space-8) 0;
+  border: var(--border-width-rule) solid var(--color-line);
+  padding: var(--space-6);
+  background: var(--color-surface);
+
+  & figcaption {
+    margin-top: var(--space-3);
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+  }
+
+  & svg {
+    width: 100%;
+    /* Shrink to fit only down to a legible scale; beyond that the figure scrolls. */
+    min-width: var(--mermaid-legible-width, 0);
+    height: auto;
+  }
+
+  html[data-motion="reduced"] &,
+  html[data-motion="reduced"] & *,
+  html[data-motion="off"] &,
+  html[data-motion="off"] & * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@utility home-continuum {
+  position: relative;
+  min-height: 200svh;
+  overflow: clip;
+
+  html:has(&) {
+    scroll-snap-type: y mandatory;
+  }
+}
+
+@utility page {
+  min-height: 65vh;
+  padding-block: var(--page-start-clearance) var(--section-space);
+
+  @media print {
+    padding: 0;
+  }
+}
+
+@utility catalog-page {
+  min-height: 100vh;
+}
+
+@utility content-shell {
+  width: min(calc(100% - (2 * var(--layout-gutter)) - var(--header-inline-reserve)),
+    var(--content-width));
+  margin-inline-start: max(var(--layout-gutter), calc((100% - var(--content-width) -
+    var(--header-inline-reserve)) / 2));
+  margin-inline-end: auto;
+
+  @media (max-width: 52rem) {
+    width: min(calc(100% - (2 * var(--layout-gutter))), var(--content-width));
+    margin-inline: auto;
+  }
+}
+
+@utility eyebrow {
+  margin: 0 0 var(--space-3);
+  color: var(--color-secondary);
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-label);
+  line-height: var(--leading-ui);
+  text-transform: uppercase;
+}
+
+@utility page-title {
+  max-width: 18ch;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-h1);
+  font-weight: var(--weight-regular);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-title);
+  text-wrap: balance;
+}
+
+@utility lead {
+  max-width: 42rem;
+  margin: var(--space-6) 0 0;
+  color: var(--color-muted);
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+}
+
+@utility section-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-block: 0 var(--space-8);
+
+  & h2 {
+    margin: 0;
+    font-size: var(--text-small);
+    font-weight: var(--weight-label);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+}
+
+@utility tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
 }
 
 @media (forced-colors: active) {
@@ -124,9 +329,23 @@ img {
   }
 }
 
+@media (forced-colors: active), print {
+  body:has([data-article-catalog]) {
+    background-image: none;
+  }
+}
+
 @media print {
   body {
     color: var(--color-print-foreground);
     background: var(--color-print-background);
+  }
+
+  header,
+  .settings,
+  .reactions,
+  .share-actions,
+  .reading-progress {
+    display: none !important;
   }
 }

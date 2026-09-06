@@ -31,6 +31,9 @@
       ]
     }
   },
+  "appPort": [
+    "0.0.0.0:5173:5173"
+  ],
   "forwardPorts": [
     8000, // Hono API
     5173, // Svelte/Vite

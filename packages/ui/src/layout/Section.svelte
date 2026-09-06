@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { LayoutProps } from "./types.ts";
+  import { cn } from "../utils.ts";
 
   let {
     as = "section",
@@ -10,20 +11,16 @@
   }: LayoutProps & { space?: "compact" | "default" | "spacious" } = $props();
 </script>
 
-<svelte:element this={as} class={`layout-section ${className}`} data-space={space} {...restProps}>
+<svelte:element
+  this={as}
+  class={cn(
+    "py-section",
+    space === "compact" && "py-16",
+    space === "spacious" && "py-40",
+    className,
+  )}
+  data-space={space}
+  {...restProps}
+>
   {@render children?.()}
 </svelte:element>
-
-<style>
-  .layout-section {
-    padding-block: var(--section-space);
-  }
-
-  .layout-section[data-space="compact"] {
-    padding-block: var(--space-16);
-  }
-
-  .layout-section[data-space="spacious"] {
-    padding-block: var(--space-40);
-  }
-</style>

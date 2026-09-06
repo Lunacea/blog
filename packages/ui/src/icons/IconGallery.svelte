@@ -23,75 +23,18 @@
   ];
 </script>
 
-<div class="icon-gallery">
+<div class="grid gap-(--space-12)">
   {#each groups as group}
     <section aria-labelledby={`icon-${group.title.toLowerCase()}`}>
-      <h2 id={`icon-${group.title.toLowerCase()}`}>{group.title}</h2>
-      <ul>
+      <h2 class="mb-(--space-4) text-small tracking-label uppercase" id={`icon-${group.title.toLowerCase()}`}>{group.title}</h2>
+      <ul class="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(min(100%,var(--layout-grid-compact)),1fr))] gap-(--space-3) p-0">
         {#each group.icons as icon}
-          <li>
+          <li class="grid min-w-0 grid-cols-[var(--control-size)_minmax(0,1fr)] items-center gap-(--space-3) border-t border-rule py-(--space-3) [&>svg]:text-h3">
             <Icon name={icon.name} decorative={false} label={icon.label} />
-            <div><strong>{icon.label}</strong><code>{icon.name}</code></div>
+            <div class="grid min-w-0 max-w-full"><strong class="min-w-0 max-w-full wrap-anywhere text-small font-component">{icon.label}</strong><code class="min-w-0 max-w-full wrap-anywhere font-mono text-caption text-quiet">{icon.name}</code></div>
           </li>
         {/each}
       </ul>
     </section>
   {/each}
 </div>
-
-<style>
-  .icon-gallery {
-    display: grid;
-    gap: var(--space-12);
-  }
-
-  h2 {
-    margin: 0 0 var(--space-4);
-    font-size: var(--text-small);
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
-  }
-
-  ul {
-    display: grid;
-    grid-template-columns: repeat(
-      auto-fit,
-      minmax(min(100%, var(--layout-grid-compact)), 1fr)
-    );
-    gap: var(--space-3);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  li {
-    display: grid;
-    min-width: 0;
-    grid-template-columns: var(--control-size) minmax(0, 1fr);
-    align-items: center;
-    gap: var(--space-3);
-    border-top: 1px solid var(--color-line);
-    padding-block: var(--space-3);
-  }
-
-  li :global(svg) {
-    font-size: var(--text-h3);
-  }
-
-  li div {
-    display: grid;
-    min-width: 0;
-  }
-
-  strong {
-    font-size: var(--text-small);
-    font-weight: var(--weight-component);
-  }
-
-  code {
-    overflow-wrap: anywhere;
-    color: var(--color-muted);
-    font-family: var(--font-mono);
-    font-size: var(--text-caption);
-  }
-</style>

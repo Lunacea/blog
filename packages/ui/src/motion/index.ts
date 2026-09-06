@@ -1,4 +1,5 @@
 export { default as RevealManager } from "./RevealManager.svelte";
+export { default as HomeOpening } from "./HomeOpening.svelte";
 export { default as CursorLayer } from "./CursorLayer.svelte";
 export { type CursorState, cursorStates } from "./cursor.ts";
 export {

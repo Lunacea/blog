@@ -1,508 +1,279 @@
 # Design System Agent Instructions
 
-## Purpose
+## 目的
 
-This package owns the visual and interaction design system for the portfolio.
+このパッケージは、ポートフォリオのデザインシステムを管理します。
 
-The design system must provide an accessible behavioral foundation while preserving a distinctive
-editorial and artistic identity.
+次を重視してください。
 
-Do not produce a generic shadcn dashboard aesthetic.
+- アクセシビリティ
+- 可読性
+- 十分な余白
+- タイポグラフィ
+- 控えめで意図的な装飾
+- 独自性のある編集的・芸術的な表現
 
-The design should feel intentional, spacious, calm, tactile, and original without relying on
-excessive decoration.
+一般的なshadcnダッシュボード風のデザインにしないでください。
 
-## Required references
+## 基本技術
 
-Before changing this package, read:
+- Svelte 5 / SvelteKit
+- Tailwind CSS 4
+- Bits UI
+- ローカルのshadcn-svelteコンポーネント
 
-- the repository root `AGENTS.md`
-- `docs/architecture.md`
+既存プリミティブを優先し、同じ役割のUIフレームワークを追加しないでください。
+
+React版shadcn/uiを使用しないでください。
+
+shadcn-svelteのデフォルト外観をそのまま採用せず、このプロジェクトのテーマに合わせて調整してください。
+
+## 関連資料
+
+タスクに関係する場合のみ、次を確認してください。
+
+- ルートの `AGENTS.md`
 - `docs/design-system.md`
+- `docs/architecture.md`
 - `components.json`
-- the installed shadcn-svelte Skill
-- the closest nested `AGENTS.md`
-- neighboring components and their tests
+- 対象付近の実装
+- 最寄りの `AGENTS.md`
 
-Use the shadcn-svelte Skill for current component APIs, CLI behavior, Svelte 5 patterns, and Bits UI
-composition rules.
+軽微な変更のために、すべての資料やテストを読まないでください。
 
-Project-specific instructions in this file override the default visual choices shown in
-shadcn-svelte examples.
+## ディレクトリ責務
 
-## Technology
+- `foundations`: テーマ、グローバルCSS、フォント、基礎スタイル
+- `primitives`: Button、Dialog、Menuなどの低レベルUI
+- `layout`: Container、Stack、Gridなどの配置
+- `components`: 単一責務の再利用可能な意味的UI
+- `patterns`: 複数コンポーネントからなるページセクション
+- `icons`: UI・ブランドアイコン
+- `motion`: アニメーション、遷移、カーソル
+- `visuals`: アセット、プレースホルダー、WebGL、視覚表現
 
-- Use Svelte 5 and SvelteKit.
-- Use Tailwind CSS 4.
-- Use Bits UI as the preferred headless behavioral primitive.
-- Use local shadcn-svelte source components where an appropriate primitive already exists.
-- Do not introduce another overlapping component framework without an approved plan.
-- Do not import React shadcn/ui packages.
+責務を越えた実装を配置しないでください。
 
-Use existing primitives before writing new accessibility or interaction behavior from scratch.
+ルーティングやデータ取得をデザインシステムに持ち込まないでください。
 
-Do not treat the default shadcn-svelte appearance as the site's design language. Rework styles
-through the project's theme, variants, composition, and motion rules.
+## テーマとスタイル
 
-## Directory responsibilities
-
-Keep UI code separated by role.
-
-### `foundations`
-
-Owns:
-
-- the Tailwind theme
-- global styles
-- typography configuration
-- font loading
-- foundational accessibility styles
-
-It must not contain page-specific component implementations.
-
-### `primitives`
-
-Owns low-level reusable controls and behaviors such as:
-
-- Button
-- Dialog
-- Tooltip
-- Popover
-- Select
-- Checkbox
-- Menu
-- Tabs
-
-Prefer Bits UI and shadcn-svelte source as the behavioral foundation.
-
-Primitives must not know about portfolio content types, routes, weather, articles, works, or API
-repositories.
-
-### `layout`
-
-Owns spatial composition only:
-
-- Container
-- Section
-- Stack
-- Cluster
-- Grid
-- Split
-- Bleed
-
-Layout components must not add decorative cards, shadows, borders, or business semantics.
-
-### `components`
-
-Owns reusable semantic UI with one clear responsibility.
-
-Examples:
-
-- ArticleCard
-- WorkMeta
-- SocialLink
-- ReactionControl
-- MediaCaption
-
-### `patterns`
-
-Owns multi-component compositions used as page sections.
-
-Examples:
-
-- Hero
-- ProfileIntroduction
-- FeaturedWorks
-- ArticleCollection
-- ContactSection
-
-Patterns may compose primitives, layout, and components but must not become alternative routing or
-data-loading layers.
-
-### `icons`
-
-Owns all UI and brand icon resolution.
-
-Application code must not import arbitrary icon packages directly.
-
-### `motion`
-
-Owns micro-interactions, page transitions, opening animation, and custom cursor behavior.
-
-### `visuals`
-
-Owns authored media slots, asset placeholders, WebGL enhancements, and typographic visual
-experiments.
-
-Do not place complex SVG or WebGL implementations in general-purpose components.
-
-## Theme source of truth
-
-Use Tailwind CSS 4 theme variables.
-
-All reusable values for the following must be defined in exactly one source-of-truth file:
+再利用可能なデザイン値は、原則として次に集約してください。
 
 `src/foundations/theme.css`
 
-This includes:
+対象：
 
-- colors
-- typography families
-- type scale
-- font weights
-- line heights
-- letter spacing
-- spacing scale
-- container sizes
-- breakpoints
-- radii
-- shadows
+- 色
+- フォント
+- タイポグラフィ
+- 余白
+- コンテナ幅
+- ブレークポイント
+- 角丸
+- 影
 - blur
-- motion durations
-- easing curves
-- z-index conventions where represented as project variables
+- モーション
+- easing
+- z-index
 
-Use `@theme` or `@theme inline` as appropriate.
+次を守ってください。
 
-Do not define competing theme values in:
+- Svelteコンポーネントに `<style>` を書かない。
+- 通常のスタイルは静的なTailwindユーティリティで表現する。
+- 状態には `data-*`、group、peer、variantを使用する。
+- propによる違いは `cn()` と完全な静的クラス文字列で表現する。
+- Tailwindクラス名を文字列補間で生成しない。
+- 静的な色、余白、寸法をインラインスタイルに書かない。
+- 再利用するアニメーションは `theme.css` に定義する。
+- arbitrary valueは、本当に一度しか使わず既存トークンで表現できない場合だけ使用する。
 
-- Svelte components
-- route styles
-- JavaScript constants
-- other CSS files
-- inline styles
-- Tailwind arbitrary values
+## ビジュアル方針
 
-A component may use a one-off literal value only when all of the following are true:
+優先するもの：
 
-1. the value is genuinely specific to that implementation;
-2. it is not a reusable design decision;
-3. no existing token expresses it;
-4. the reason is documented next to the implementation.
+- 余白
+- タイポグラフィ
+- 構成
+- スケール
+- リズム
+- 控えめな色
+- 意図的なモーション
+- ユーザー提供のアセット
 
-Do not create an arbitrary Tailwind value merely to make a screenshot look closer without evaluating
-whether the theme token should change.
+デフォルトで追加しないもの：
 
-`global.css` may contain selectors, resets, scrollbar rules, body styles, forced-color behavior, and
-browser-specific fallbacks, but must reference tokens from `theme.css` rather than defining a second
-token system.
+- カード化
+- 境界線
+- 影
+- blur
+- glassmorphism
+- 大きなグラデーション
+- blob
+- 過剰な角丸
+- pill形状
+- ダッシュボード風レイアウト
 
-## Visual identity
+境界線、角丸、影には、機能上または構成上の理由を持たせてください。
 
-The design system is not a collection of generic cards.
+日本語の行長、行間、改行、句読点の可読性を維持してください。
 
-Prefer:
+## Headless UI
 
-- whitespace
-- typography
-- composition
-- scale
-- rhythm
-- restrained color contrast
-- intentional motion
-- authored visual assets
+Dialog、Menu、Tooltip、Popover、Selectなど、複雑な操作は次の順で検討してください。
 
-Do not add borders, shadows, blur, glass effects, or rounded corners by default.
+1. 既存ローカルプリミティブ
+2. shadcn-svelte
+3. Bits UI
+4. 既存プリミティブの拡張
+5. 新規実装
 
-Every border, radius, or shadow must have a functional or compositional reason.
+見た目を変えるためだけに、フォーカス管理やARIAを独自実装しないでください。
 
-Avoid:
+ルートやpatternからBits UIを直接利用せず、ローカルのデザインシステムを通してください。
 
-- card grids where plain document structure is sufficient
-- excessive pill shapes
-- uniformly rounded containers
-- permanent glassmorphism
-- large generic gradients
-- decorative blobs
-- generic dashboard layouts
-- visual effects copied directly from shadcn examples
-- identical treatment for every section
+## アイコン
 
-Use serif and sans-serif according to the documented typography roles.
+Iconifyは `Icon.svelte` を通じて使用してください。
 
-Use Japanese-capable fonts and preserve readable Japanese line length, line height, punctuation, and
-word breaking.
+- 一般UI: `solar:*:linear`
+- 公式ブランド: `simple-icons:*`
 
-## Spacing and layout
+理由なく複数のSolarスタイルを混在させないでください。
 
-The interface should have generous breathing room.
+アイコンだけで意味が不明な操作には、ラベル、アクセシブルネーム、必要に応じてTooltipを付けてください。
 
-Use the documented spacing and container tokens instead of local, uncoordinated margins.
+UIの装飾、状態表示、ナビゲーション、フォールバックとして絵文字を使用しないでください。
 
-Prefer structural layout components over repeated class strings.
+記事本文中の絵文字は、明示的な依頼がない限り変更しないでください。
 
-Do not solve every spacing issue by adding more wrappers.
+## モーション
 
-Spacing must remain coherent at:
+形状変化に意味がある操作は、必要に応じてCSSまたは単純なSVGで実装してください。
 
-- narrow mobile widths
-- tablet widths
-- desktop widths
-- wide desktop widths
-- increased browser text size
+例：
 
-Avoid dense interface patterns unless the content genuinely requires them.
+- hamburgerからclose
+- playからpause
+- disclosure indicator
+- loading indicator
 
-## Headless component policy
+次を守ってください。
 
-For controls with complex focus, keyboard, overlay, dismissal, selection, or ARIA behavior:
+- reduced motionに対応する。
+- アニメーションで不明確な情報設計をごまかさない。
+- 不要な常時アニメーションや高負荷なparticle表現を追加しない。
 
-1. check whether an existing local primitive exists;
-2. check whether shadcn-svelte provides the component;
-3. check whether Bits UI provides an appropriate primitive;
-4. compose or extend the existing primitive;
-5. write a new behavior implementation only when the existing options are insufficient.
+## 画像とアセット
 
-Do not recreate dialogs, menus, listboxes, comboboxes, tooltips, popovers, or focus traps solely to
-obtain a custom appearance.
+人物、植物、動物、手、肖像、ロゴなどの有機的・ブランド的な画像をコードで生成しないでください。
 
-The visual layer may be completely customized, but accessibility behavior must remain intact.
+必要な画像がない場合は `AssetPlaceholder` を使用し、次を示してください。
 
-Do not expose raw shadcn-svelte defaults directly to route code. Route and pattern code should
-consume this project's local design-system exports.
+- アセット番号
+- 想定サイズまたはアスペクト比
+- ファイル形式
+- 内容
+- 配置目的
 
-## Icon system
+単純な幾何学図形、構造図、技術的SVGは実装して構いません。
 
-Use Iconify through the local `Icon.svelte` abstraction.
+GIFはユーザー提供のものだけを使用し、生成、ダウンロード、推測による代替をしないでください。
 
-Do not import Iconify icons ad hoc in route or component files.
+## スクロールとカーソル
 
-Use two approved collections:
+- ネイティブスクロールを維持する。
+- JavaScript制御のスクロールへ置き換えない。
+- スクロールバーを完全に隠さない。
+- スクロール進捗表示は補助としてのみ使用する。
 
-- `solar:*` for general interface symbols
-- `simple-icons:*` only for official technology, service, product, and social-media logos
+カスタムカーソルはProgressive Enhancementとして扱い、次では無効にしてください。
 
-Use one Solar style throughout general UI. Default to:
-
-`solar:*:linear`
-
-Do not mix Solar linear, outline, bold, broken, and duotone styles within the same interface without
-an approved design-system change.
-
-Brand marks must use the correct official glyph where available.
-
-Render brand marks through the same local Icon component and normalize:
-
-- size
-- alignment
-- optical spacing
-- accessible labeling
-- color behavior
-
-Prefer monochrome `currentColor` rendering. Use official brand colors only when the design
-specification explicitly requires them.
-
-Every technical stack or social-service item with a recognized brand mark must be capable of
-displaying its corresponding icon.
-
-Icons are supportive, not a replacement for all text.
-
-Do not create icon-only navigation when a visible text label improves understanding.
-
-An icon-only interactive control must have an accessible name and an appropriate visible tooltip
-when its meaning is not universally clear.
-
-## Emoji prohibition
-
-Do not use emoji as interface graphics, labels, decoration, status indicators, bullets, navigation
-symbols, empty states, or fallback icons.
-
-This prohibition applies to application chrome and design-system UI.
-
-Do not automatically alter emoji that intentionally appears inside editorial article content unless
-the task explicitly requests content editing.
-
-## Micro-interactions
-
-Do not model every interaction as a static Iconify icon.
-
-Implement interaction-specific forms locally when shape transformation is part of the meaning.
-
-Examples include:
-
-- hamburger to close transition
-- play to pause transition
-- expandable disclosure indicator
-- loading mark
-- cursor state
-- navigation transition indicator
-
-The hamburger menu trigger should be a semantic button with locally drawn lines or simple CSS/SVG
-geometry so the open and closed states can morph coherently.
-
-Simple icons may be rotated, translated, faded, or scaled when the icon shape itself does not need
-to transform.
-
-Animation must not compensate for unclear information architecture.
-
-## GIF assets
-
-GIF may be used only as a user-provided authored asset.
-
-Do not generate, download, invent, or substitute a GIF.
-
-When a required GIF is missing, render the standard asset placeholder with:
-
-- a stable asset number
-- expected aspect ratio
-- intended placement
-- concise asset requirements
-- meaningful fallback text
-
-Do not use an animated GIF for behavior that is better implemented through CSS, SVG, Svelte
-transitions, or WebGL.
-
-## Authored images and complex SVG
-
-Do not implement complex organic illustrations, portraits, plants, animals, hands, logos, or
-authored brand imagery as SVG code.
-
-Wait for user-provided assets.
-
-Until an asset is provided, use `AssetPlaceholder` and display:
-
-- asset number
-- expected dimensions or aspect ratio
-- expected file type
-- intended content description
-
-The placeholder must preserve layout without pretending to be final art.
-
-Simple geometric or technical SVG may be implemented when it is structural, not a substitute for
-authored artwork.
-
-## Scrollbars
-
-Preserve native scrolling behavior.
-
-Apply the site's visual language using standard scrollbar styling and tokenized browser fallbacks.
-
-Do not make the page scrollbar completely undiscoverable.
-
-Do not replace normal document scrolling with a JavaScript-controlled scroll system.
-
-Use native scrollbar behavior in:
-
-- forced-colors mode
-- unsupported browsers
-- accessibility fallbacks
-
-A decorative scroll-progress indicator may supplement the native scrollbar but must not replace it.
-
-## Cursor
-
-A custom cursor is a progressive enhancement.
-
-Enable it only for devices matching fine-pointer and hover capabilities.
-
-Do not hide or replace the native cursor on:
-
-- touch devices
-- coarse pointers
-- reduced-motion configurations
-- forced-colors mode
-- text-entry controls
-- text-selection contexts
-- initialization failure
-- JavaScript-disabled pages
-
-The cursor may react to interactive elements and WebGL regions, but it must not be the only
-indication that an element is interactive.
-
-Cursor states must be defined centrally and remain limited in number.
-
-Do not create distracting cursor trails or continuous high-cost particle effects.
-
-## Accessibility
-
-Preserve or improve:
-
-- semantic HTML
-- native control behavior
-- keyboard operation
-- visible focus
-- correct ARIA
-- accessible names
-- heading hierarchy
-- text alternatives
-- color contrast
-- reduced-motion behavior
-- forced-colors behavior
-- zoom and text resizing
-- touch target size
-- no-JavaScript access where documented
-
-Prefer visible labels over icon-only controls.
-
-Do not use ARIA to imitate a native element when a native element is available.
-
-Decorative icons must be hidden from assistive technology.
-
-Meaningful icons must have an accessible label supplied by the containing control or nearby text.
-
-## UX decision gate
-
-Do not make an autonomous UX or product decision when it materially changes:
-
-- navigation structure
-- information hierarchy
-- meaning of an action
-- content priority
-- reading flow
-- interaction modality
-- discoverability
-- accessibility tradeoffs
-- destructive behavior
-- persistence expectations
-- mobile behavior
-
-When such a decision is encountered:
-
-1. identify the decision explicitly;
-2. explain the user impact;
-3. present the smallest set of viable alternatives;
-4. avoid implementing the disputed behavior;
-5. continue with unblocked structural work or a reversible placeholder.
-
-Do not use the decision gate for ordinary implementation details that can be resolved from the
-design system and existing code.
-
-## Validation
-
-For design-system changes, run the scripts that actually exist for:
-
-- formatting
-- lint
-- Svelte checks
-- type checking
-- unit or component tests
-- accessibility tests
-- production build
-- JavaScript budget checks
-
-For visual work, verify at minimum:
-
-- narrow mobile
-- tablet
-- desktop
-- wide desktop
-- keyboard-only navigation
-- increased text size
+- タッチ端末
+- coarse pointer
+- hover非対応
 - reduced motion
-- forced colors when supported
-- JavaScript-disabled behavior where promised
+- forced colors
+- テキスト入力・選択中
+- 初期化失敗
+- JavaScript無効
 
-Inspect the final diff for:
+カスタムカーソルを、操作可能性を示す唯一の手段にしないでください。
 
-- arbitrary colors
-- arbitrary spacing
-- unapproved icon sets
-- emoji in UI
-- unnecessary borders
-- unnecessary shadows
-- unnecessary rounded containers
-- imported heavy dependencies
-- direct route imports from Bits UI or icon libraries
-- duplicated design tokens
+## アクセシビリティ
 
-Report unexecuted visual checks as unexecuted.
+ユーザー向け変更では、必要に応じて次を維持または改善してください。
+
+- セマンティックHTML
+- ネイティブ操作
+- キーボード操作
+- フォーカス表示
+- 適切なARIA
+- アクセシブルネーム
+- 見出し構造
+- 代替テキスト
+- 色のコントラスト
+- reduced motion
+- forced colors
+- zoomと文字サイズ変更
+- タッチターゲット
+
+ネイティブ要素が使える場合、ARIAで代替実装しないでください。
+
+## UX判断
+
+次を大きく変更する場合は、ユーザーの要求または既存仕様を確認してください。
+
+- ナビゲーション
+- 情報階層
+- 操作の意味
+- コンテンツの優先度
+- 読書フロー
+- 主要なモバイル動作
+- 破壊的操作
+- 永続化
+- 重大なアクセシビリティ上の判断
+
+通常の実装詳細は、既存コードとデザインシステムから最も影響の小さい方法を選んでください。
+
+## 作業方針
+
+- 要求を満たす最小限の変更を行う。
+- 対象ファイルと周辺実装を先に確認する。
+- 既存コンポーネント、variant、トークンを再利用する。
+- 無関係な変更やリファクタリングをしない。
+- ファイル全体ではなく局所的に編集する。
+- 軽微な変更で新しい抽象化を作らない。
+- 小さな変更ではPlanを作らず直接実装する。
+
+複数の主要コンポーネント、テーマ構造、公開API、操作体系に影響する場合のみ短いPlanを使用してください。
+
+## 検証
+
+変更内容に応じて、必要最小限の検証を行ってください。
+
+- 文言・軽微なスタイル: 対象確認と必要な画面確認
+- コンポーネント動作: 関連テスト、Svelteまたは型チェック
+- プリミティブ・共通UI: 関連テスト、型チェック、主要な利用箇所
+- テーマ・レイアウト基盤: 型チェック、必要に応じてlintまたはbuild
+- 依存関係・初期バンドル: build、必要な場合のみbudget確認
+
+見た目だけの変更に新しい自動テストは必須ではありません。
+
+すべての変更でformat、lint、全テスト、build、全画面幅の確認を一律に実行しないでください。
+
+まず最小の関連チェックを行い、影響範囲や失敗に応じて追加してください。
+
+実行していない確認を成功と報告しないでください。
+
+## 完了報告
+
+最終回答は簡潔にし、必要な範囲で次を報告してください。
+
+- 変更内容
+- 変更ファイル
+- 実行した検証
+- 未実行の重要な確認
+- 残っているリスク
+
+全コマンドや全確認項目の羅列は、求められた場合のみ行ってください。

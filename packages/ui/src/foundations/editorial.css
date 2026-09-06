@@ -17,11 +17,11 @@
 
 .prose h2 {
   margin: var(--space-16) 0 var(--space-5);
-  border-bottom: 1px solid var(--color-line);
+  border-bottom: var(--border-width-rule) solid var(--color-line);
   padding-bottom: var(--space-3);
   font-family: var(--font-sans);
   font-size: var(--text-prose-h2);
-  font-weight: var(--weight-component);
+  font-weight: var(--weight-regular);
   letter-spacing: var(--tracking-ui);
 }
 
@@ -40,7 +40,7 @@
 .prose ul,
 .prose ol,
 .prose table {
-  margin-block: var(--space-4);
+  margin-block: var(--space-2);
 }
 
 .prose blockquote {
@@ -57,7 +57,7 @@
   position: relative;
   z-index: calc(var(--z-controls) + 1);
   margin-block: var(--space-8);
-  border: 1px solid var(--color-line);
+  border: var(--border-width-rule) solid var(--color-line);
   border-left: 3px solid var(--color-secondary);
   padding: var(--space-4) var(--space-5);
   background: var(--color-surface);
@@ -82,7 +82,7 @@
 
 .prose th,
 .prose td {
-  border-bottom: 1px solid var(--color-line);
+  border-bottom: var(--border-width-rule) solid var(--color-line);
   padding: var(--space-2) var(--space-3);
   text-align: left;
 }
@@ -100,7 +100,7 @@
   z-index: calc(var(--z-controls) + 1);
   overflow: hidden;
   margin-block: var(--space-8);
-  border: 1px solid var(--color-line);
+  border: var(--border-width-rule) solid var(--color-line);
   background: var(--color-code-background);
   color: var(--color-code-foreground);
   text-shadow: none;
@@ -116,11 +116,18 @@
   color: var(--shiki-dark, inherit) !important;
 }
 
+.code-block code,
+.code-block code span,
+.code-block code a {
+  border: 0;
+  text-decoration: none;
+}
+
 .code-block[data-title]::before {
   display: flex;
   min-height: var(--space-10);
   align-items: center;
-  border-bottom: 1px solid var(--color-line);
+  border-bottom: var(--border-width-rule) solid var(--color-line);
   padding: var(--space-2) var(--space-12) var(--space-2) var(--space-4);
   color: color-mix(in srgb, var(--color-code-foreground) 68%, transparent);
   content: attr(data-title);
@@ -141,7 +148,7 @@
   z-index: calc(var(--z-controls) + 1);
   overflow-x: auto;
   margin-block: var(--space-8);
-  border: 1px solid var(--color-line);
+  border: var(--border-width-rule) solid var(--color-line);
   padding: var(--space-5);
   background: var(--color-surface);
   white-space: pre-wrap;

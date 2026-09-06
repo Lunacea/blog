@@ -1,75 +1,14 @@
 <script lang="ts">
-  import { dev } from "$app/environment";
-  import { page } from "$app/state";
   import HomeSnapController from "$lib/components/HomeSnapController.svelte";
   import PageHead from "$lib/components/PageHead.svelte";
-  import { getWeatherContext } from "$lib/weather-context.ts";
   import ThemeToggle from "$ui/components/ThemeToggle.svelte";
-  import type { ApprovedIconName } from "$ui/icons";
-  import { EngineeringProfile, GlassProfileCard } from "$ui/patterns";
-  import { MediaSlot, parseWeatherVisualOverride } from "$ui/visuals";
+  import { GlassProfileCard } from "$ui/patterns";
+  import { Icon, ScrollGlyph, tagIconName } from "$ui/icons";
+  import { MediaSlot } from "$ui/visuals";
   import AmbientHero from "$ui/visuals/AmbientHero.svelte";
+  import { HomeOpening } from "$ui/motion";
   import { siteConfig, visualAssets } from "@lunacea/config";
 
-  const weather = getWeatherContext();
-  const devWeather = $derived(
-    dev
-      ? parseWeatherVisualOverride(page.url.searchParams.get("weather"))
-      : null,
-  );
-  const engineeringCategories: readonly {
-    title: string;
-    technologies: readonly { label: string; icon: ApprovedIconName }[];
-  }[] = [
-    {
-      title: "Frontend",
-      technologies: [
-        { label: "SvelteKit / Svelte 5", icon: "simple-icons:svelte" },
-        { label: "Tailwind CSS 4", icon: "simple-icons:tailwindcss" },
-        { label: "Threlte", icon: "solar:code-linear" },
-        { label: "Three.js", icon: "simple-icons:threedotjs" },
-      ],
-    },
-    {
-      title: "Backend",
-      technologies: [
-        { label: "Deno 2", icon: "simple-icons:deno" },
-        { label: "Hono", icon: "solar:code-linear" },
-        { label: "Zod", icon: "simple-icons:zod" },
-      ],
-    },
-    {
-      title: "Database",
-      technologies: [{ label: "Deno KV", icon: "simple-icons:deno" }],
-    },
-    {
-      title: "Infrastructure / Hosting",
-      technologies: [{ label: "Deno Deploy", icon: "simple-icons:deno" }],
-    },
-    {
-      title: "Development Tools",
-      technologies: [
-        { label: "TypeScript", icon: "simple-icons:typescript" },
-        { label: "Vite", icon: "simple-icons:vite" },
-      ],
-    },
-    {
-      title: "Design / Creative Tools",
-      technologies: [
-        { label: "Storybook", icon: "simple-icons:storybook" },
-        { label: "Sharp", icon: "simple-icons:sharp" },
-      ],
-    },
-    {
-      title: "Testing / Quality",
-      technologies: [
-        { label: "Deno Test", icon: "simple-icons:deno" },
-        { label: "Vitest", icon: "simple-icons:vitest" },
-        { label: "Playwright", icon: "simple-icons:playwright" },
-        { label: "axe-core", icon: "solar:accessibility-linear" },
-      ],
-    },
-  ];
   const authorLinks: Array<string | null> = [
     siteConfig.author.github as string | null,
     siteConfig.author.x as string | null,
@@ -99,6 +38,7 @@
   description={siteConfig.description}
   path="/"
 />
+<HomeOpening />
 <HomeSnapController />
 <svelte:head
   ><script type="application/ld+json">
@@ -107,281 +47,60 @@
 >
 
 <div class="home-continuum">
-  <div class="visual-surface">
-    <AmbientHero weather={devWeather ?? $weather.visual} />
+  <div class="visual-surface pointer-events-auto absolute inset-0 z-(--z-content) min-h-[200svh] home-opening:animate-home-visual-enter">
+    <AmbientHero />
   </div>
   {#if visualAssets.heroOrganic.src}
-    <div class="foliage">
+    <div class="foliage pointer-events-none absolute -top-(--space-12) -right-(--space-8) z-[calc(var(--z-visual)+1)] w-[min(34vw,31rem)] origin-top-right motion-full:animate-foliage-grow max-md:-top-(--space-8) max-md:-right-(--space-10) max-md:w-[min(48vw,22rem)] [&_.media-slot]:overflow-visible [&_img]:origin-[86%_8%] motion-full:[&_img]:animate-foliage-breathe">
       <MediaSlot asset={visualAssets.heroOrganic} showPlaceholder={false} />
     </div>
   {/if}
 
   <section
-    class="home-section intro"
+    class="home-section intro pointer-events-none relative z-(--z-visual) grid min-h-svh snap-start snap-always grid-rows-[1fr_auto_1fr] items-start p-(--layout-gutter) *:pointer-events-auto"
     aria-labelledby="home-title"
     data-home-intro
   >
-    <p class="intro-copy">Web Developer</p>
-    <div class="title-block">
-      <h1 id="home-title" aria-label="Lunacea">
-        <span aria-hidden="true">Luna</span><span class="title-glyph"
+    <div class="title-block row-start-2 place-self-center text-center home-opening:animate-home-title-enter">
+      <h1 class="m-0 font-serif text-display leading-display font-regular tracking-display" id="home-title" aria-label="Lunacea">
+        <span aria-hidden="true">Luna</span><span class="title-glyph ms-[-.02em] me-[-.04em] inline-flex size-[.792em] items-center justify-center align-[.03em] text-(length:--text-title-glyph) text-signal [&_.theme-glyph]:size-full"
           ><ThemeToggle placement="title" /></span
         ><span aria-hidden="true">ea</span>
       </h1>
-      <p>Quiet structures, durable records.</p>
+      <p class="mt-(--space-4) mb-0 text-small tracking-ui text-quiet">Quiet structures, durable records.</p>
     </div>
-    <a class="about-link" href="#about">
-      <i aria-hidden="true"></i><span>View profile</span>
+    <a class="about-link group row-start-3 flex h-(--control-size) items-center gap-(--space-3) place-self-end font-serif text-body text-quiet no-underline home-opening:animate-home-other-enter" href="#about">
+      <ScrollGlyph /><span>View profile</span>
     </a>
   </section>
 
   <section
     id="about"
-    class="home-section about"
+    class="home-section about pointer-events-none relative z-(--z-visual) grid min-h-svh snap-start snap-always scroll-mt-0 place-items-center px-(--layout-gutter) py-[max(var(--space-20),env(safe-area-inset-top),env(safe-area-inset-bottom))] *:pointer-events-auto"
     aria-label="About Lunacea"
     data-home-about
     data-profile-boundary
   >
-    <div class="about-content">
+    <div class="about-content grid w-[min(100%,var(--content-width))] justify-items-center gap-(--space-12) max-md:gap-(--space-10) **:data-[cursor=drag]:pointer-events-auto">
       <GlassProfileCard
         asset={visualAssets.profile}
         name={siteConfig.author.name}
-        field="Interactive Systems / Design Research"
+        field="Web Engineering / Graphic Design"
         github={siteConfig.author.github}
         x={siteConfig.author.x}
         email={siteConfig.author.email}
       />
-      <p class="about-introduction">
-        Cold Logic, Warm UX.<br />
-        静かで、確かな、インタラクティブな体験を。
-      </p>
-      <EngineeringProfile categories={engineeringCategories} />
+      <div class="grid justify-items-center gap-(--space-5)">
+        <p class="about-introduction m-0 max-w-(--prose-width) px-(--space-4) py-(--space-3) text-center leading-copy text-ink max-xs:bg-transparent max-xs:px-0 max-xs:text-small max-h-[42rem]:bg-transparent max-h-[42rem]:px-0 max-h-[42rem]:text-small">
+          UI・UX設計、Webエンジニアリング、<br />グラフィックデザイン。
+        </p>
+        <ul class="tech-stack m-0 flex list-none flex-wrap justify-center gap-x-(--space-5) gap-y-(--space-2) p-0 text-caption tracking-ui text-quiet" aria-label="主な技術スタック">
+          {#each siteConfig.techStack as item}
+            <li class="flex items-center gap-(--space-2) leading-none"><Icon name={tagIconName(item)} /><span>{item}</span></li>
+          {/each}
+        </ul>
+        <a class="font-serif text-body underline decoration-rule underline-offset-8 hover:decoration-ink" href="/articles">記事を読む</a>
+      </div>
     </div>
   </section>
 </div>
-
-<style>
-  .home-continuum {
-    position: relative;
-    min-height: 200svh;
-    overflow: clip;
-  }
-
-  :global(html:has(.home-continuum)) {
-    scroll-snap-type: y mandatory;
-  }
-
-  .visual-surface {
-    position: absolute;
-    z-index: var(--z-content);
-    inset: 0;
-    min-height: 200svh;
-    pointer-events: auto;
-  }
-
-  .foliage {
-    position: absolute;
-    z-index: calc(var(--z-visual) + 1);
-    top: calc(var(--space-12) * -1);
-    right: calc(var(--space-8) * -1);
-    width: min(34vw, 31rem);
-    pointer-events: none;
-    transform-origin: 100% 0;
-  }
-
-  .foliage :global(.media-slot) {
-    overflow: visible;
-  }
-
-  :global(html[data-motion="full"]) .foliage {
-    animation: foliage-grow var(--motion-duration-opening) var(--motion-ease-enter) both;
-  }
-
-  :global(html[data-motion="full"]) .foliage :global(img) {
-    animation: foliage-breathe calc(var(--motion-duration-ambient) * 1.5)
-      var(--motion-ease-standard) infinite alternate;
-    transform-origin: 86% 8%;
-  }
-
-  @keyframes foliage-grow {
-    from {
-      opacity: 0;
-      transform: scale(.72) rotate(4deg);
-    }
-  }
-
-  @keyframes foliage-breathe {
-    to {
-      transform: rotate(-1.2deg) scale(1.012);
-    }
-  }
-
-  .home-section {
-    position: relative;
-    z-index: var(--z-visual);
-    min-height: 100svh;
-    padding: var(--layout-gutter);
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-    pointer-events: none;
-  }
-
-  .home-section > * {
-    pointer-events: auto;
-  }
-
-  .intro {
-    display: grid;
-    grid-template-rows: 1fr auto 1fr;
-    align-items: start;
-  }
-
-  .intro-copy {
-    font-family: var(--font-serif);
-    max-width: 25rem;
-    margin: env(safe-area-inset-top) 0 0;
-    color: var(--color-muted);
-    line-height: var(--leading-copy);
-  }
-
-  .title-block {
-    align-self: center;
-    justify-self: center;
-    text-align: center;
-  }
-
-  h1 {
-    margin: 0;
-    font-family: var(--font-serif);
-    font-size: var(--text-display);
-    font-weight: var(--weight-regular);
-    letter-spacing: var(--tracking-display);
-    line-height: var(--leading-display);
-  }
-
-  .title-glyph {
-    display: inline-flex;
-    width: 0.792em;
-    height: 0.792em;
-    margin-inline: -0.02em -0.04em;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-accent);
-    font-size: var(--text-title-glyph);
-    vertical-align: 0.03em;
-  }
-
-  .title-glyph :global(.theme-glyph) {
-    width: 100%;
-    height: 100%;
-  }
-
-  .title-block p {
-    margin: var(--space-4) 0 0;
-    color: var(--color-muted);
-    font-size: var(--text-small);
-    letter-spacing: var(--tracking-ui);
-  }
-
-  .about-link {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    align-self: end;
-    justify-self: end;
-    min-height: var(--control-size);
-    color: var(--color-muted);
-    font-family: var(--font-serif);
-    font-size: var(--text-body);
-    text-decoration: none;
-  }
-
-  .about-link i {
-    position: relative;
-    width: 2px;
-    height: var(--space-10);
-    overflow: hidden;
-    background: var(--color-line);
-  }
-
-  .about-link i::after {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 2px;
-    height: 45%;
-    background: currentColor;
-    content: "";
-  }
-
-  :global(html[data-motion="full"]) .about-link i::after {
-    animation: scroll-indicator var(--motion-duration-resume) var(--motion-ease-standard) infinite;
-  }
-
-  @keyframes scroll-indicator {
-    from { transform: translateY(-110%); }
-    to { transform: translateY(240%); }
-  }
-
-  .about {
-    display: grid;
-    place-items: start center;
-    padding-block: calc(var(--space-20) + env(safe-area-inset-top))
-      calc(var(--space-16) + env(safe-area-inset-bottom));
-    scroll-margin-top: 0;
-  }
-
-  .about-content {
-    display: grid;
-    width: min(100%, var(--content-width));
-    justify-items: center;
-    gap: var(--space-12);
-  }
-
-  .about :global(.profile-card) {
-    pointer-events: auto;
-  }
-
-  .about-introduction {
-    max-width: var(--prose-width);
-    margin: 0;
-    padding: var(--space-3) var(--space-4);
-    color: var(--color-foreground);
-    line-height: var(--leading-copy);
-    text-align: center;
-  }
-
-  @media (max-width: 52rem) {
-    .home-section {
-      padding-inline: var(--layout-gutter);
-    }
-
-    .about-content {
-      gap: var(--space-10);
-    }
-
-    .foliage {
-      top: calc(var(--space-8) * -1);
-      right: calc(var(--space-10) * -1);
-      width: min(48vw, 22rem);
-    }
-
-  }
-
-  @media (max-width: 34rem), (max-height: 42rem) {
-    .intro-copy {
-      font-size: var(--text-small);
-    }
-
-    .about {
-      padding-block: calc(var(--space-16) + env(safe-area-inset-top))
-        calc(var(--space-12) + env(safe-area-inset-bottom));
-    }
-
-    .about-introduction {
-      padding-inline: 0;
-      background: transparent;
-      font-size: var(--text-small);
-    }
-  }
-</style>

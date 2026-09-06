@@ -1,5 +1,6 @@
 <script lang="ts">
   import { useLinkPreviews } from "./link-preview-context.ts";
+  import { cn } from "../utils.ts";
 
   let {
     href,
@@ -34,97 +35,25 @@
 </script>
 
 <a
-  class="link-card"
-  class:has-image={Boolean(resolved.image)}
+  class={cn(
+    "link-card",
+    "relative z-[calc(var(--z-controls)+1)] my-8 grid min-h-36 grid-cols-1 items-stretch overflow-hidden border border-rule bg-panel no-underline max-xs:min-h-32",
+    resolved.image && "grid-cols-[minmax(8rem,.72fr)_minmax(0,1.28fr)] max-xs:grid-cols-[minmax(6.5rem,.7fr)_minmax(0,1.3fr)]",
+  )}
   {href}
   rel="noreferrer"
   target="_blank"
   data-cursor="interactive"
   data-cursor-label="Open external"
 >
-  {#if resolved.image}<img src={resolved.image} alt={imageAlt} loading="lazy" />{/if}
-  <span class="copy">
-    <span class="site">{resolved.site}</span>
-    <strong>{resolved.title}</strong>
-    <span class="description">{resolved.description}</span>
+  {#if resolved.image}
+    <span class="preview-media grid size-full place-items-center bg-canvas p-2 max-xs:p-1">
+      <img class="max-h-full max-w-full object-contain" src={resolved.image} alt={imageAlt} loading="lazy" />
+    </span>
+  {/if}
+  <span class="copy grid min-w-0 content-center gap-1 p-4 max-xs:p-3">
+    <span class="text-(length:--text-caption) text-quiet uppercase">{resolved.site}</span>
+    <strong class="line-clamp-2 overflow-hidden font-emphasis">{resolved.title}</strong>
+    <span class="line-clamp-2 overflow-hidden text-(length:--text-small) leading-card text-quiet max-xs:line-clamp-1">{resolved.description}</span>
   </span>
 </a>
-
-<style>
-  .link-card {
-    position: relative;
-    z-index: calc(var(--z-controls) + 1);
-    display: grid;
-    grid-template-columns: 1fr;
-    align-items: stretch;
-    min-height: 9rem;
-    margin-block: var(--space-8);
-    border: 1px solid var(--color-line);
-    background: var(--color-surface);
-    text-decoration: none;
-    overflow: hidden;
-  }
-
-  .has-image {
-    grid-template-columns: minmax(8rem, .72fr) minmax(0, 1.28fr);
-  }
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .copy {
-    display: grid;
-    align-content: center;
-    min-width: 0;
-    gap: var(--space-1);
-    padding: var(--space-4);
-  }
-
-  .site,
-  .description {
-    color: var(--color-muted);
-  }
-
-  .site {
-    font-size: var(--text-caption);
-    text-transform: uppercase;
-  }
-
-  strong {
-    display: -webkit-box;
-    overflow: hidden;
-    font-weight: var(--weight-emphasis);
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-
-  .description {
-    display: -webkit-box;
-    overflow: hidden;
-    font-size: var(--text-small);
-    line-height: var(--leading-card);
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-
-  @media (max-width: 34rem) {
-    .link-card {
-      min-height: 8rem;
-    }
-    .has-image {
-      grid-template-columns: minmax(6.5rem, .7fr) minmax(0, 1.3fr);
-    }
-    .copy {
-      padding: var(--space-3);
-    }
-    .description {
-      -webkit-line-clamp: 1;
-      line-clamp: 1;
-    }
-  }
-</style>

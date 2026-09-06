@@ -1,9 +1,9 @@
-# Lunacea Archive
+# Lunacea — Web, UX & Design
 
-ブログ、作品、登壇、写真・場所・ワイン・Momentを一つの情報設計で扱う、Lunacea名義の個人アーカイブです。SvelteKitを唯一のデプロイ単位にし、Hono
+UI・UX設計、Webエンジニアリング、グラフィックデザインの考え方を綴る技術ブログです。SvelteKitを唯一のデプロイ単位にし、Hono
 APIを同じアプリの`/api/v1`へ組み込んでいます。
 
-現在同梱している18件は交換用サンプルです。`sampleMode`が有効な間は画面へラベルを追加せずに
+現在同梱している7件は交換用サンプルです。`sampleMode`が有効な間は画面へラベルを追加せずに
 `noindex`を設定し、RSS・Atom・Sitemapからサンプルを除外します。
 
 ## はじめる
@@ -49,8 +49,10 @@ e2e/                     Playwright + axe
 docs/                    設計、執筆、公開runbook
 ```
 
-公開URLは`/articles/[slug]`、`/works/[slug]`、`/archive/{diaries|photos|places|wines|moments}/[slug]`です。Article一覧のGET検索、タグ、Home内About、RSS、Atom、Sitemap、OGP、限定APIも同じアプリから配信します。旧Talk、Search、About、Archive一覧URLは互換用の308
-redirectとして維持します。
+公開記事のURLは `/articles/[slug]` です。`/articles` は新聞表示を初期状態とし、`view=list`
+でGET検索・カテゴリ・タグ・ソートを利用できます。検索条件付きURLはリスト表示になります。Home内プロフィール、RSS、Atom、Sitemap、OGP、限定APIも同じアプリから配信します。
+
+Works・Archiveの一覧、詳細、互換ルートと対象OGPは廃止し404を返します。旧SearchとAboutは308転送を維持します。
 
 ## コンテンツを入れ替える
 

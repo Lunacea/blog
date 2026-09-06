@@ -3,10 +3,11 @@ import { error } from "@sveltejs/kit";
 import { allContent, findContent } from "@lunacea/content";
 import type { ContentType } from "@lunacea/schemas";
 import { coverOgPngResponse, ogPngResponse, renderOgSvg } from "$lib/server/og.ts";
+import type { RequestHandler } from "./$types.d.ts";
 
 export const prerender = false;
 
-export async function GET({ params }) {
+export const GET: RequestHandler = async ({ params }) => {
   if (!dev) error(404, "Not found");
   const content = findContent(params.type as ContentType, params.slug);
   if (!content) error(404, "Content not found");
@@ -18,7 +19,7 @@ export async function GET({ params }) {
     title: content.title,
     compact: true,
   }));
-}
+};
 
 export function entries() {
   return allContent.map((entry) => ({ type: entry.type, slug: entry.slug }));

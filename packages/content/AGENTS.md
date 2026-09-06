@@ -1,15 +1,15 @@
-# Content Package Instructions
+# Contentパッケージ向けエージェント指示
 
-This package owns `.svx` discovery, validation, registries, plain-text extraction, and
-search-document generation.
+このパッケージは、`.svx`ファイルの検出、検証、レジストリ、プレーンテキスト抽出、検索ドキュメント生成を管理します。
 
-- Content validation must be deterministic and build-time safe.
-- Do not perform network requests during content validation.
-- Do not weaken a Zod schema solely to make invalid existing content pass.
-- Stable content IDs and slugs must not change without a migration plan.
-- Internal links, related IDs, cover files, and hotlinks must remain validated.
-- Search indexing must not depend on browser APIs.
-- Preserve Japanese tokenization using the documented Segmenter and bigram strategy unless an
-  approved plan changes it.
-- Add focused fixtures for validation edge cases.
-- Run content validation and the relevant search tests after changes.
+- コンテンツ検証は決定的で、ビルド時に安全に実行できるものにする。
+- コンテンツ検証中にネットワーク通信を行わない。
+- 既存の不正なコンテンツを通すためだけに、Zodスキーマを弱めない。
+- 安定したコンテンツIDやslugを変更する場合は、事前に移行計画を用意する。
+- 内部リンク、関連コンテンツID、カバー画像、外部画像の直リンクに対する検証を維持する。
+- 検索インデックスの生成をブラウザAPIに依存させない。
+- 検索仕様を明示的に変更する場合を除き、既定の日本語`Segmenter`とbigram方式を維持する。
+- 検証またはインデックス生成の境界条件を変更した場合のみ、対応するfixtureを追加または更新する。
+- コンテンツ構造、スキーマ、ファイル検出、検証処理を変更した場合は、コンテンツ検証を実行する。
+- テキスト抽出、トークン化、インデックス生成、検索ドキュメント生成を変更した場合のみ、関連する検索テストを実行する。
+- まず変更に直接関係する最小限の検証を行い、影響範囲や失敗に応じて追加する。

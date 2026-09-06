@@ -1,39 +1,32 @@
 <script lang="ts">
   import type { HTMLInputAttributes } from "svelte/elements";
+  import { cn } from "../utils.ts";
 
-  type Props = Omit<HTMLInputAttributes, "value"> & {
+  type Props = Omit<HTMLInputAttributes, "value" | "class"> & {
     value?: string;
     variant?: "default" | "query";
+    class?: string;
+    ref?: HTMLInputElement | null;
   };
 
   let {
     value = $bindable(""),
     variant = "default",
     class: className = "",
+    ref = $bindable(null),
     ...restProps
   }: Props = $props();
 </script>
 
-<input bind:value class={`input ${className}`} data-variant={variant} {...restProps} />
-
-<style>
-  .input {
-    width: 100%;
-    min-width: 0;
-    min-height: var(--control-size);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-none);
-    padding-inline: var(--space-3);
-    background: var(--color-background);
-  }
-
-  .input[data-variant="query"] {
-    min-height: var(--space-16);
-    border: 0;
-    border-bottom: 1px solid var(--color-line);
-    padding: 0;
-    background: transparent;
-    font-family: var(--font-serif);
-    font-size: var(--text-h2);
-  }
-</style>
+<input
+  bind:this={ref}
+  bind:value
+  class={cn(
+    "min-h-control w-full min-w-0 rounded-sharp border border-rule bg-canvas px-3 text-ink",
+    variant === "query" &&
+      "min-h-16 border-0 border-b border-rule bg-transparent p-0 font-editorial text-(length:--text-h2)",
+    className,
+  )}
+  data-variant={variant}
+  {...restProps}
+/>

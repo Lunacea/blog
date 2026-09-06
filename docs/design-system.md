@@ -12,18 +12,29 @@ semantic color, typography, spacing, layout, shape, depth, motion, breakpoint, a
 `global.css` owns selectors, resets, scrollbars, forced-color behavior, and browser fallbacks, and
 must consume those tokens rather than define a second scale.
 
+Tailwind CSS 4のCSS-first構成を使用し、JavaScriptの`tailwind.config`は持たない。Svelteファイルの
+`<style>`は0件を契約とし、通常の見た目はutility class、状態は`data-*`・group・peer・custom variant、
+所有できる複雑な子孫はarbitrary variantで表現する。CSSへ残すのは`@theme`、`@custom-variant`、
+`@utility`、reset、print/forced-colors、SVX/Mermaid等の生成DOM、View
+Transition、keyframesだけである。 再利用するanimationは`--animate-*`と`animate-*`を組にする。inline
+styleは生成されたaspect ratio、 utilityへ渡すCSS custom
+property、`view-transition-name`だけを許可する。
+
 The light and dark themes retain the same semantic roles. System preference is used when the stored
 preference is `auto`. Manrope followed by Zen Kaku Gothic New is the sans role. Newsreader followed
-by Hina Mincho is reserved for large editorial headings and quotations. DotGothic16 remains limited
-to named accents. Fira Code followed by system monospace is limited to fenced/inline code, keyboard
-input, and technical identifiers. Dates, navigation, tags, and ordinary status text use the sans
-role with tabular numerals where alignment is useful.
+by Zen Old Mincho Medium is reserved for large editorial headings and quotations. DotGothic16
+remains limited to named accents. Fira Code followed by system monospace is limited to fenced/inline
+code, keyboard input, and technical identifiers. Dates, navigation, tags, and ordinary status text
+use the sans role with tabular numerals where alignment is useful. The global weight scale is
+intentionally one step heavier than the font defaults: ordinary text is 500, component and editorial
+emphasis is 700, and strong labels use 800 where the selected face supports it. Faces capped below a
+requested value use their heaviest authored weight.
 
 These fonts are self-hosted from repository-pinned OFL sources. The build derives hashed WOFF2
 subsets from public content, UI strings, and configuration, emits the same generated CSS for Web and
-Storybook, and never contacts Google Fonts at runtime. Only the regular sans Latin/Japanese faces
-needed for first paint are preloaded; the preload budget is 350 KiB and the total initial-route
-custom-font budget is 500 KiB.
+Storybook, and never contacts Google Fonts at runtime. Only the variable sans Latin face and medium
+sans Japanese face needed for first paint are preloaded; the preload budget is 350 KiB and the total
+initial-route custom-font budget is 500 KiB.
 
 ## Components and behavior
 
@@ -34,6 +45,12 @@ provide the required behavior and progressive enhancement, including the GET sea
 Application routes consume the package's public exports rather than Bits UI or icon libraries
 directly. Semantic components may depend on public schemas and configuration but do not own external
 repositories.
+
+Button/ActionLink、Input、Badge、Separatorは共通variant基盤でcontrol height、角形、罫線、focus、
+active、disabled、文字組みを共有する。catalogのtext/icon切替は`LinkSelector`へ統合する。
+`CatalogControls`と`ContentDetailView`はpatterns、`ResponsivePicture`、controlled
+`ReactionControl`、`ShareActions`はcomponentsが所有する。リアクションのfetch/Zod検証と生成画像registry
+解決はWeb adapterに残し、UI componentはnetworkへ直接依存しない。
 
 Spatial composition uses the public `Container`, `Section`, `Stack`, `Cluster`, `Grid`, `Split`, and
 `Bleed` primitives. They add layout only; spacing and responsive values resolve to foundation
@@ -47,9 +64,12 @@ runtime.
 ## Icons and authored media
 
 UI icons resolve through `icons/Icon.svelte`. General UI uses Solar linear; official technology and
-service marks use Simple Icons. Semantic resolvers cover interface actions, weather state, and tags;
-unknown tags use the common tag icon. Icon data is bundled so the server renders SVG without a
-browser request to an icon service.
+service marks use Simple Icons. The site's own glyphs - Display motion, Theme, Search, the contents
+index, the paper mark, the praise heart and the scroll indicator - are drawn locally in one stroke
+language instead: a 24 unit box, a 1.75 non-scaling stroke, round caps and joins, and one short
+state transition. `icons/glyph.ts` holds that contract. Semantic resolvers cover interface actions,
+weather state, and tags; unknown tags use the common tag icon. Icon data is bundled so the server
+renders SVG without a browser request to an icon service.
 
 Authored organic imagery is supplied through `config.visualAssets` and `MediaSlot`. Missing assets
 use `AssetPlaceholder` with a stable ID, role, aspect ratio, file type, accessibility description,
@@ -59,56 +79,74 @@ and transparency need.
 
 Motion clarifies state and hierarchy. The effective motion mode never exceeds OS reduced-motion,
 save-data, or forced-colors constraints. Eligible route changes animate only the `main` content with
-restrained opacity and at most 6px translation; fixed Header and other persistent chrome remain
-stationary. Shared continuity is limited to matching Article/Work media. Transitions preserve
-navigation, focus, scroll restoration, and no-JavaScript access. Smooth scrolling is enabled for a
-user-clicked same-document anchor and the bounded Home two-section snap assist; Reduced/Off uses
-immediate movement. The custom cursor is available for fine, hovering pointers in Full and
-explicitly selected Reduced modes, but capability-limited Reduced and Off retain the native cursor.
-It never replaces native input/selection behavior.
+restrained opacity and at most 6px translation. Fixed Header and other persistent chrome remain
+stationary. Shared continuity is limited to matching content titles and Article media. Transitions
+preserve navigation, focus, scroll restoration, and no-JavaScript access. Smooth scrolling is
+enabled for a user-clicked same-document anchor and the bounded Home two-section snap assist;
+Reduced/Off uses immediate movement. The custom cursor is available for fine, hovering pointers in
+Full and explicitly selected Reduced modes, but capability-limited Reduced and Off retain the native
+cursor. It never replaces native input/selection behavior.
 
-The Header is a transparent fixed control layer rather than a horizontal bar. Its desktop region
-stacks Home, Articles, Works, and Archive at the safe-area-aware upper-right inset, followed by
-Theme and Display; mobile keeps Theme, Display, and the hamburger in that order. It has no
-background, decorative border, shadow, blur, or radius. Feed and sitemap endpoints do not appear in
-Header navigation. Display is one icon button that cycles Full, Reduced, and Off while exposing the
-current and next state through its accessible name. Its glyph is a straight line for Off, one wave
-for Reduced, and two waves for Full. Both paths share one point-symmetric sine curve with one crest
-and one trough; switching mode interpolates amplitude and position. Full and an explicitly selected
-Reduced mode advance one seamless phase on hover, while Off and capability-limited reduced motion
-remain static. Theme controls remain transparent in both themes and communicate state through the
-sun/moon glyph, color, and accessible name; the title glyph keeps the accent color through hover and
-focus. The mobile navigation disclosure uses compact stacked text with a short enter/exit
-transition. Selected navigation, filter, view, and reaction states use rectangular semantic-color
-fills instead of underline markers. Non-Home pages reserve the fixed control region before first
-paint: desktop content uses a shared inline-end reserve and aligns its top edge with the navigation,
-while mobile retains only the three-button top clearance. On Article detail, reaching the reading
-surface fades the desktop links into the same Theme, Display, and hamburger controls used on mobile;
-returning above the surface restores them. Glass treatment may appear on temporary interactive
-surfaces such as an open menu, mobile table of contents, or hover media overlay, but not as a
-permanent Header, catalog filter, or reading-surface background. The site has no global Footer.
-Header navigation and Display may use a clipped rectangular fill sweep without moving their control
-boxes; navigation rows keep the same full width for hover and active fills. Theme is excluded from
-that sweep and changes only to the title's accent color on hover/focus. Theme and Display remain on
-the same vertical baseline. The filled hamburger moves its two parallel lines slightly while closed;
-its open cross stays centered and rotates 90 degrees in place on hover/focus. Reduced/Off applies
-state immediately. The custom pointer is a rotating heavy square outline rather than a circular
-ring. Unlabelled actionable targets settle as an unfilled diamond. Labelled targets first settle at
-a right angle, then extend horizontally; Article-list “View more” keeps that rectangle fixed while
-one wide diagonal band travels through it on an exact repeating tile. Fine-pointer cursor labels
-identify the whole draggable profile card, Article-list links, external previews, and code-copy
-actions as “Drag it!”, “View more”, “Open external”, and “Copy code” respectively; native cursors
-remain in all capability fallbacks. The profile card is a compact 18–22rem identity surface
-containing only the authored profile asset, name, two short roles on separate lines, and vertical
-GitHub/X/Email links. At rest in Full motion it retains a subtle authored tilt instead of settling
-horizontally. Pointer movement is clamped to the Home About section, yields to links, text
-selection, and vertical touch scrolling, and does not persist. Full motion may continue with short
-damped inertia, allow a token-bounded rubber-band overshoot, and spring back inside the boundary;
-Reduced/Off removes inertia, overshoot, and tilt. The first in-view appearance uses one restrained
-sub-15-degree rotation to suggest optional drag without adding instructions; that one-shot animation
-is cleared before drag so opacity and transform remain continuous into inertia. Introduction remains
-centered below the movable card, and the category based Engineering list follows in a
-four/two/one-column responsive grid without card or pill chrome.
+The tab's first Full-motion Home visit may use a non-blocking 1.8-second opening sequence: a serif
+word and single rule, the ambient visual and available point field, the title, then remaining chrome
+and intro controls. A session flag prevents replay on reload, history restoration, and later Home
+visits. The sequence never waits for WebGL and is absent for Reduced/Off, save-data, forced colors,
+and no JavaScript. Shared reveal targets receive at most 240ms of stagger; only in-view media may
+use scroll-linked translation, capped at 8px on mobile and 16px on desktop. Text and controls do not
+parallax, and all scroll-linked work pauses outside the viewport or in a hidden tab.
+
+The Header is a transparent fixed control layer rather than a horizontal bar. Its upper-right region
+uses fixed columns for Theme, Display, a seven-rem navigation slot, and Search on the catalog route
+only - Home and the reading surface keep three columns. Search is one icon button whose disclosure
+holds the site-wide GET form for `/articles`; it shares the Header disclosure channel with the menu,
+closes on Escape and returns focus to its button, and is replaced by a static expanded form when
+JavaScript is unavailable. Desktop places Home, Articles inside that slot; compact and mobile states
+replace the same slot with a seven-rem hamburger and matching menu panel. Theme and Display remain
+immediately to its left, so resize and the Article reading boundary do not move their control boxes.
+Every Home corner label, navigation row, Theme button, Display button, and hamburger uses the shared
+control-size block height, so their baselines and hit areas remain stable across breakpoints. It has
+no background, decorative border, shadow, blur, or radius. Feed and sitemap endpoints do not appear
+in Header navigation. Display is one icon button that cycles Full, Reduced, and Off. Its Japanese
+accessible name states the current and next mode, and a small Japanese tooltip beneath it names the
+current mode on hover or focus rather than relying on a native title. Its glyph is a straight line
+for Off, one wave for Reduced, and two waves for Full. Both paths share one point-symmetric sine
+curve with one crest and one trough; switching mode interpolates amplitude and position. Full and an
+explicitly selected Reduced mode advance one seamless phase on hover, while Off and
+capability-limited reduced motion remain static. Theme controls remain transparent in both themes
+and communicate state through the sun/moon glyph, color, and accessible name; the title glyph keeps
+the accent color through hover and focus. The mobile navigation disclosure uses compact stacked text
+with a short enter/exit transition. Selected navigation, filter, view, and reaction states use
+rectangular semantic-color fills instead of underline markers. Non-Home pages reserve the fixed
+control region before first paint: desktop content uses a shared inline-end reserve and aligns its
+top edge with the navigation, while mobile retains only the three-button top clearance. On Article
+detail, reaching the reading surface fades the desktop links into the same Theme, Display, and
+hamburger controls used on mobile; returning above the surface restores them. Glass treatment may
+appear on temporary interactive surfaces such as an open menu, mobile table of contents, or hover
+media overlay, but not as a permanent Header, catalog filter, or reading-surface background. The
+site has no global Footer. Header navigation and Display may use a clipped rectangular fill sweep
+without moving their control boxes; navigation rows keep the same full width for hover and active
+fills. Theme is excluded from that sweep and changes only to the title's accent color on
+hover/focus. Theme and Display remain on the same vertical baseline. The filled hamburger moves its
+two parallel lines slightly while closed; its open cross stays centered and rotates 90 degrees in
+place on hover/focus. Reduced/Off applies state immediately. The custom pointer is a rotating heavy
+square outline rather than a circular ring. Unlabelled actionable targets settle as an unfilled
+diamond. Labelled targets first settle at a right angle, then extend horizontally; Article-list
+“View more” keeps that rectangle fixed while one wide diagonal band in the same opaque accent as
+Theme hover and linked Article-tag hover travels through it on an exact repeating tile. In Dark, the
+label becomes black only where that band crosses it. Fine-pointer cursor labels identify the whole
+draggable profile card, Article-list links, external previews, and code-copy actions as “Drag it!”,
+“Read more”, “View more”, “Open external”, and “Copy code” respectively; native cursors remain in
+all capability fallbacks. The profile card is a compact 18–22rem identity surface containing only
+the authored profile asset, name, two short roles on separate lines, and vertical GitHub/X/Email
+links. At rest in Full motion it retains a subtle authored tilt instead of settling horizontally.
+Pointer movement is clamped to the Home About section, yields to links, text selection, and vertical
+touch scrolling, and does not persist. Full motion may continue with short damped inertia, allow a
+token-bounded rubber-band overshoot, and spring back inside the boundary; Reduced/Off removes
+inertia, overshoot, and tilt. The first in-view appearance uses one restrained sub-15-degree
+rotation to suggest optional drag without adding instructions; that one-shot animation is cleared
+before drag so opacity and transform remain continuous into inertia. Introduction remains centered
+below the movable card, and the category based Engineering list follows in a four/two/one-column
+responsive grid without card or pill chrome.
 
 The shared Theme glyph uses tight local SVG bounds: a crescent for Dark and one filled circle for
 Light. Both shapes use the same visible outer square and center, without hidden viewBox padding.
@@ -117,52 +155,50 @@ sizing independent; the title motif is also a keyboard-accessible Theme toggle w
 accessible name remains `Lunacea`. Registered semantic color properties interpolate theme changes
 over the existing base/slow motion tokens; Reduced/Off remains immediate.
 
-WebGL remains a Home-only optional enhancement loaded dynamically after capability checks. Static
-weather ambience, primary text, and navigation exist before it loads and remain when it fails; no
-unrelated central substitute geometry is shown. One Canvas shares its renderer between a background
-weather environment and the independent central Hero. The Hero still morphs equal-size deterministic
-point sets through a Möbius strip, a sphere/point cloud, and a regular octahedron. Fine-pointer
-proximity repels a compact local radius around nearby points in screen space and eases back after
-pointer exit. Point sprites use small soft diamonds rather than circular droplet shapes. Low quality
-uses at most 1400 Hero points and DPR 1.2; high quality uses at most 3200 Hero points and DPR 1.5.
-Other routes use a CSS-only weather backdrop. Reduced motion, save-data, forced colors, and Display
-Off hide the Home central motif rather than substituting unrelated geometry. The Home visual layer
-is full-bleed across the Hero and About continuum while prose keeps its content width. Scroll never
-owns or pauses the WebGL timeline; pointer drag may only change the Hero observation angle while
-preserving vertical touch scrolling.
+WebGL remains an optional enhancement loaded dynamically after capability checks. Home owns the only
+renderer. Static weather ambience, primary text, and navigation exist before it loads and remain
+when it fails; no unrelated central substitute geometry is shown. The Canvas renders the independent
+central Hero; weather stays in a persistent lightweight layer. The Hero still morphs equal-size
+deterministic point sets through a Möbius strip, a sphere/point cloud, and a regular octahedron.
+Fine-pointer proximity repels a compact local radius around nearby points in screen space and eases
+back after pointer exit. Point sprites use small soft diamonds rather than circular droplet shapes.
+Low quality uses at most 1400 Hero points and DPR 1.2; high quality uses at most 3200 Hero points
+and DPR 1.5. Other routes use an SVG/CSS weather backdrop. Reduced motion, save-data, forced colors,
+and Display Off hide the Home central motif rather than substituting unrelated geometry. The Home
+visual layer is full-bleed across the Hero and About continuum while prose keeps its content width.
+Scroll never owns or pauses the WebGL timeline; pointer drag may only change the Hero observation
+angle while preserving vertical touch scrolling.
 
-Weather motion uses a seamless shared phase in the Home shader. Clear renders slowly drifting,
-leaf-filtered light shafts; Cloudy layers moving fog; Rain grows sparse glass-surface droplets; Snow
-combines falling flakes with a gently changing lower accumulation line. Non-Home CSS uses sparse
-droplets, flakes, and diffuse light with exact tile-period endpoints, so the last frame joins the
-first without a jump. Development builds may preview `clear`, `cloudy`, `rain`, `snow`, or `neutral`
-through the `?weather=` query; production ignores that override and continues to use fixed-location
-weather.
+Weather keeps the same rendering surface from its first resolved condition; loading Home WebGL never
+replaces it. Rain uses a transparent Canvas 2D particle field, not shaded water-bead SVGs. The
+initial volume is populated before paint. Independent depth, velocity, wind and finite-exposure
+streaks produce falling rain; only offscreen particles respawn. Three small cached streak textures,
+a 320-particle ceiling and DPR cap of 1.5 bound the renderer's work. Reduced/Off and save-data keep
+a static frame, hidden tabs stop animation, forced colors clears/hides the surface, and unmount
+cancels its frame and listeners. No Three.js graph is added to content routes. Clear, Cloudy, and
+Snow retain the persistent SVG/CSS layer. Snow falls with independent speed, soft focus and sway; it
+never sticks to the pane. Rain and snow use a fixed, pointer-transparent viewport layer above
+content but below dialogs; opening and scroll never move it. Unknown or unavailable weather renders
+no weather decoration. Prerendered HTML does not claim live weather: the optional layer appears when
+the fixed-location request resolves without delaying content. Development may preview `clear`,
+`cloudy`, `rain`, `snow`, or `neutral` through `?weather=`; production ignores that override.
 
-Article and Work list views use compact ruled rows. On fine hovering pointers, a row with authored
-media may reveal that media as a viewport-scale background while a translucent contrast surface
-keeps the selected row readable; touch and coarse-pointer layouts remain static. Catalog search and
-facets are always visible without an outer panel, show the matching record count and per-facet
-counts, and remain link/form based. Search submit uses a labeled icon. Facet options are compact
-square rectangles: inactive options are transparent with a rule, and active options use a semantic
-fill. Result count and the always-reserved reset slot remain left-aligned; reset uses the same icon
-button dimensions in enabled and disabled states. Grid/List, facet, GET search, and reset navigation
-preserve scroll and focus when enhanced, while their ordinary links/forms remain usable without
-JavaScript. Grid/List controls use labeled icons. Full motion uses item-level View Transitions when
-only the public `view` query changes; root content does not fade, and Reduced/Off or unsupported
-browsers switch immediately. Articles, Works, and Archive use a single page title without catalog
-eyebrow or explanatory lead copy. Route transitions snapshot `main` only: the outgoing page
-completes its exit before the incoming page begins, while persistent Header and environment layers
-remain static.
+Article list views use compact ruled rows. Category classification is a permanent strip under the
+folio in both views; tag, sort, reset and result count remain list-only, and every one of them stays
+an ordinary GET link. Search is a Header control rather than catalog furniture. Newspaper/list uses
+visible text labels. Mobile facets start collapsed after enhancement and stay available without
+JavaScript. Full motion uses item-level View Transitions when only `view` changes; Reduced/Off
+switches immediately. Route transitions snapshot `main` only, leaving persistent chrome static.
 
-Article cards left-align category, date, title, summary, and tags in both Grid and List. Article
-detail metadata vertically stacks category, published date, optional updated date, and localized
-status. Its compact H1 retains the editorial serif role, while prose H2/H3 use the sans role; H2 is
-one scale smaller with a lower divider, and the first H2 has no extra top space. Editorial
-quotations remain close to body scale with compact padding and line height. Fenced code always uses
-the dark code surface and its matching highlighted-token palette in both site themes. Its copy
-action is an icon-only square aligned to either the title bar or top-right and temporarily becomes a
-check icon.
+Article cards left-align category, date, and title in both Grid and List. The newspaper lead adds
+its summary and up to three representative tags; column and boxed records keep the summary without
+tag chrome, and every record ends with its reading length. Article detail metadata vertically stacks
+category, published date, optional updated date, and localized status. Its compact H1 retains the
+editorial serif role, while prose H2/H3 use the sans role; H2 is one scale smaller with a lower
+divider, and the first H2 has no extra top space. Editorial quotations remain close to body scale
+with compact padding and line height. Fenced code always uses the dark code surface and its matching
+highlighted-token palette in both site themes. Its copy action is an icon-only square aligned to
+either the title bar or top-right and temporarily becomes a check icon.
 
 Link cards require only `href` in authored content. `ReadingSurface` resolves title, description,
 site, and optional repository-local OGP WebP from the generated preview registry; explicit component
@@ -171,11 +207,14 @@ the clamped title, description, and site label visible under text enlargement; n
 Mermaid retains its source and rerenders every diagram on light/dark changes, with source fallback
 after a render failure. Reduced/Off explicitly remove animation and transition from the generated
 Mermaid SVG tree. Mermaid's temporary measurement tree is exempt from the global duration override
-so its generated viewBox and compact geometry match Full mode. Mobile table-of-contents disclosure
-animates height and opacity in both directions in Full motion and becomes immediate in Reduced/Off;
-without JavaScript it remains a native `details`. Desktop TOC uses one connected 1px vertical track
-and a 2px active segment that slides to the current heading in Full motion and snaps in Reduced/Off.
-It shares the prose heading anchor offset with scrollspy.
+so its generated viewBox and compact geometry match Full mode. The mobile table of contents is a
+compact filled control on the Header line at the top left, no wider than its label. It shares the
+Header disclosure channel, opens a downward panel on the navigation menu's surface, closes on Escape
+or on choosing a heading, and its glyph collapses three index rules into one; without JavaScript it
+remains a native `details` in the document flow. Desktop and mobile both use one connected 1px
+vertical track and a 2px active segment, in the colour of the active label, that slides to the
+current heading in Full motion and snaps in Reduced/Off. It shares the prose heading anchor offset
+with scrollspy.
 
 All routes use one visible fixed sprayed-noise image that multiplies in Light and screens in Dark.
 It sits above weather ambience but below `main`, so opaque content surfaces reliably mask it while
@@ -193,15 +232,13 @@ authored slot is empty. Article tags combine their semantic icon with a square f
 更新履歴 and 関連記事 share compact ruled-list headings and vertically aligned dates. Article TOC
 labels use the small UI scale rather than caption text, and the optional cursor becomes a vertical
 caret over Article prose by visibly settling and collapsing the existing rotating square. Reactions
-use one unlabelled praise icon and count; selection fills the heart itself without inverting the
-button surface and runs a short heart pulse/burst on hover and selection. An adjacent X icon with a
-visible Share label uses a plain intent link without third-party scripts. Public status labels are
-公開済み, 更新中, 断片, and 旧版 while their stored enum values remain unchanged. Work and Archive
-details are image-led and left-aligned; their metadata uses a vertical definition list and the
-reading surface does not draw a second rule directly below the cover. Work technologies use semantic
-icons, and configured GitHub/site URLs appear as View source and Visit site actions. Tag pages
-retain their stable URL while using the same compact heading, applied-filter summary, and ruled
-records as catalog pages.
+close the article as one centred post-reading block: an unboxed heart glyph, its count, and the
+share link beneath. The count answers the press immediately and reconciles with the server, and
+selection fills the heart itself. Selecting plays a one-shot celebration - that same heart blooming
+across the viewport behind a handwritten `Thank you!` that draws itself once - which exists in the
+DOM only while it runs and only in Full motion. The X icon with a visible Share label uses a plain
+intent link without third-party scripts. Public status labels are 公開済み, 更新中, 断片, and 旧版
+while their stored enum values remain unchanged.
 
 ## Storybook
 
@@ -216,3 +253,33 @@ violations, horizontal overflow at narrow mobile, tablet, desktop, and wide desk
 text at narrow and tablet widths. It also checks editorial output, page-transition and reveal
 behavior, mobile-menu keyboard dismissal, motion and forced-color caps, save-data and low-capability
 fallbacks, missing WebGL2, and context-loss cleanup.
+
+## Newspaper and paper (2026-09)
+
+Articles opens on a newspaper front page with no display title: a folio line carries the small
+`Articles` heading, the discipline line, the record count and the newest date, and a permanent
+category strip sits directly beneath it. The front section pairs a serif lead story with one
+secondary record across a vertical rule; the remaining records follow under a section rule in three
+desktop columns, two tablet columns and one mobile column, separated by column rules that never open
+a row. Between them, a boxed serendipity feature re-surfaces older records chosen once per UTC day;
+its picks leave the ordinary grid, so no record prints twice. Editorial serif headings, rules,
+summaries and authored covers establish hierarchy.
+
+Paper surfaces use semantic paper color, thin rules and restrained shadow. The existing sprayed
+background remains visible around opaque surfaces. Every record carries its reading length as a
+figure and a small stacked paper mark rather than a bar under the row: one sheet stands for one
+reading minute, clamped to 1–5, and the front sheet's bottom-right corner is folded. Fine-pointer
+hover and keyboard focus widen that fold without moving text; Reduced/Off and coarse pointers keep
+it at rest. Forced colors removes shadows. The business card uses the same paper surface with its
+existing identity asset and optional drag.
+
+Desktop TOC has a decorative vertical minimap: short lines represent prose, accent-colored
+rectangles represent technical and media blocks in source order. Existing TOC links and active
+marker own navigation; section sizing resolves by heading ID. Mobile retains its normal collapsible
+TOC. Missing composition data never prevents reading or navigation.
+
+Home keeps Hero and ambience. The intro section keeps its three rows with the title centred and the
+profile anchor at its foot; it carries no role line. The profile group is vertically and
+horizontally centered in its viewport-height section, expanding for small screens or enlarged text.
+It contains a paper card, one concise description of UI/UX, Web engineering and graphic design, a
+light row of representative stack names with their icons, and an Articles link.

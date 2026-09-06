@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { LayoutProps } from "./types.ts";
+  import { cn } from "../utils.ts";
 
   let {
     as = "div",
@@ -10,20 +11,15 @@
   }: LayoutProps & { axis?: "inline" | "block" | "both" } = $props();
 </script>
 
-<svelte:element this={as} class={`layout-bleed ${className}`} data-axis={axis} {...restProps}>
+<svelte:element
+  this={as}
+  class={cn(
+    (axis === "inline" || axis === "both") && "-mx-(--layout-gutter) w-[calc(100%+2*var(--layout-gutter))]",
+    (axis === "block" || axis === "both") && "-my-8 py-8",
+    className,
+  )}
+  data-axis={axis}
+  {...restProps}
+>
   {@render children?.()}
 </svelte:element>
-
-<style>
-  .layout-bleed[data-axis="inline"],
-  .layout-bleed[data-axis="both"] {
-    width: calc(100% + (2 * var(--layout-gutter)));
-    margin-inline: calc(-1 * var(--layout-gutter));
-  }
-
-  .layout-bleed[data-axis="block"],
-  .layout-bleed[data-axis="both"] {
-    margin-block: calc(-1 * var(--space-8));
-    padding-block: var(--space-8);
-  }
-</style>

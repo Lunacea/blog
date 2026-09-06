@@ -26,6 +26,11 @@ Maintain a small motion vocabulary:
 - home opening
 - ambient WebGL motion
 
+Define reusable keyframes and `--animate-*` registrations in `foundations/theme.css`; components
+select them through Tailwind `animate-*` utilities. Motion components must not add local `<style>`
+blocks. Runtime geometry may be passed only through CSS custom properties consumed by static
+utilities.
+
 ## Home opening
 
 Only the Home route may use a dedicated opening animation.

@@ -6,13 +6,9 @@ export function GET() {
   const staticPages = [
     "/",
     "/articles",
-    "/works",
-    "/archive",
   ];
-  const publishedTags = [...new Set(publishedFeedContent.flatMap((entry) => entry.tags))];
   const urls = [
     ...staticPages.map((path) => siteConfig.url + path),
-    ...publishedTags.map((tag) => `${siteConfig.url}/tags/${encodeURIComponent(tag)}`),
     ...publishedFeedContent.map(absoluteHref),
   ];
   const body = '<?xml version="1.0" encoding="UTF-8"?>' +

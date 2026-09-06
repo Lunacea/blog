@@ -41,7 +41,19 @@ export function canUsePageTransition({
 }
 
 export function installPageTransitions() {
+  if (typeof document === "undefined") return () => {};
   let catalogPosition: { x: number; y: number } | undefined;
+  const handleDirectionClick = (event: MouseEvent) => {
+    const link = (event.target as Element | null)?.closest<HTMLAnchorElement>(
+      "a[data-content-direction]",
+    );
+    if (!link) return;
+    const direction = link.dataset.contentDirection;
+    if (direction === "previous" || direction === "next") {
+      document.documentElement.dataset.contentDirection = direction;
+    }
+  };
+  document.addEventListener("click", handleDirectionClick, { capture: true });
   afterNavigate(() => {
     if (!catalogPosition) return;
     const position = catalogPosition;
@@ -61,13 +73,17 @@ export function installPageTransitions() {
     if (preserveCatalogPosition) {
       catalogPosition = { x: scrollX, y: scrollY };
     }
+    if (navigation.type === "popstate") delete document.documentElement.dataset.contentDirection;
     if (
       !canUsePageTransition({
         type: navigation.type,
         from: navigation.from?.url,
         to: navigation.to?.url,
       })
-    ) return;
+    ) {
+      delete document.documentElement.dataset.contentDirection;
+      return;
+    }
     return new Promise<void>((resolve) => {
       if (catalogTransition) document.documentElement.dataset.catalogTransition = "true";
       const transition = document.startViewTransition(async () => {
@@ -79,8 +95,13 @@ export function installPageTransitions() {
           delete document.documentElement.dataset.catalogTransition;
         });
       }
+      void transition.finished.finally(() => {
+        delete document.documentElement.dataset.contentDirection;
+      });
     });
   });
+
+  return () => document.removeEventListener("click", handleDirectionClick, { capture: true });
 }
 
 export function installAnchorNavigation() {

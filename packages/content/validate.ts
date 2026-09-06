@@ -81,15 +81,10 @@ for (const path of files) {
 const knownRoutes = new Set([
   "/",
   "/articles",
-  "/works",
-  "/archive",
   "/rss.xml",
   "/atom.xml",
   "/sitemap.xml",
   ...records.map((record) => href(record.content)),
-  ...records.flatMap((record) =>
-    record.content.tags.map((tag) => `/tags/${encodeURIComponent(tag)}`)
-  ),
 ]);
 
 for (const { path, source, content } of records) {

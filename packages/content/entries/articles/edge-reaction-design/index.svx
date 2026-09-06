@@ -25,12 +25,58 @@ revisions: []
 
 署名付きの匿名Cookieを使い、メール、アカウント、IPアドレスを保存しない。
 Cookieの消去まで完全に防ぐことは目的にせず、通常利用での重複だけを穏やかに抑える。
+匿名性を保つ設計では、識別精度を上げるほどよいとは限らない。端末をまたいだ追跡や長期的な
+フィンガープリントを導入せず、ひとつのブラウザセッションに必要な範囲だけ状態を持たせる。
+
+## Cookieを境界にする
+
+CookieにはランダムなアクターIDと署名だけを入れる。記事IDや選択内容はCookieへ蓄積せず、
+サーバー側の集計キーと分離する。属性はSecure、HttpOnly、SameSite=Laxを固定し、JavaScriptから
+値を読み取る必要をなくす。
+
+~~~ts title="actor-cookie.ts"
+const actorId = crypto.randomUUID();
+const value = await signer.sign(actorId);
+
+cookies.set("reaction_actor", value, {
+  httpOnly: true,
+  secure: true,
+  sameSite: "lax",
+  path: "/",
+});
+~~~
 
 ## 書き込みを冪等にする
 
 操作は「増やす」ではなく「この種類を選択済みにする」という状態として送る。
 再送が起きても集計値が二重に増えない。
 
+集計値とアクターの選択状態は同じトランザクションで更新する。先に集計だけを増やすと、通信が
+切れた後の再送で二重加算が起きる。現在値を読み、選択が変わった場合だけ差分を反映する。
+
+~~~ts title="select-reaction.ts"
+const result = await kv.atomic()
+  .check(selection.versionstamp)
+  .set(selectionKey, nextKind)
+  .sum(countKey(nextKind), 1n)
+  .commit();
+
+if (!result.ok) throw new ConflictError();
+~~~
+
 ## 境界で検証する
 
 種類、記事ID、Origin、本文サイズをAPI境界で確認し、短時間の連続操作はKVの期限付きキーで抑制する。
+許可するリアクション名は設定から列挙し、未知の値を保存層へ渡さない。JSONを読む前にContent-Lengthを
+確認し、上限がない巨大な本文をパースしないことも、小さなAPIでは重要になる。
+
+## 競合を通常系として扱う
+
+同じ記事へ同時に操作が届くことは例外ではない。compare-and-setが失敗した場合は短い範囲で再読込し、
+最新状態に対してもう一度だけ更新を試す。無制限な再試行は行わず、混雑時には本文と現在の集計値を
+利用できる状態のまま、操作だけを後で試せるようにする。
+
+## 保存しないものをテストする
+
+成功応答だけでなく、ログと永続キーにIPアドレスやUser-Agentが含まれないことを確認する。
+プライバシー要件は実装者の記憶ではなく、リポジトリインターフェースとテストの入力項目で狭める。

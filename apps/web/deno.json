@@ -1,7 +1,7 @@
 {
   "deploy": {
     "framework": "sveltekit",
-    "install": "deno install --frozen --allow-scripts=npm:sharp",
+    "install": "deno task --cwd ../.. content:generate && deno install --frozen=false --allow-scripts=npm:sharp",
     "build": "deno task build"
   },
   "tasks": {

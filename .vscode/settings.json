@@ -18,8 +18,21 @@
   },
   // 🦕 Deno 2.x 設定
   "deno.enable": true,
+  "deno.config": "./deno.json",
+  "deno.enablePaths": [
+    "apps",
+    "packages",
+    "e2e"
+  ],
   "deno.lint": true,
   "deno.path": "/usr/bin/deno",
+  "tailwindCSS.experimental.configFile": {
+    "packages/ui/src/foundations/global.css": [
+      "apps/web/src/**",
+      "packages/ui/src/**"
+    ]
+  },
+  "tailwindCSS.lint.suggestCanonicalClasses": "warning",
   // 言語別フォーマッタ
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
@@ -28,10 +41,12 @@
     "editor.defaultFormatter": "denoland.vscode-deno"
   },
   "[svelte]": {
-    "editor.defaultFormatter": "svelte.svelte-vscode"
+    "editor.defaultFormatter": "svelte.svelte-vscode",
+    // `deno task fmt` intentionally excludes Svelte; avoid an editor-only rewrite.
+    "editor.formatOnSave": false
   },
   "[markdown]": {
-    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+    "editor.defaultFormatter": "denoland.vscode-deno"
   },
   "markdownlint.config": {
     "MD033": {

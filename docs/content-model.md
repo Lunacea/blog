@@ -45,3 +45,16 @@ cache entry for every external `LinkCard` URL. It does not perform network reque
 schemas to accommodate invalid content. Preview metadata is refreshed only through
 `deno task links:refresh`; generated metadata JSON and local WebP assets are reviewed and committed
 with the content that references them.
+
+## Technical-blog publication (2026-09)
+
+Only the seven existing Article entries are published. Works and Archive `.svx` entries and their
+routes have been removed; old catalog, detail, and OGP URLs return 404 without redirects. Article
+slugs, IDs, and Talk feed aliases remain stable. The existing public type schemas and reaction
+storage contract remain available; this publication change does not migrate or delete KV data.
+
+Composition is generated from source-ordered text, technical, and media blocks, with normalized
+positions, units, heading IDs, and prose character counts. Source metadata, scripts, fenced code,
+image URLs and markup are excluded from prose counts. Paper layers are
+`min(5, max(1, ceil(estimatedMinutes)))`: one sheet per reading minute, a time cue rather than
+printed pages. The registry carries no duplicated prose text and remains a build-time artifact.

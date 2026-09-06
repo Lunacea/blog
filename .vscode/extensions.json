@@ -1,5 +1,8 @@
 {
   "recommendations": [
+    "denoland.vscode-deno",
+    "svelte.svelte-vscode",
+    "bradlc.vscode-tailwindcss",
     // コンテナ・ホスト連携用の必須拡張機能
     "ms-vscode-remote.remote-wsl",
     "ms-vscode-remote.remote-containers",

@@ -1,47 +1,48 @@
 <script lang="ts">
-  import type { Component } from "svelte";
+  import { StatusBadge, TagLabel } from "$ui/components";
+  import { BackGlyph } from "$ui/icons";
+  import { ContentDetailView, ContentList, ReadingSurface } from "$ui/patterns";
   import { siteConfig } from "@lunacea/config";
   import { linkPreviews } from "@lunacea/content/link-previews.ts";
-  import type { Content } from "@lunacea/schemas";
-  import { StatusBadge, TagLabel } from "$ui/components";
-  import { Icon, interfaceIcons, socialIcons, tagIconName } from "$ui/icons";
-  import { ContentList, ReadingSurface } from "$ui/patterns";
+  import type { Article } from "@lunacea/schemas";
+  import { onMount, type Component } from "svelte";
+  import type { ArticleCompositionVisual } from "$ui/visuals";
+  import { recordImpression } from "$lib/impressions.ts";
   import ReactionBar from "./ReactionBar.svelte";
   import ResponsiveImage from "./ResponsiveImage.svelte";
-  import ShareActions from "./ShareActions.svelte";
+  import { ShareActions } from "$ui/components";
+  import { cn } from "$ui/utils.ts";
 
   let {
     metadata,
     component,
     headings = [],
-    related = []
+    related = [],
+    composition,
   }: {
-    metadata: Content;
-    component: Component;
+    metadata: Article;
+    component?: Component;
     headings?: Array<{ id: string; text: string; level: number }>;
-    related?: Content[];
+    related?: Article[];
+    composition?: ArticleCompositionVisual;
   } = $props();
   let ContentComponent = $derived(component);
 
-  const canonical = $derived(siteConfig.url +
-    (metadata.type === "article"
-      ? "/articles/"
-      : metadata.type === "work"
-      ? "/works/"
-      : "/archive/" + metadata.type + "s/") +
-    metadata.slug);
-
+  const canonical = $derived(`${siteConfig.url}/articles/${metadata.slug}`);
   const structured = $derived({
     "@context": "https://schema.org",
-    "@type": metadata.type === "work" ? "SoftwareApplication" : "Article",
+    "@type": "Article",
     headline: metadata.title,
     description: metadata.summary,
     datePublished: metadata.publishedAt,
     dateModified: metadata.updatedAt ?? metadata.publishedAt,
     author: { "@type": "Person", name: siteConfig.author.name },
-    mainEntityOfPage: canonical
+    mainEntityOfPage: canonical,
   });
+  onMount(() => recordImpression(metadata.type, metadata.slug));
+
   const mediaTransitionName = $derived(`record-media-${metadata.type}-${metadata.slug}`);
+  const titleTransitionName = $derived(`record-title-${metadata.type}-${metadata.slug}`);
 </script>
 
 <svelte:head>
@@ -54,423 +55,95 @@
   <meta property="og:site_name" content={siteConfig.name} />
   <meta property="og:locale" content="ja_JP" />
   <meta property="og:url" content={canonical} />
-  <meta
-    property="og:image"
-    content={siteConfig.url + "/og/" + metadata.type + "/" + metadata.slug + ".png"}
-  />
+  <meta property="og:image" content={`${siteConfig.url}/og/${metadata.type}/${metadata.slug}.png`} />
   <meta name="twitter:card" content="summary_large_image" />
   <script type="application/ld+json">{JSON.stringify(structured)}</script>
 </svelte:head>
 
-<article
-  class:article-record={metadata.type === "article"}
-  class:work-record={metadata.type === "work"}
-  class:archive-record={metadata.type !== "article" && metadata.type !== "work"}
+<ContentDetailView
+  contentId={`${metadata.type}:${metadata.slug}`}
+  canonicalUrl={canonical}
+  kind={metadata.type}
+  class={cn(
+    "[&_.article-header]:grid [&_.article-header]:min-h-0 [&_.article-header]:grid-cols-1 [&_.article-header]:content-start [&_.article-header]:gap-3 [&_.article-header]:pb-12 [&_.article-header>*]:w-[min(100%,var(--prose-width))] [&_h1]:m-0 [&_h1]:max-w-[24ch] [&_h1]:text-balance [&_h1]:font-editorial [&_h1]:text-(length:--text-h1) [&_h1]:font-regular [&_h1]:leading-tight [&_h1]:tracking-(--tracking-heading) [&_.article-flags]:flex [&_.article-flags]:flex-wrap [&_.article-flags]:items-center [&_.article-flags]:gap-2 [&_.article-flags]:leading-none [&_.detail-flags]:flex [&_.detail-flags]:flex-wrap [&_.detail-flags]:items-center [&_.detail-flags]:justify-between [&_.detail-flags]:gap-2 [&_.lead]:m-0 [&_.lead]:max-w-prose [&_.lead]:leading-copy [&_.tag-list]:m-0 [&_.tag-list]:flex [&_.tag-list]:list-none [&_.tag-list]:flex-wrap [&_.tag-list]:items-center [&_.tag-list]:gap-1 [&_.tag-list]:p-0 [&_.tag-list]:leading-none",
+    "[&_.article-back]:inline-flex [&_.article-back]:w-fit [&_.article-back]:items-center [&_.article-back]:gap-(--space-2) [&_.article-back]:text-(length:--text-caption) [&_.article-back]:tracking-(--tracking-ui) [&_.article-back]:text-quiet [&_.article-back]:no-underline [&_.article-back]:transition-colors [&_.article-back]:duration-(--motion-duration-fast) hover:[&_.article-back]:text-ink focus-visible:[&_.article-back]:text-ink",
+    "[&_.article-byline]:mt-1 [&_.article-byline]:flex [&_.article-byline]:flex-wrap [&_.article-byline]:items-center [&_.article-byline]:justify-between [&_.article-byline]:gap-x-6 [&_.article-byline]:gap-y-3 [&_.article-byline]:border-t [&_.article-byline]:border-rule [&_.article-byline]:pt-3 [&_.article-byline]:leading-ui",
+    "[&_.compact-dates]:m-0 [&_.compact-dates]:flex [&_.compact-dates]:flex-wrap [&_.compact-dates]:items-baseline [&_.compact-dates]:gap-x-5 [&_.compact-dates]:gap-y-1 [&_.compact-dates]:leading-ui [&_.compact-dates>div]:flex [&_.compact-dates>div]:items-baseline [&_.compact-dates>div]:gap-2 [&_.compact-dates_dt]:m-0 [&_.compact-dates_dt]:text-(length:--text-caption) [&_.compact-dates_dt]:tracking-(--tracking-ui) [&_.compact-dates_dt]:text-quiet [&_.compact-dates_dd]:m-0 [&_.compact-dates_dd]:text-(length:--text-caption) [&_.compact-dates_dd]:text-quiet [&_.compact-dates_dd]:tabular-nums",
+    "[&_.event-meta]:mt-3 [&_.event-meta]:grid [&_.event-meta]:gap-1 [&_.event-meta]:leading-ui [&_.event-meta>div]:grid [&_.event-meta>div]:grid-cols-[5rem_minmax(0,1fr)] [&_.event-meta>div]:gap-2 [&_.event-meta_dt]:m-0 [&_.event-meta_dt]:text-(length:--text-caption) [&_.event-meta_dt]:tracking-(--tracking-ui) [&_.event-meta_dt]:text-quiet [&_.event-meta_dd]:m-0 [&_.event-meta_dd]:text-(length:--text-small)",
+    "[&_.cover]:m-0 [&_.cover_img]:max-h-[72svh] [&_.cover_img]:w-full [&_.cover_img]:object-cover [&_.cover_figcaption]:mt-2 [&_.cover_figcaption]:text-(length:--text-caption) [&_.cover_figcaption]:text-quiet [&_.article-cover]:mb-section",
+    "[&_.engagement]:mt-10 [&_.engagement]:grid [&_.engagement]:justify-items-center [&_.engagement]:gap-4 [&_.engagement]:border-t [&_.engagement]:border-rule [&_.engagement]:pt-10",
+    "[&_.article-tail]:pb-section [&_.revisions]:mt-8 [&_.related]:mt-8 [&_.detail-section-title]:mb-4 [&_.detail-section-title]:font-editorial [&_.detail-section-title]:text-(length:--text-h3) [&_.detail-section-title]:font-regular [&_.revisions_ol]:m-0 [&_.revisions_ol]:list-none [&_.revisions_ol]:border-t [&_.revisions_ol]:border-rule [&_.revisions_ol]:p-0 [&_.revisions_li]:grid [&_.revisions_li]:grid-cols-[10rem_1fr] [&_.revisions_li]:items-center [&_.revisions_li]:border-b [&_.revisions_li]:border-rule [&_.revisions_li]:py-3 max-sm:[&_.revisions_li]:grid-cols-1 max-sm:[&_.revisions_li]:gap-1 [&_.revisions_time]:text-(length:--text-caption) [&_.revisions_time]:text-quiet [&_.revisions_time]:tabular-nums",
+    metadata.type === "article" && "[&_h1]:text-(length:--text-h2) [&_h1]:leading-heading [&_h1]:text-shadow-ui-mask",
+  )}
 >
-  <header class="page shell content-shell article-header" data-reveal>
-    {#if metadata.type === "article"}
+  {#if metadata.type === "article"}
+    <header class="page content-shell article-header" data-reveal>
+      <a class="article-back" href="/articles" data-sveltekit-noscroll>
+        <BackGlyph />記事一覧へ
+      </a>
       <div class="article-flags">
         <TagLabel tag={metadata.category} />
         <StatusBadge status={metadata.status} />
       </div>
-    {:else}
-      <div class="meta"><StatusBadge status={metadata.status} /></div>
-    {/if}
-    <h1>{metadata.title}</h1>
-    <p class="lead">{metadata.summary}</p>
-    {#if metadata.type === "article"}
-      <dl class="article-dates">
-        <div><dt>公開</dt><dd><time datetime={metadata.publishedAt}>{metadata.publishedAt}</time></dd></div>
-        {#if metadata.updatedAt}
-          <div><dt>更新</dt><dd><time datetime={metadata.updatedAt}>{metadata.updatedAt}</time></dd></div>
-        {/if}
-      </dl>
+      <h1 style:view-transition-name={titleTransitionName}>{metadata.title}</h1>
+      <p class="lead">{metadata.summary}</p>
+      <div class="article-byline">
+        <dl class="article-dates compact-dates">
+          <div><dt>公開</dt><dd><time datetime={metadata.publishedAt}>{metadata.publishedAt}</time></dd></div>
+          {#if metadata.updatedAt}<div><dt>更新</dt><dd><time datetime={metadata.updatedAt}>{metadata.updatedAt}</time></dd></div>{/if}
+        </dl>
+      </div>
       <ul class="tag-list" aria-label="タグ">
         {#each metadata.tags as tag}
-          <li><TagLabel {tag} href={"/tags/" + encodeURIComponent(tag)} /></li>
+          <li><TagLabel {tag} href={`/articles?view=list&tag=${encodeURIComponent(tag)}`} /></li>
         {/each}
       </ul>
       {#if metadata.event}
         <dl class="event-meta">
-          <div><dt>Event</dt><dd>{metadata.event.name}</dd></div>
-          <div><dt>Held</dt><dd>{metadata.event.heldAt} / {metadata.event.mode}</dd></div>
-          <div><dt>Format</dt><dd>{metadata.event.presentationType}</dd></div>
-          {#if metadata.event.venue}<div><dt>Venue</dt><dd>{metadata.event.venue}</dd></div>{/if}
+          <div><dt>イベント</dt><dd>{metadata.event.name}</dd></div>
+          <div><dt>開催</dt><dd>{metadata.event.heldAt} / {metadata.event.mode}</dd></div>
+          <div><dt>形式</dt><dd>{metadata.event.presentationType}</dd></div>
+          {#if metadata.event.venue}<div><dt>会場</dt><dd>{metadata.event.venue}</dd></div>{/if}
         </dl>
       {/if}
-    {:else if metadata.type === "work"}
-      <dl class="work-meta">
-        <div><dt>Role</dt><dd>{metadata.role}</dd></div>
-        <div><dt>Period</dt><dd>{metadata.period}</dd></div>
-        <div><dt>Field</dt><dd>{metadata.fields.join(" / ")}</dd></div>
-      </dl>
-      <div class="work-technologies">
-        <p>Technology</p>
-        <ul aria-label="使用技術">
-          {#each metadata.stack as technology}
-            <li><Icon name={tagIconName(technology)} /><span>{technology}</span></li>
-          {/each}
-        </ul>
-      </div>
-      {#if metadata.links.github || metadata.links.site}
-        <nav class="work-links" aria-label="制作物の外部リンク">
-          {#if metadata.links.github}
-            <a href={metadata.links.github} rel="noreferrer" target="_blank">
-              <Icon name={socialIcons.github} /><span>View source</span>
-            </a>
-          {/if}
-          {#if metadata.links.site}
-            <a href={metadata.links.site} rel="noreferrer" target="_blank">
-              <Icon name={interfaceIcons.externalLink} /><span>Visit site</span>
-            </a>
-          {/if}
-        </nav>
-      {/if}
-      <ul class="tag-list" aria-label="タグ">
-        {#each metadata.tags as tag}
-          <li><TagLabel {tag} href={"/tags/" + encodeURIComponent(tag)} /></li>
-        {/each}
-      </ul>
-    {:else}
-      <dl class="archive-meta">
-        <div><dt>Kind</dt><dd>{metadata.type}</dd></div>
-        <div><dt>Published</dt><dd><time datetime={metadata.publishedAt}>{metadata.publishedAt}</time></dd></div>
-        {#if metadata.location}<div><dt>Location</dt><dd>{metadata.location}</dd></div>{/if}
-        {#if metadata.type === "photo" && metadata.camera}
-          <div><dt>Camera</dt><dd>{metadata.camera}</dd></div>
-        {/if}
-        {#if metadata.type === "photo" && metadata.lens}
-          <div><dt>Lens</dt><dd>{metadata.lens}</dd></div>
-        {/if}
-        {#if metadata.type === "wine"}
-          <div><dt>Producer</dt><dd>{metadata.producer}</dd></div>
-          <div><dt>Region</dt><dd>{metadata.region}</dd></div>
-          {#if metadata.vintage}<div><dt>Vintage</dt><dd>{metadata.vintage}</dd></div>{/if}
-          {#if metadata.grapes.length}
-            <div><dt>Grapes</dt><dd>{metadata.grapes.join(" / ")}</dd></div>
-          {/if}
-        {/if}
-      </dl>
-      <ul class="tag-list" aria-label="タグ">
-        {#each metadata.tags as tag}
-          <li><TagLabel {tag} href={"/tags/" + encodeURIComponent(tag)} /></li>
-        {/each}
-      </ul>
-    {/if}
-  </header>
+    </header>
 
-  {#if metadata.cover?.kind === "image" || metadata.cover?.kind === "og"}
-    <figure class="cover shell content-shell" data-reveal="image" style:view-transition-name={mediaTransitionName}>
-      <ResponsiveImage cover={{ ...metadata.cover, kind: "image" }} eager />
-      {#if metadata.cover.kind === "image" && metadata.cover.caption}
-        <figcaption>{metadata.cover.caption}</figcaption>
-      {/if}
-    </figure>
-  {:else if metadata.cover?.kind === "placeholder"}
-    <div
-      class="cover-placeholder shell content-shell"
-      style:aspect-ratio={metadata.cover.aspectRatio}
-      data-asset-id={metadata.cover.assetId}
-      aria-label="制作物画像は未設定です"
-      role="img"
-    >
-      <span>Asset placeholder / {metadata.cover.assetId}</span>
-    </div>
+    {#if metadata.cover}
+      <figure class="cover article-cover content-shell" data-reveal="image" style:view-transition-name={mediaTransitionName}>
+        <ResponsiveImage cover={metadata.cover} eager />
+        {#if metadata.cover.caption}<figcaption>{metadata.cover.caption}</figcaption>{/if}
+      </figure>
+    {/if}
   {/if}
 
-  <ReadingSurface
-    component={ContentComponent}
-    {headings}
-    {linkPreviews}
-    class={metadata.type === "article" ? "article-reading" : "media-led-reading"}
-  />
+  {#if ContentComponent}
+    <ReadingSurface
+      component={ContentComponent}
+      {headings}
+      {linkPreviews}
+      {composition}
+      class="article-reading"
+    />
+  {/if}
 
   <div class="shell article-tail">
-    {#if metadata.revisions.length}
-      <section class="revisions" aria-labelledby="revision-title" data-reveal>
-        <h2 class="detail-section-title" id="revision-title">更新履歴</h2>
-        <ol>
-          {#each metadata.revisions as revision}
-            <li><time datetime={revision.date}>{revision.date}</time><span>{revision.summary}</span></li>
-          {/each}
-        </ol>
-      </section>
-    {/if}
     <div class="engagement">
       <ReactionBar content={metadata} />
       <ShareActions title={metadata.title} url={canonical} />
     </div>
-    {#if related.length}
+    {#if metadata.revisions.length}
+      <section class="revisions" aria-labelledby="revision-title" data-reveal>
+        <h2 class="detail-section-title" id="revision-title">更新履歴</h2>
+        <ol>{#each metadata.revisions as revision}<li><time datetime={revision.date}>{revision.date}</time><span>{revision.summary}</span></li>{/each}</ol>
+      </section>
+    {/if}
+    {#if metadata.type === "article" && related.length}
       <section class="related" data-reveal>
         <h2 class="detail-section-title">関連記事</h2>
-        <ContentList entries={related} showType />
+        <ContentList entries={related.map((entry) => ({ ...entry, titleTransitionName: `record-title-${entry.type}-${entry.slug}` }))} showType />
       </section>
     {/if}
   </div>
-</article>
 
-<style>
-  .article-header {
-    display: grid;
-    grid-template-columns: minmax(10rem, 1fr) minmax(0, 3fr);
-    gap: var(--space-6) var(--space-12);
-    min-height: auto;
-    padding-bottom: clamp(var(--space-12), 7vw, var(--space-24));
-  }
 
-  .article-header h1 {
-    max-width: 22ch;
-    margin: 0;
-    font-family: var(--font-serif);
-    font-size: var(--text-h1);
-    font-weight: var(--weight-regular);
-    letter-spacing: var(--tracking-heading);
-    line-height: var(--leading-tight);
-    text-wrap: balance;
-  }
-
-  .article-header .lead,
-  .article-header .tag-list,
-  .article-header .work-meta,
-  .article-header .work-links,
-  .article-header .event-meta {
-    grid-column: 2;
-  }
-
-  .article-header .lead {
-    margin-top: 0;
-  }
-
-  .cover {
-    margin-bottom: var(--section-space);
-  }
-
-  .article-record .article-header {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-4);
-    padding-bottom: var(--space-16);
-  }
-
-  .article-record .article-header .meta,
-  .article-record .article-header .article-flags,
-  .article-record .article-header h1,
-  .article-record .article-header .lead,
-  .article-record .article-header .article-dates,
-  .article-record .article-header .tag-list,
-  .article-record .article-header .event-meta {
-    grid-column: 1;
-    width: min(100%, var(--prose-width));
-  }
-
-  .article-record .article-header .meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .article-record .article-header h1,
-  .article-record .article-header .lead,
-  .article-record .article-header .article-dates {
-    text-shadow: var(--shadow-text-mask);
-  }
-
-  .article-flags {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .article-dates {
-    display: grid;
-    gap: var(--space-1);
-    margin: 0;
-  }
-
-  .article-dates div {
-    display: grid;
-    grid-template-columns: 3rem 1fr;
-    gap: var(--space-2);
-  }
-
-  .article-dates dt,
-  .article-dates dd {
-    margin: 0;
-    color: var(--color-muted);
-    font-size: var(--text-caption);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .article-record .article-header h1 {
-    max-width: 26ch;
-    font-size: var(--text-h2);
-    line-height: var(--leading-heading);
-  }
-
-  .article-record .article-header .lead {
-    margin-top: var(--space-2);
-  }
-
-  .work-record .article-header,
-  .archive-record .article-header {
-    grid-template-columns: minmax(0, 1fr);
-    align-items: start;
-    justify-items: start;
-    gap: var(--space-5);
-    padding-bottom: var(--space-10);
-  }
-
-  .work-record .article-header h1,
-  .archive-record .article-header h1 {
-    max-width: 22ch;
-  }
-
-  .work-record .article-header .lead,
-  .archive-record .article-header .lead {
-    display: block;
-  }
-
-  .work-record .article-header .meta,
-  .work-record .article-header h1,
-  .work-record .article-header .lead,
-  .work-record .article-header .work-meta,
-  .work-record .article-header .work-technologies,
-  .work-record .article-header .work-links,
-  .work-record .article-header .tag-list {
-    grid-column: 1;
-    width: min(100%, var(--prose-width));
-  }
-
-  .archive-record .article-header .meta,
-  .archive-record .article-header h1,
-  .archive-record .article-header .lead,
-  .archive-record .article-header .archive-meta,
-  .archive-record .article-header .tag-list {
-    grid-column: 1;
-    width: min(100%, var(--prose-width));
-  }
-
-  .work-record .cover,
-  .archive-record .cover {
-    width: min(calc(100% - (2 * var(--layout-gutter))), 92rem);
-  }
-
-  .work-meta, .archive-meta, .event-meta { display: grid; grid-template-columns: 1fr; gap: 0; margin: var(--space-2) 0 0; }
-  .work-meta div, .archive-meta div, .event-meta div { border-top: 1px solid var(--color-line); padding-top: var(--space-2); }
-  .work-meta div, .archive-meta div { display: grid; grid-template-columns: minmax(6rem, .22fr) 1fr; align-items: baseline; padding-block: var(--space-3); }
-  .work-meta dt, .archive-meta dt, .event-meta dt { color: var(--color-muted); font-size: var(--text-caption); }
-  .work-meta dd, .archive-meta dd, .event-meta dd { margin: var(--space-1) 0 0; }
-  .work-technologies > p { margin: 0 0 var(--space-2); color: var(--color-muted); font-size: var(--text-caption); }
-  .work-technologies ul { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-  .work-technologies li { display: inline-flex; min-height: var(--space-8); align-items: center; gap: var(--space-2); border: 1px solid var(--color-line); padding-inline: var(--space-2); font-size: var(--text-caption); }
-  .work-technologies li :global(svg) { font-size: var(--text-small); }
-  .work-links { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-  .work-links a { display: inline-flex; min-height: var(--control-size); align-items: center; gap: var(--space-2); border: 1px solid var(--color-line); padding-inline: var(--space-3); color: inherit; font-size: var(--text-small); text-decoration: none; }
-  .work-links a:hover, .work-links a:focus-visible { color: var(--color-background); background: var(--color-foreground); }
-
-  .cover :global(img) {
-    width: 100%;
-    max-height: 72svh;
-    object-fit: cover;
-  }
-
-  .cover figcaption {
-    margin-top: var(--space-2);
-    color: var(--color-muted);
-    font-size: var(--text-caption);
-  }
-
-  .cover-placeholder {
-    display: grid;
-    place-items: center;
-    max-height: 72svh;
-    border: 1px solid var(--color-line);
-    background: var(--color-surface);
-    color: var(--color-muted);
-    font-variant-numeric: tabular-nums;
-    font-size: var(--text-caption);
-  }
-
-  .article-tail {
-    padding-block: var(--section-space);
-  }
-
-  .engagement {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-    margin-top: var(--space-12);
-    border-block: 1px solid var(--color-line);
-    padding-block: var(--space-4);
-  }
-
-  .article-record .detail-section-title,
-  .article-record .revisions li,
-  .article-record .related {
-    text-shadow: var(--shadow-text-mask);
-  }
-
-  .revisions,
-  .related {
-    margin-top: var(--space-20);
-  }
-
-  .revisions:first-child {
-    margin-top: 0;
-  }
-
-  .detail-section-title {
-    margin: 0 0 var(--space-4);
-    font-family: var(--font-serif);
-    font-size: var(--text-h3);
-    font-weight: var(--weight-regular);
-  }
-
-  .revisions ol {
-    margin: 0;
-    padding: 0;
-    border-top: 1px solid var(--color-line);
-    list-style: none;
-  }
-
-  .revisions li {
-    display: grid;
-    grid-template-columns: 10rem 1fr;
-    border-bottom: 1px solid var(--color-line);
-    padding-block: var(--space-3);
-    align-items: center;
-  }
-
-  .revisions time {
-    color: var(--color-muted);
-    font-variant-numeric: tabular-nums;
-    font-size: var(--text-caption);
-  }
-
-  @media (max-width: 44rem) {
-    .article-header {
-      grid-template-columns: 1fr;
-    }
-
-    .article-header .lead,
-    .article-header .tag-list,
-    .article-header .work-meta,
-    .article-header .work-links,
-    .article-header .event-meta {
-      grid-column: 1;
-    }
-
-    .work-record .article-header,
-    .archive-record .article-header {
-      grid-template-columns: 1fr;
-    }
-
-    .revisions li {
-      grid-template-columns: 1fr;
-      gap: var(--space-1);
-    }
-  }
-
-</style>
+</ContentDetailView>

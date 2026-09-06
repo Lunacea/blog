@@ -3,60 +3,30 @@
   import type { LinkPreviewRegistry } from "../components/link-preview-context.ts";
   import { provideLinkPreviews } from "../components/link-preview-context.ts";
   import ReadingEnhancements from "./ReadingEnhancements.svelte";
+  import type { ArticleCompositionVisual } from "../visuals/article-composition-types.ts";
 
   let {
     component,
     headings = [],
     linkPreviews = {},
     class: className = "",
+    composition,
   }: {
     component: Component;
     headings?: Array<{ id: string; text: string; level: number }>;
     linkPreviews?: LinkPreviewRegistry;
     class?: string;
+    composition?: ArticleCompositionVisual;
   } = $props();
   let ContentComponent = $derived(component);
   let prose = $state<HTMLElement | null>(null);
   provideLinkPreviews(() => linkPreviews);
 </script>
 
-<div class={["reading-surface", className]}>
-  <span class="reading-start" data-reading-start aria-hidden="true"></span>
-  <div class="shell article-grid">
+<div class={["reading-surface relative border-y border-rule bg-transparent py-section [&.media-led-reading]:border-t-0", className]}>
+  <span class="reading-start absolute top-0" data-reading-start aria-hidden="true"></span>
+  <div class="article-grid shell grid grid-cols-[minmax(0,var(--prose-width))_minmax(var(--layout-grid-compact),1fr)] justify-between gap-[clamp(var(--space-8),8vw,var(--space-32))] max-lg:grid-cols-1 max-lg:gap-8">
     <div class="prose" bind:this={prose}><ContentComponent /></div>
-    <ReadingEnhancements root={prose} {headings} />
+    <ReadingEnhancements root={prose} {headings} {composition} />
   </div>
 </div>
-
-<style>
-  .reading-surface {
-    position: relative;
-    border-block: 1px solid var(--color-line);
-    padding-block: var(--section-space);
-    background: transparent;
-  }
-
-  .reading-surface.media-led-reading {
-    border-top: 0;
-  }
-
-  .reading-start {
-    position: absolute;
-    top: 0;
-  }
-
-  .article-grid {
-    display: grid;
-    grid-template-columns:
-      minmax(0, var(--prose-width))
-      minmax(var(--layout-grid-compact), 1fr);
-    justify-content: space-between;
-    gap: clamp(var(--space-8), 8vw, var(--space-32));
-  }
-
-  @media (max-width: 60rem) {
-    .article-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>

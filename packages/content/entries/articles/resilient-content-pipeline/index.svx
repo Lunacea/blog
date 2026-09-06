@@ -18,8 +18,7 @@ targetVersions:
   - Svelte 5
   - Deno 2
 testedAt: 2026-07-10
-related:
-  - work:quiet-archive
+related: []
 revisions:
   - date: 2026-07-10
     summary: 検証境界と失敗時の扱いを追記

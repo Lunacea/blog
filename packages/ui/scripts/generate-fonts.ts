@@ -108,7 +108,7 @@ const fonts = [
     weight: 400,
     file: "zen-kaku-gothic-new/ZenKakuGothicNew-Regular.ttf",
     role: "all",
-    preload: true,
+    preload: false,
   },
   {
     family: "Zen Kaku Gothic New",
@@ -116,7 +116,7 @@ const fonts = [
     weight: 500,
     file: "zen-kaku-gothic-new/ZenKakuGothicNew-Medium.ttf",
     role: "all",
-    preload: false,
+    preload: true,
   },
   {
     family: "Zen Kaku Gothic New",
@@ -135,10 +135,10 @@ const fonts = [
     preload: false,
   },
   {
-    family: "Hina Mincho",
-    key: "hina-400",
-    weight: 400,
-    file: "hina-mincho/HinaMincho-Regular.ttf",
+    family: "Zen Old Mincho",
+    key: "zen-mincho-500",
+    weight: 500,
+    file: "zen-old-mincho/ZenOldMincho-Medium.ttf",
     role: "editorial",
     preload: true,
   },
@@ -203,7 +203,7 @@ export async function generateFontSubsets(): Promise<void> {
 }
 
 @font-face {
-  font-family: "Hina Mincho Fallback";
+  font-family: "Zen Old Mincho Fallback";
   src: local("Yu Mincho"), local("Hiragino Mincho ProN");
   size-adjust: 100%;
   ascent-override: 90%;

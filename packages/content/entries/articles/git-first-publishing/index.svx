@@ -32,6 +32,13 @@ revisions: []
 
 frontmatter検証、プレビューデプロイ、静的ページとAPIの境界を順に組み立てた。
 
+~~~mermaid title="公開経路"
+flowchart LR
+  Git[Git] --> Validate[Validate]
+  Validate --> Preview[Preview]
+  Preview --> Publish[Publish]
+~~~
+
 ## 補足
 
 公開記事をデータベースへ複製しないことで、復旧経路とレビュー対象を単純に保った。

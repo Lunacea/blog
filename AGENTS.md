@@ -1,310 +1,208 @@
 # Repository Agent Instructions
 
-## Project purpose
+## 目的
 
-This repository contains a personal blog and portfolio built as a SvelteKit modular monolith.
+このリポジトリは、SvelteKitで構築された個人ブログ兼ポートフォリオです。
 
-The site must prioritize:
+次を重視してください。
 
-- readable and accessible public content
-- progressive enhancement
-- low initial JavaScript cost
-- stable Git-managed content
-- privacy-preserving anonymous reactions
-- a consistent editorial visual identity
-- graceful degradation when optional features fail
+- 可読性とアクセシビリティ
+- Progressive Enhancement
+- 初期JavaScript量の抑制
+- Git管理された公開コンテンツ
+- 匿名リアクションのプライバシー
+- 一貫したデザイン
+- オプション機能が失敗しても本文を利用できること
 
-Do not optimize one of these goals by silently violating another.
+一つの目的のために、ほかの方針を無断で破らないでください。
 
-## Sources of truth
+## 基本方針
 
-Before making changes, read the documents relevant to the task:
+- 要求を満たす最小限の変更を行う。
+- 対象ファイルと周辺実装を確認する。
+- 既存パターンを優先して再利用する。
+- 無関係な変更やリファクタリングをしない。
+- ファイル全体ではなく局所的に編集する。
+- ユーザーの未コミット変更を上書きしない。
+- 実行していない確認を成功と報告しない。
 
-- `docs/architecture.md` for system boundaries and architectural decisions
-- `docs/design-system.md` for colors, typography, spacing, motion, imagery, and component styling
-- `docs/content-model.md` for content types, frontmatter, IDs, and validation
-- the closest package-level `AGENTS.md`
-- existing tests and neighboring implementations
+## 関連資料
 
-`docs/architecture.md` is an accepted architectural contract only when its status is marked
-`Accepted`.
+タスクに関係する場合のみ、次を確認してください。
 
-If the requested task conflicts with an accepted architectural decision:
+- `docs/architecture.md`
+- `docs/design-system.md`
+- `docs/content-model.md`
+- 最寄りの `AGENTS.md`
+- `.agent/PLANS.md`
+- 対象付近の実装とテスト
 
-1. do not silently work around it;
-2. identify the conflict;
-3. explain the affected decision;
-4. propose an ADR or architecture-document update;
-5. keep the implementation separate from the architectural change.
+軽微な変更のために、関係のない資料をすべて読まないでください。
 
-Repository code and documentation must not intentionally disagree after the task is complete.
+`docs/architecture.md`
+のAcceptedな決定と要求が衝突する場合は、無断で回避せず、衝突内容を報告してください。
 
-## Package manager and commands
+## アーキテクチャ
 
-Use the package manager declared by the repository's `packageManager` field and lockfile.
+明示的な変更要求がない限り、次を維持してください。
 
-Do not migrate package managers as part of an unrelated task.
+- SvelteKitを唯一のデプロイ単位とする。
+- Honoを独立サーバーへ分離しない。
+- 公開コンテンツはGit管理された `.svx` とする。
+- 匿名リアクションとレート制限はDeno KVで管理する。
+- `core` はDOM、Deno KV、ネットワーク、`fetch` に依存させない。
+- 外部インフラストラクチャは明示的なインターフェースを通す。
+- パッケージ間の依存方向を維持し、循環依存を作らない。
+- 記事ページの初期依存にHero、Threlte、Three.jsを含めない。
+- オプション機能で主要コンテンツをブロックしない。
 
-Run only scripts that actually exist in the repository. Inspect the root and package-level
-`package.json` files before choosing commands. Do not invent script names.
+公開API、スキーマ、ストレージ、ルーティング、デプロイ境界を勝手に変更しないでください。
 
-Prefer the smallest relevant validation first, followed by the repository-wide checks required for
-the changed area.
+## レンダリングと性能
 
-## Architectural invariants
+- 記事、一覧、About、タグ、フィード、サイトマップ、OGPは原則プリレンダリングする。
+- 検索はJavaScriptなしでもGETフォームから利用できるようにする。
+- `/api/v1` を動的HTTP境界とする。
+- Mermaid、Threlte、Three.jsは必要なページでのみ読み込む。
+- 実装を簡単にするためだけに、プリレンダリングをSSRやCSRへ変更しない。
+- 不要なハイドレーションやグローバル状態を追加しない。
+- 小さな実装や既存依存で足りる場合、大きな依存を追加しない。
 
-Unless the task explicitly changes the architecture through an approved plan:
+ルーティング、依存関係、初期バンドル、レンダリング方式を変更する場合は、影響を説明してください。
 
-- SvelteKit remains the only deployment unit.
-- Hono remains inside the SvelteKit HTTP boundary and must not become a separately deployed server.
-- Public content remains Git-managed `.svx`.
-- Anonymous reaction state and rate-limit state remain in Deno KV.
-- Weather data is cacheable environmental data and must not become persistent user data.
-- `core` must remain independent of DOM APIs, Deno KV, network access, and `fetch`.
-- External infrastructure must be accessed through explicit interfaces.
-- Public package dependency directions described in `docs/architecture.md` must be preserved.
-- Article and content pages must not import the homepage Hero, Threlte, or Three.js dependency
-  graph.
-- Optional visual features must not block access to the primary content.
-- Progressive enhancement must be preserved.
+## プライバシーとセキュリティ
 
-Do not introduce circular package dependencies.
+リアクション機能では、次を保存またはログ出力しないでください。
 
-## Rendering boundaries
+- IPアドレス
+- User-Agent
+- 正確な位置情報
+- メールアドレス
+- 不要な識別子
 
-Preserve the documented rendering model:
+次を維持してください。
 
-- content lists, content detail pages, About, tags, feeds, sitemap, and OGP are prerendered;
-- search remains usable through a GET form without JavaScript;
-- `/api/v1` is the dynamic HTTP boundary;
-- Mermaid loads only when required by the rendered article;
-- Threlte and Three.js load only when the documented motion and device conditions are satisfied.
+- same-origin確認
+- HTTP境界でのZodバリデーション
+- 入力サイズ制限
+- Secure、HttpOnly、SameSite Cookie
+- アクター単位のレート制限
+- 集計と選択状態の原子的な更新
+- 永続化のリポジトリインターフェース
 
-Do not convert prerendered routes to SSR or client-side rendering merely because it makes an
-implementation easier.
+秘密情報、トークン、本番データ、個人情報をソース、テスト、ログ、ドキュメントへ追加しないでください。
 
-Any rendering-boundary change requires an explicit plan that documents:
+## コンテンツ
 
-- why the current boundary is insufficient;
-- SEO and accessibility effects;
-- caching implications;
-- JavaScript and deployment impact;
-- rollback strategy.
+コンテンツID、slug、公開URLは安定した識別子です。
 
-## Performance
+移行計画がない限り、次を変更しないでください。
 
-Treat performance budgets as acceptance criteria, not optional recommendations.
+- コンテンツディレクトリ
+- slug
+- `type:slug` ID
+- 公開ルート
 
-- Preserve the article-detail initial JavaScript gzip budget documented in `docs/architecture.md`.
-- Keep Mermaid, WebGL, and other heavy enhancements outside the article initial dependency graph.
-- Do not add a large dependency when a small local implementation or existing dependency is
-  sufficient.
-- Avoid global client-side state for route-local behavior.
-- Avoid unnecessary hydration.
-- Prefer server-rendered or prerendered HTML for public content.
+スキーマエラーを避けるためだけに、フィールドをoptionalへ変更しないでください。
 
-When changing dependencies, dynamic imports, routing, or shared UI, run the applicable bundle or
-budget checks.
+## デザインとスタイル
 
-Report measured results rather than claiming that a change is lightweight.
+詳細は `docs/design-system.md` と対象パッケージの `AGENTS.md` に従ってください。
 
-## Privacy and security
+共通ルール：
 
-The reaction system must remain anonymous and privacy-preserving.
+- セマンティックなデザイントークンを使用する。
+- Svelteコンポーネントに `<style>` を追加しない。
+- 通常のスタイルはTailwind CSS 4で表現する。
+- 静的な色、寸法、余白をインラインスタイルに書かない。
+- 孤立したコンポーネント内で新しいデザイン言語を作らない。
+- 人物、植物、動物、手、肖像、ロゴなどのブランド画像をコード生成しない。
+- 不足画像を汎用的なgradient、blob、glass cardで代替しない。
 
-Do not store or log:
+単純な幾何学図形や技術的SVGは、ブランド画像の代用でない場合に限り作成できます。
 
-- IP addresses
-- User-Agent strings
-- precise location
-- email addresses
-- raw identifiers that are unnecessary for the documented reaction model
+## アクセシビリティ
 
-Preserve:
+ユーザー向け変更では、必要に応じて次を維持または改善してください。
 
-- same-origin mutation checks
-- Zod validation at HTTP boundaries
-- documented input-size limits
-- Secure, HttpOnly, SameSite cookie behavior
-- actor-level rate limiting
-- atomic aggregate and selection updates
-- repository interfaces for persistence implementations
+- セマンティックHTML
+- キーボード操作
+- フォーカス表示
+- アクセシブルネーム
+- 見出し構造
+- 色のコントラスト
+- reduced motion
+- forced colors
+- 文字サイズ変更
+- JavaScriptなしでの利用
 
-Do not weaken these protections to simplify local development or testing.
+天気、Mermaid、WebGL、リアクションなどの失敗によって、本文閲覧やページ移動を妨げないでください。
 
-Use an in-memory implementation with the same repository contract where appropriate.
+## 計画
 
-Never add secrets, tokens, production data, or personal data to source files, fixtures, snapshots,
-logs, or documentation.
+次のような小さく明確な変更は、Planを作らず直接実装してください。
 
-## Content rules
+- 文言修正
+- 軽微なスタイル修正
+- 単一コンポーネントの修正
+- 明確なバグ修正
+- 既存パターンに沿った小規模追加
 
-Content IDs and slugs are stable public identifiers.
+次の場合は短いPlanを使用してください。
 
-Do not casually rename:
+- 複数の主要ファイルにまたがる。
+- 新しいユーザー操作を追加する。
+- レンダリングや読み込み方法に影響する。
+- 受け入れ条件が不明確である。
 
-- content directories
-- slugs
-- `type:slug` identifiers
-- public routes
+次の場合のみ、`.agent/PLANS.md` に従ったExecPlanを使用してください。
 
-Changes to stable identifiers require a migration and redirect plan.
+- 複数パッケージの境界を変更する。
+- 公開API、スキーマ、ストレージ、ルーティングを変更する。
+- プライバシーやセキュリティ仕様を変更する。
+- プリレンダリングやデプロイ境界を変更する。
+- 移行やロールバックが必要である。
+- 大規模な基盤変更やホームページ再設計を行う。
 
-Content validation must continue to detect, where applicable:
+## 検証
 
-- invalid frontmatter
-- duplicate IDs
-- slug and directory mismatches
-- invalid related-content IDs
-- broken internal links
-- missing cover assets
-- external image hotlinks
+変更内容に応じて、必要最小限の検証を行ってください。
 
-Do not bypass validation by weakening schemas or changing invalid fields to optional without
-explaining the content-model consequences.
+- 文言・静的コンテンツ：対象確認、必要な場合のみコンテンツ検証
+- 軽微なスタイル：対象確認、必要な画面確認
+- ロジック変更：関連テスト、型またはSvelteチェック
+- 共通UI：関連テスト、型チェック、主要な利用箇所
+- ルーティング・依存関係：build、必要な場合のみbudget確認
+- API・データ・セキュリティ：関連テスト、型チェック、バリデーション確認
 
-## Visual design and assets
+見た目だけの変更に、新しい自動テストは必須ではありません。
 
-Follow `docs/design-system.md` when it exists.
+すべての変更でformat、lint、全テスト、buildを一律に実行しないでください。
 
-Do not invent a new visual language inside an isolated component.
+まず最小の関連チェックを実行し、影響範囲や失敗に応じて追加してください。
 
-Use semantic design tokens rather than repeated literal values for:
+## Git
 
-- primary
-- secondary
-- accent
-- background
-- foreground
-- muted colors
-- typography
-- spacing
-- radius
-- shadows
-- motion
+明示的に依頼されない限り、次を行わないでください。
 
-Use the documented Japanese-compatible sans-serif and serif font roles.
+- ユーザーの変更の破棄
+- `git add`
+- commit
+- push
+- rebase
+- 無関係なlockfile更新
+- 生成ファイルの手動編集
 
-Do not generate organic brand imagery such as people, plants, animals, hands, portraits, or
-logo-like illustrations in code.
+本番依存を追加する場合は、必要性を説明してください。
 
-Authored visual assets must be provided through `config.visualAssets` and rendered through the
-established media-slot abstraction.
+## 完了報告
 
-Codex may create simple geometric, structural, or technical SVG elements when the task explicitly
-requires them and they are not brand assets.
+最終回答は簡潔にし、必要な範囲で次を報告してください。
 
-Do not replace missing authored artwork with generic AI-looking gradients, blobs, glass cards, or
-decorative illustrations.
+- 変更内容
+- 変更ファイル
+- 実行した検証
+- 未実行の重要な確認
+- 残っているリスク
 
-## Accessibility and resilience
-
-All user-visible changes must preserve or improve:
-
-- semantic HTML
-- keyboard operation
-- visible focus
-- meaningful accessible names
-- heading hierarchy
-- color contrast
-- reduced-motion support
-- save-data and low-capability fallbacks
-- content access without JavaScript where documented
-
-Failures in weather, Mermaid, WebGL, or reactions must not prevent reading or navigating the site.
-
-Use live regions only for relevant asynchronous status messages. Do not create noisy announcements.
-
-## Working procedure
-
-Before editing:
-
-1. inspect `git status`;
-2. treat existing uncommitted changes as user-owned;
-3. identify the relevant packages, routes, tests, and documentation;
-4. read the closest `AGENTS.md`;
-5. verify the current implementation instead of relying only on filenames or documentation;
-6. determine whether the task requires a direct change, a short plan, or an ExecPlan.
-
-During implementation:
-
-- make the smallest coherent change that satisfies the acceptance criteria;
-- reuse existing patterns before creating new abstractions;
-- avoid unrelated cleanup;
-- do not rewrite whole files when a focused edit is sufficient;
-- add or update tests for changed behavior;
-- keep documentation synchronized with changed contracts;
-- preserve public APIs unless the task explicitly changes them.
-
-When ordinary implementation details are unclear, inspect the repository and make the least
-disruptive decision.
-
-Do not make autonomous product, branding, privacy, public-API, data-model, or architecture
-decisions. Surface those decisions explicitly.
-
-## Planning policy
-
-Use a direct implementation for small, well-scoped changes with no architectural, schema, API,
-storage, privacy, or design-system impact.
-
-Use Plan mode for changes that:
-
-- affect multiple modules;
-- introduce a new user-visible interaction;
-- alter rendering or loading behavior;
-- require several implementation steps;
-- have unclear acceptance criteria.
-
-Use an ExecPlan following `.agent/PLANS.md` for changes that:
-
-- affect multiple packages;
-- change schemas, public APIs, storage, routing, or stable content IDs;
-- modify privacy or security behavior;
-- modify prerendering or deployment boundaries;
-- add or significantly change WebGL, Mermaid, search, reactions, or build tooling;
-- introduce a new design system or major homepage redesign;
-- require migration or rollback steps.
-
-## Validation
-
-After editing:
-
-1. run the smallest relevant tests;
-2. run relevant type and Svelte checks;
-3. run lint and formatting checks;
-4. run content validation when content or schema behavior changes;
-5. run build and budget checks when routing, shared UI, dependencies, or rendering changes;
-6. inspect the relevant page or interaction when behavior is visual;
-7. inspect the final Git diff for unrelated changes.
-
-Report:
-
-- exact commands executed;
-- whether each command passed or failed;
-- failures that existed before the change;
-- checks that could not be run;
-- manual verification still required.
-
-Never describe an unexecuted check as passing.
-
-## Git and scope safety
-
-- Do not discard, overwrite, stage, commit, push, or rebase user changes unless explicitly
-  requested.
-- Do not create commits unless explicitly requested.
-- Do not modify generated files manually.
-- Do not edit lockfiles unless dependency resolution actually changes.
-- Do not add production dependencies without explaining the need and alternatives.
-- Do not modify unrelated files merely to make the diff look cleaner.
-
-## Definition of done
-
-A task is complete only when:
-
-- its acceptance criteria are satisfied;
-- architectural and package boundaries remain valid;
-- privacy, accessibility, and progressive-enhancement requirements are preserved;
-- relevant tests and checks have been run;
-- no unexplained unrelated changes remain;
-- documentation reflects any changed public contract;
-- the final response lists changed files, verification results, risks, and remaining manual checks.
+全コマンドや全確認項目の羅列は、求められた場合のみ行ってください。

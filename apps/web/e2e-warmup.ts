@@ -3,8 +3,6 @@ import type { FullConfig } from "@playwright/test";
 const warmupRoutes = [
   "/",
   "/articles",
-  "/works",
-  "/archive",
   "/articles/resilient-content-pipeline",
 ] as const;
 

@@ -19,6 +19,7 @@
     "npm:@sveltejs/adapter-auto@7.0.1": "7.0.1_@sveltejs+kit@2.69.2__@sveltejs+vite-plugin-svelte@7.1.2___svelte@5.56.4___vite@8.1.3____@types+node@24.10.1___@types+node@24.10.1__svelte@5.56.4__typescript@5.9.3__vite@8.1.3___@types+node@24.10.1_typescript@5.9.3",
     "npm:@sveltejs/kit@2.69.2": "2.69.2_@sveltejs+vite-plugin-svelte@7.1.2__svelte@5.56.4__vite@8.1.3___@types+node@24.10.1__@types+node@24.10.1_svelte@5.56.4_typescript@5.9.3_vite@8.1.3__@types+node@24.10.1",
     "npm:@sveltejs/vite-plugin-svelte@7.1.2": "7.1.2_svelte@5.56.4_vite@8.1.3__@types+node@24.10.1_@types+node@24.10.1",
+    "npm:@tailwindcss/language-server@0.14.29": "0.14.29",
     "npm:@tailwindcss/vite@4.3.1": "4.3.1_vite@8.1.3__@types+node@24.10.1_@types+node@24.10.1",
     "npm:@testing-library/svelte@5.4.2": "5.4.2_svelte@5.56.4_vite@8.1.3__@types+node@24.10.1_vitest@4.1.9__@types+node@24.10.1__jsdom@29.1.1__vite@8.1.3___@types+node@24.10.1_@types+node@24.10.1",
     "npm:@threlte/core@8.5.16": "8.5.16_svelte@5.56.4_three@0.185.1",
@@ -52,6 +53,7 @@
     "npm:tailwindcss@4.3.1": "4.3.1",
     "npm:three@*": "0.185.1",
     "npm:three@0.185.1": "0.185.1",
+    "npm:typescript@5.9.3": "5.9.3",
     "npm:vite@8.1.3": "8.1.3_@types+node@24.10.1",
     "npm:vitest@4.1.9": "4.1.9_@types+node@24.10.1_jsdom@29.1.1_vite@8.1.3__@types+node@24.10.1",
     "npm:zod@4.4.3": "4.4.3"
@@ -1136,6 +1138,10 @@
       "dependencies": [
         "tslib"
       ]
+    },
+    "@tailwindcss/language-server@0.14.29": {
+      "integrity": "sha512-aZ3/XyTNmsoIyhs09Fghlw6D6y7o70aIxHmQEYPFiJPe/1k3HqtxXqhn7g7a5UpA1yeGOyKK9HRNJ8ghZqIclg==",
+      "bin": true
     },
     "@tailwindcss/node@4.3.1": {
       "integrity": "sha512-6NDaqRoAMSXD1mr/RXu0HBvNE9a2n5tHPsxu9XHLws8o4Twes5rBM2205SUUiJ9goAtadrN6xTGX0UDEwp/N4A==",
@@ -4029,6 +4035,7 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@deno/svelte-adapter@*",
       "jsr:@std/assert@^1.0.19",
       "jsr:@std/yaml@^1.1.1",
       "npm:hono@4.12.27",

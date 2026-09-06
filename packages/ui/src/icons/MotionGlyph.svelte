@@ -3,7 +3,7 @@
 </script>
 
 <svg
-  class="motion-glyph"
+  class="motion-glyph size-(--space-6) overflow-hidden [&_.wave]:origin-[12px_12px] [&_.wave]:transform-view [&_.wave]:scale-y-[.001] [&_.wave]:opacity-0 [&_.wave]:transition-[scale,translate,opacity] [&_.wave]:duration-(--motion-duration-fast) [&_.wave]:ease-standard motion-reduced:[&_.wave]:duration-(--motion-duration-immediate) data-[mode=off]:[&_.wave-primary]:scale-y-[.001] data-[mode=off]:[&_.wave-primary]:opacity-100 data-[mode=reduced]:[&_.wave-primary]:scale-y-100 data-[mode=reduced]:[&_.wave-primary]:opacity-100 data-[mode=full]:[&_.wave-primary]:-translate-y-1 data-[mode=full]:[&_.wave-primary]:scale-y-[.58] data-[mode=full]:[&_.wave-primary]:opacity-100 data-[mode=full]:[&_.wave-secondary]:translate-y-1 data-[mode=full]:[&_.wave-secondary]:scale-y-[.58] data-[mode=full]:[&_.wave-secondary]:opacity-100 [&_path]:fill-none [&_path]:stroke-current [&_path]:[stroke-linecap:round] [&_path]:[stroke-linejoin:round] [&_path]:stroke-[1.75] [&_path]:[vector-effect:non-scaling-stroke]"
   data-mode={mode}
   viewBox="0 0 24 24"
   aria-hidden="true"
@@ -21,62 +21,3 @@
     />
   </g>
 </svg>
-
-<style>
-  .motion-glyph {
-    width: var(--space-6);
-    height: var(--space-6);
-    overflow: hidden;
-  }
-
-  .wave {
-    opacity: 0;
-    transform: scaleY(.001);
-    transform-box: view-box;
-    transform-origin: 12px 12px;
-    transition:
-      transform var(--motion-duration-micro) var(--motion-ease-enter),
-      opacity var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-
-  [data-mode="off"] .wave-primary {
-    opacity: 1;
-    transform: scaleY(.001);
-  }
-
-  [data-mode="reduced"] .wave-primary {
-    opacity: 1;
-    transform: scaleY(1);
-  }
-
-  [data-mode="full"] .wave-primary {
-    opacity: 1;
-    transform: translateY(-4px) scaleY(.58);
-  }
-
-  [data-mode="full"] .wave-secondary {
-    opacity: 1;
-    transform: translateY(4px) scaleY(.58);
-  }
-
-  path {
-    fill: none;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    /* SVG coordinate-space weight: optical match for the 24×24 glyph. */
-    stroke-width: 1.75;
-    vector-effect: non-scaling-stroke;
-  }
-
-  :global(html[data-motion="reduced"]) .wave,
-  :global(html[data-motion="off"]) .wave {
-    transition-duration: var(--motion-duration-immediate);
-  }
-
-  :global(.settings-trigger[data-motion-feedback="true"]) .wave {
-    transition-duration:
-      var(--motion-duration-micro),
-      var(--motion-duration-fast) !important;
-  }
-</style>

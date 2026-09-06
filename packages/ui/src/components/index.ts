@@ -1,10 +1,15 @@
 export { default as LinkCard } from "./LinkCard.svelte";
+export { default as LinkSelector } from "./LinkSelector.svelte";
+export type { LinkSelectorOption } from "./LinkSelector.svelte";
+export { default as ResponsivePicture } from "./ResponsivePicture.svelte";
+export type { ResponsiveImageVariant } from "./ResponsivePicture.svelte";
+export { default as ReactionControl } from "./ReactionControl.svelte";
+export { default as ShareActions } from "./ShareActions.svelte";
 export { contentStatusLabel } from "./content-labels.ts";
 export { default as FontPreloads } from "./FontPreloads.svelte";
-export { default as FilterSelector } from "./FilterSelector.svelte";
+export { default as HeaderSearch } from "./HeaderSearch.svelte";
 export { default as SettingsPanel } from "./SettingsPanel.svelte";
 export { default as SiteHeader } from "./SiteHeader.svelte";
 export { default as ThemeToggle } from "./ThemeToggle.svelte";
 export { default as StatusBadge } from "./StatusBadge.svelte";
 export { default as TagLabel } from "./TagLabel.svelte";
-export { default as ViewToggle } from "./ViewToggle.svelte";

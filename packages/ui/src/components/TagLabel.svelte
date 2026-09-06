@@ -1,6 +1,8 @@
 <script lang="ts">
   import Icon from "../icons/Icon.svelte";
   import { tagIconName } from "../icons/semantic.ts";
+  import Badge from "../primitives/Badge.svelte";
+  import { cn } from "../utils.ts";
 
   let {
     tag,
@@ -14,41 +16,13 @@
 </script>
 
 {#if href}
-  <a class={`tag-label ${className}`} {href}>
+  <Badge variant="solid" class={cn("tag-label text-shadow-none", className)} {href}>
     <Icon name={tagIconName(tag)} />
     <span>{tag}</span>
-  </a>
+  </Badge>
 {:else}
-  <span class={`tag-label ${className}`}>
+  <Badge variant="solid" class={cn("tag-label text-shadow-none", className)}>
     <Icon name={tagIconName(tag)} />
     <span>{tag}</span>
-  </span>
+  </Badge>
 {/if}
-
-<style>
-  .tag-label {
-    display: inline-flex;
-    min-height: var(--space-8);
-    align-items: center;
-    gap: var(--space-1);
-    border: 1px solid var(--color-foreground);
-    padding-inline: var(--space-2);
-    color: var(--color-background);
-    background: var(--color-foreground);
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    text-decoration: none;
-  }
-
-  .tag-label :global(svg) {
-    flex: none;
-    font-size: var(--text-small);
-  }
-
-  a.tag-label:hover,
-  a.tag-label:focus-visible {
-    border-color: var(--color-accent);
-    color: var(--color-black);
-    background: var(--color-accent);
-  }
-</style>

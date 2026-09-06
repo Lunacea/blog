@@ -1,13 +1,27 @@
-import { allContent } from "@lunacea/content";
+import { articleView, dayNumber, serendipityCount, serendipityPicks } from "$lib/article-view.ts";
+import { createDenoKvImpressionRepository } from "@lunacea/api";
+import { allContent, articleComposition } from "@lunacea/content";
 import { searchDocuments } from "@lunacea/content/search.ts";
 import { searchContent, type SearchSort } from "@lunacea/core/search.ts";
 import { type Article, articleCategorySchema } from "@lunacea/schemas";
+import type { PageServerLoad } from "./$types.d.ts";
 
 export const prerender = false;
 
+const impressions = createDenoKvImpressionRepository();
+
+/** Ranking is an optional read: an unavailable store leaves the catalog fully usable. */
+async function impressionCounts(ids: readonly string[]): Promise<Record<string, number>> {
+  try {
+    return await impressions.counts(ids);
+  } catch {
+    return {};
+  }
+}
+
 const sorts = new Set<SearchSort>(["relevance", "published", "updated"]);
 
-export function load({ url, setHeaders }) {
+export const load: PageServerLoad = async ({ url, setHeaders }) => {
   setHeaders({
     "cache-control": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
   });
@@ -24,7 +38,7 @@ export function load({ url, setHeaders }) {
   const availableTags = new Set(documents.flatMap((entry) => entry.tags));
   const requestedTag = url.searchParams.get("tag")?.trim();
   const tag = requestedTag && availableTags.has(requestedTag) ? requestedTag : undefined;
-  const view: "grid" | "list" = url.searchParams.get("view") === "grid" ? "grid" : "list";
+  const view = articleView(url.searchParams);
   const filters = {
     category: categoryResult.success ? categoryResult.data : undefined,
     tag,
@@ -35,7 +49,23 @@ export function load({ url, setHeaders }) {
       (allContent.find((content) => content.type === "article" && content.slug === entry.slug) as
         | Article
         | undefined)?.cover,
+    composition: articleComposition(entry.slug),
   }));
+  const isFiltered = Boolean(query || filters.category || filters.tag || sort !== "published");
+  // The front section keeps its chronology; the daily box draws only from what follows it.
+  const pool = entries.slice(2);
+  const serendipity = isFiltered
+    ? []
+    : serendipityPicks(pool, serendipityCount(pool.length), dayNumber(new Date())).map((entry) =>
+      entry.slug
+    );
+  const counts = await impressionCounts(entries.map((entry) => `article:${entry.slug}`));
+  const ranking = entries
+    .map((entry) => ({ slug: entry.slug, impressions: counts[`article:${entry.slug}`] ?? 0 }))
+    .sort((left, right) =>
+      right.impressions - left.impressions || left.slug.localeCompare(right.slug)
+    )
+    .slice(0, 5);
   const categories = [
     ...new Set(documents.flatMap((entry) => entry.category ? [entry.category] : [])),
   ]
@@ -48,6 +78,8 @@ export function load({ url, setHeaders }) {
     sort,
     view,
     entries,
+    serendipity,
+    ranking,
     facets: {
       categories,
       tags,
@@ -64,6 +96,6 @@ export function load({ url, setHeaders }) {
         ]),
       ),
     },
-    isFiltered: Boolean(query || filters.category || filters.tag || sort !== "published"),
+    isFiltered,
   };
-}
+};

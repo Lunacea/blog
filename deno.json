@@ -16,11 +16,12 @@
     "hono": "npm:hono@4.12.27",
     "hono/": "npm:hono@4.12.27/",
     "svelte": "npm:svelte@5.56.4",
-    "zod": "npm:zod@4.4.3"
+    "zod": "npm:zod@4.4.3",
+    "@deno/svelte-adapter": "jsr:@deno/svelte-adapter"
   },
   "tasks": {
     "dev": "deno task --cwd apps/web dev",
-    "build": "deno task --cwd apps/web build",
+    "build": "deno task content:generate && deno task content:validate && deno task --cwd apps/web build",
     "fonts:generate": "deno run -A packages/ui/scripts/generate-fonts.ts",
     "fonts:check": "deno run -A packages/ui/scripts/check-fonts.ts",
     "images:generate": "deno run -A apps/web/scripts/generate-images.ts",
@@ -51,6 +52,7 @@
       "**/.svelte-kit/**",
       "**/build/**",
       "**/storybook-static/**",
+      "**/*.timestamp-*.mjs",
       "**/*.svelte"
     ]
   },
@@ -64,6 +66,7 @@
       "**/node_modules/**",
       "**/.svelte-kit/**",
       "**/build/**",
+      "**/*.timestamp-*.mjs",
       "**/*.svelte"
     ]
   }

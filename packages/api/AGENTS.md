@@ -1,15 +1,15 @@
-# API Package Instructions
+# APIパッケージ向けエージェント指示
 
-This package owns HTTP boundaries, external requests, cookies, rate limits, and persistence
-repositories.
+このパッケージは、HTTP境界、外部通信、Cookie、レート制限、永続化リポジトリを管理します。
 
-- Keep Hono inside the SvelteKit deployment unit.
-- Validate every external input at the HTTP boundary.
-- Preserve same-origin mutation protections and input-size limits.
-- Do not persist IP addresses, User-Agent strings, location, or email.
-- Keep Deno KV behind a repository interface.
-- Memory and Deno KV implementations must satisfy the same contract tests.
-- Aggregate and actor-selection writes must remain atomic.
-- External API failure must return the documented degraded response.
-- Do not expose internal persistence details in public API responses.
-- Add regression tests for security, rate-limit, and concurrency behavior.
+- HonoはSvelteKitのデプロイ単位内に維持する。
+- 外部から受け取る入力はHTTP境界で検証する。
+- same-origin保護、入力サイズ制限、既定のCookie設定を維持する。
+- IPアドレス、User-Agent、正確な位置情報、メールアドレス、不要な識別子を保存しない。
+- Deno KVはリポジトリインターフェースの背後に配置する。
+- インメモリ実装とDeno KV実装は、同じリポジトリ契約を満たすようにする。
+- 集計値とアクターごとの選択状態は、原子的に更新する。
+- 外部APIが失敗した場合は、仕様で定められた縮退レスポンスを返す。
+- 公開APIのレスポンスに、内部の永続化方式や実装詳細を露出させない。
+- セキュリティ、レート制限、リポジトリ契約、原子性、並行処理の振る舞いを変更した場合のみ、対応するテストを追加または更新する。
+- まず変更に直接関係する最小限のAPIテストを実行し、影響範囲や失敗に応じて検証を追加する。

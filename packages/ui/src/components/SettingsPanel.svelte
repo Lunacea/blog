@@ -16,9 +16,9 @@
   let motionFeedback = $state(false);
   const modes: MotionPreference[] = ["full", "reduced", "off"];
   const modeLabels: Record<MotionPreference, string> = {
-    full: "Full",
-    reduced: "Reduced",
-    off: "Off",
+    full: "フル",
+    reduced: "控えめ",
+    off: "なし",
   };
   const nextMotion = $derived(modes[(modes.indexOf(motion) + 1) % modes.length]);
 
@@ -47,55 +47,22 @@
   }
 </script>
 
-<button
-  class="settings-trigger"
-  type="button"
-  data-ready={ready}
-  data-mode={motion}
-  data-motion-feedback={motionFeedback}
-  aria-label={`Display: ${modeLabels[motion]}。${modeLabels[nextMotion]}に切り替える`}
-  title={`Display: ${modeLabels[motion]}`}
-  onclick={cycleMotion}
->
-  <MotionGlyph mode={motion} />
-</button>
-
-<style>
-  .settings-trigger {
-    display: grid;
-    width: var(--control-size);
-    min-height: var(--control-size);
-    place-items: center;
-    border: 0;
-    padding: 0;
-    background: transparent;
-    cursor: pointer;
-    color: var(--color-muted);
-    transition:
-      color var(--motion-duration-fast) var(--motion-ease-standard),
-      background var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-
-  .settings-trigger:hover,
-  .settings-trigger:focus-visible {
-    color: var(--color-background);
-    background: var(--color-foreground);
-  }
-
-  :global(html[data-motion-preference="full"][data-motion="full"])
-    .settings-trigger[data-mode="full"][data-motion-feedback="true"]:hover
-    :global(.motion-glyph path),
-  :global(html[data-motion-preference="reduced"][data-motion="reduced"])
-    .settings-trigger[data-mode="reduced"][data-motion-feedback="true"]:hover
-    :global(.motion-glyph path) {
-    animation: motion-wave-phase var(--motion-duration-resume) linear infinite;
-    animation-duration: var(--motion-duration-resume) !important;
-    animation-iteration-count: infinite !important;
-  }
-
-  @keyframes motion-wave-phase {
-    to {
-      transform: translateX(-24px);
-    }
-  }
-</style>
+<div class="settings group/display relative grid size-control place-items-center">
+  <button
+    class="settings-trigger motion-preference-feedback group/display grid size-control min-h-control cursor-pointer place-items-center border-0 bg-transparent p-0 text-quiet transition-colors duration-(--motion-duration-fast) ease-standard hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas motion-full:data-[mode=full]:data-[motion-feedback=true]:hover:[&_.motion-glyph_path]:animate-motion-wave motion-reduced:data-[mode=reduced]:data-[motion-feedback=true]:hover:[&_.motion-glyph_path]:animate-motion-wave"
+    type="button"
+    data-ready={ready}
+    data-mode={motion}
+    data-motion-feedback={motionFeedback}
+    aria-describedby="display-tooltip"
+    aria-label={`モーション: ${modeLabels[motion]}。${modeLabels[nextMotion]}に切り替える`}
+    onclick={cycleMotion}
+  >
+    <MotionGlyph mode={motion} />
+  </button>
+  <span
+    class="display-tooltip pointer-events-none absolute top-[calc(100%+var(--space-1))] right-0 z-(--z-overlay) w-max border border-rule bg-paper px-(--space-2) py-(--space-1) text-caption leading-ui whitespace-nowrap text-ink opacity-0 shadow-paper transition-opacity duration-(--motion-duration-fast) ease-standard group-hover/display:opacity-100 group-focus-within/display:opacity-100 motion-reduced:transition-none motion-off:transition-none forced-colors:shadow-none"
+    id="display-tooltip"
+    role="tooltip"
+  >モーション: {modeLabels[motion]}</span>
+</div>

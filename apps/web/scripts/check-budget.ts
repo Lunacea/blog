@@ -9,11 +9,26 @@ const manifest = JSON.parse(
   await Deno.readTextFile(new URL(".vite/manifest.json", client)),
 ) as Record<string, ManifestEntry>;
 
+const generatedNodes = new URL("../.svelte-kit/generated/client-optimized/nodes/", import.meta.url);
+async function nodeKeyFor(routeFile: string): Promise<string> {
+  for await (const entry of Deno.readDir(generatedNodes)) {
+    if (!entry.isFile || !entry.name.endsWith(".js")) continue;
+    const source = await Deno.readTextFile(new URL(entry.name, generatedNodes));
+    if (source.includes(`/${routeFile}\"`)) {
+      return `.svelte-kit/generated/client-optimized/nodes/${entry.name}`;
+    }
+  }
+  throw new Error(`Unable to resolve generated client node for ${routeFile}.`);
+}
+
+const homeNodeKey = await nodeKeyFor("src/routes/+page.svelte");
+const articleDetailNodeKey = await nodeKeyFor("src/routes/articles/[slug]/+page.svelte");
+
 const roots = [
   "../../node_modules/.deno/@sveltejs+kit@2.69.2/node_modules/@sveltejs/kit/src/runtime/client/entry.js",
   ".svelte-kit/generated/client-optimized/app.js",
   ".svelte-kit/generated/client-optimized/nodes/0.js",
-  ".svelte-kit/generated/client-optimized/nodes/12.js",
+  articleDetailNodeKey,
 ];
 const files = new Set<string>();
 
@@ -52,7 +67,7 @@ function collectKeys(key: string, keys: Set<string>): void {
 
 for (const key of Object.keys(manifest)) {
   const match = key.match(/generated\/client-optimized\/nodes\/(\d+)\.js$/u);
-  if (!match || Number(match[1]) <= 2) continue;
+  if (!match || key === homeNodeKey) continue;
   const routeKeys = new Set<string>();
   collectKeys(key, routeKeys);
   for (const dependency of forbiddenInitialDependencies.slice(2)) {
@@ -81,7 +96,7 @@ if (gzipBytes > limit) {
   throw new Error(`Article initial JavaScript is ${gzipBytes} gzip bytes; limit is ${limit}.`);
 }
 
-const detail = manifest[".svelte-kit/generated/client-optimized/nodes/12.js"];
+const detail = manifest[articleDetailNodeKey];
 if (detail?.dynamicImports?.some((path) => path.includes("HeroScene"))) {
   throw new Error("Article route must not import the WebGL hero.");
 }

@@ -132,8 +132,8 @@ async function checkVisualBaselines(
   const directory = new URL("../visual-baselines/", import.meta.url);
   const stories = [
     "components-siteheader--desktop",
-    "components-filterselector--default",
-    "components-viewtoggle--grid",
+    "components-linkselector--text",
+    "components-linkselector--icons",
     "patterns-glassprofilecard--placeholder",
     "visuals-assetplaceholder--profile-character",
     "visuals-ambienthero--static-fallback",

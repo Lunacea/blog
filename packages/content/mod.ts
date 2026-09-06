@@ -3,6 +3,10 @@
 import type { Component } from "svelte";
 import { type Content, contentSchema, type ContentType } from "@lunacea/schemas";
 import { metadataModules } from "./.generated/metadata.ts";
+import { generatedArticleCompositions } from "./.generated/composition.ts";
+import type { ArticleComposition } from "./composition.ts";
+
+export type { ArticleComposition, CompositionBlock, CompositionSection } from "./composition.ts";
 
 export type ContentModule = {
   default: Component;
@@ -70,3 +74,11 @@ export function hrefForContent(content: Content): string {
 
 export const tags = [...new Set(allContent.flatMap((entry) => entry.tags))]
   .sort((left, right) => left.localeCompare(right, "ja"));
+
+export const articleCompositions = generatedArticleCompositions as unknown as Readonly<
+  Record<string, ArticleComposition>
+>;
+
+export function articleComposition(slug: string): ArticleComposition | undefined {
+  return articleCompositions[slug];
+}

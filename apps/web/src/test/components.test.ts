@@ -36,7 +36,7 @@ describe("display preferences", () => {
   it("cycles and persists motion through one keyboard-accessible icon control", async () => {
     localStorage.setItem("lunacea-motion", "full");
     const view = render(SettingsPanel);
-    const display = view.getByRole("button", { name: /Display: Full/ });
+    const display = view.getByRole("button", { name: /モーション: フル/ });
     display.focus();
     expect(document.activeElement).toBe(display);
     expect(display.querySelectorAll('[data-stroke="wave"]')).toHaveLength(2);
@@ -53,7 +53,7 @@ describe("display preferences", () => {
     expect(display.querySelector(".wave-primary")).toBeTruthy();
     expect(display.querySelector(".wave-secondary")).toBeTruthy();
     expect(localStorage.getItem("lunacea-motion")).toBe("off");
-    expect(display.getAttribute("aria-label")).toContain("Display: Off");
+    expect(display.getAttribute("aria-label")).toContain("モーション: なし");
     expect(view.queryByLabelText("Theme")).toBeNull();
   });
 
@@ -183,45 +183,90 @@ describe("reading enhancements", () => {
   });
 });
 
-describe("article search UI", () => {
-  it("renders a GET form and filtered records from server data", () => {
+describe("article catalog", () => {
+  const catalogData = {
+    query: "天候",
+    filters: { category: "design" as const, tag: undefined },
+    sort: "relevance" as const,
+    view: "list" as const,
+    isFiltered: true,
+    serendipity: [],
+    ranking: [] as Array<{ slug: string; impressions: number }>,
+    facets: {
+      categories: ["design" as const],
+      tags: ["Weather"],
+      categoryCounts: { design: 1 },
+      tagCounts: { Weather: 1 },
+    },
+    entries: [{
+      id: "article:weather",
+      type: "article" as const,
+      slug: "weather",
+      title: "天候を環境情報にする",
+      summary: "天候を静かな環境情報として表示するための記事です。",
+      tags: ["Weather"],
+      publishedAt: "2026-01-01",
+      category: "design" as const,
+      status: "stable" as const,
+      legacyIds: [] as string[],
+      body: "天候",
+      href: "/articles/weather",
+      cover: undefined,
+      composition: {
+        estimatedMinutes: 3,
+        textCharacters: 900,
+        paperLayers: 3,
+        blocks: [],
+        sections: [],
+      },
+    }],
+  };
+
+  it("keeps filters, records and the reading length without an in-page search form", () => {
+    const view = render(ArticlesPage, { data: structuredClone(catalogData) });
+
+    expect(view.queryByRole("searchbox")).toBeNull();
+    expect(view.container.querySelector("details")?.hasAttribute("open")).toBe(true);
+    expect(view.getByRole("navigation", { name: "カテゴリ" })).toBeTruthy();
+    const article = view.getByRole("link", { name: /天候を環境情報にする/ });
+    expect(article.getAttribute("data-cursor-label")).toBe("Read more");
+    expect(view.getByText("3分")).toBeTruthy();
+    expect(view.container.querySelector("[data-paper-mark]")?.getAttribute("data-paper-mark"))
+      .toBe("3");
+    expect(view.getByText(/^1件/)).toBeTruthy();
+    expect(view.getByRole("link", { name: "条件を解除" })).toBeTruthy();
+  });
+
+  it("opens the newspaper with a lead story and a daily serendipity box", () => {
+    const entries = ["a", "b", "c", "d", "e", "f", "g"].map((slug, index) => ({
+      ...catalogData.entries[0],
+      id: `article:${slug}`,
+      slug,
+      title: `記事${slug}`,
+      href: `/articles/${slug}`,
+      publishedAt: `2026-0${index + 1}-01`,
+    }));
     const view = render(ArticlesPage, {
       data: {
-        query: "天候",
-        filters: { category: "design", tag: undefined },
-        sort: "relevance",
-        view: "list",
-        isFiltered: true,
-        facets: {
-          categories: ["design"],
-          tags: ["Weather"],
-          categoryCounts: { design: 1 },
-          tagCounts: { Weather: 1 },
-        },
-        entries: [{
-          id: "article:weather",
-          type: "article",
-          slug: "weather",
-          title: "天候を環境情報にする",
-          summary: "天候を静かな環境情報として表示するための記事です。",
-          tags: ["Weather"],
-          publishedAt: "2026-01-01",
-          category: "design",
-          status: "stable",
-          legacyIds: [],
-          body: "天候",
-          href: "/articles/weather",
-          cover: undefined,
-        }],
+        ...structuredClone(catalogData),
+        query: "",
+        sort: "published" as const,
+        view: "grid" as const,
+        isFiltered: false,
+        entries,
+        serendipity: ["e", "g"],
       },
     });
-    const form = view.getByRole("searchbox").closest("form");
-    expect(form?.method).toContain("get");
-    expect(view.container.querySelector("details")).toBeNull();
-    expect(view.getByRole("button", { name: "記事を検索" }).querySelector("svg")).toBeTruthy();
-    expect(view.getByRole("link", { name: /天候を環境情報にする/ })).toBeTruthy();
-    expect(view.getByText(/1 records/)).toBeTruthy();
-    expect(view.getByRole("link", { name: "条件を解除" })).toBeTruthy();
+
+    expect(view.container.querySelectorAll(".article-collection > li")).toHaveLength(7);
+    expect(view.container.querySelector('[data-article-preview="lead"] h3')?.textContent)
+      .toBe("記事a");
+    const box = view.getByRole("complementary", { name: "本日のPick Up" });
+    expect(box.querySelectorAll('[data-article-preview="compact"]')).toHaveLength(2);
+    // Without recorded impressions the rail indexes the remaining records instead of ranking them.
+    const rail = view.getByRole("complementary", { name: "そのほかの記事" });
+    expect(rail.querySelectorAll("li")).toHaveLength(3);
+    expect(view.queryByText("絞り込み")).toBeNull();
   });
 });
 

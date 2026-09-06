@@ -14,4 +14,4 @@ type Story = StoryObj<typeof meta>;
 export const Technology: Story = {};
 export const VersionedTechnology: Story = { args: { tag: "Deno 2" } };
 export const EditorialFallback: Story = { args: { tag: "Research" } };
-export const Linked: Story = { args: { tag: "WebGL", href: "/tags/WebGL" } };
+export const Linked: Story = { args: { tag: "WebGL", href: "/articles?tag=WebGL" } };

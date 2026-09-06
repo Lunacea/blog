@@ -1,5 +1,13 @@
 <script lang="ts">
   import type { LayoutGap, LayoutProps } from "./types.ts";
+  import { cn } from "../utils.ts";
+
+  const gapClasses: Record<LayoutGap, string> = { xs: "gap-2", sm: "gap-4", md: "gap-6", lg: "gap-8", xl: "gap-12" };
+  const minClasses = {
+    compact: "grid-cols-[repeat(auto-fit,minmax(min(100%,var(--layout-grid-compact)),1fr))]",
+    standard: "grid-cols-[repeat(auto-fit,minmax(min(100%,var(--layout-grid-standard)),1fr))]",
+    wide: "grid-cols-[repeat(auto-fit,minmax(min(100%,var(--layout-grid-wide)),1fr))]",
+  } as const;
 
   let {
     as = "div",
@@ -16,27 +24,10 @@
 
 <svelte:element
   this={as}
-  class={`layout-grid ${className}`}
+  class={cn("grid", gapClasses[gap], minClasses[min], className)}
   data-gap={gap}
   data-min={min}
   {...restProps}
 >
   {@render children?.()}
 </svelte:element>
-
-<style>
-  .layout-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--layout-grid-min)), 1fr));
-    gap: var(--layout-gap, var(--space-6));
-  }
-
-  [data-gap="xs"] { --layout-gap: var(--space-2); }
-  [data-gap="sm"] { --layout-gap: var(--space-4); }
-  [data-gap="md"] { --layout-gap: var(--space-6); }
-  [data-gap="lg"] { --layout-gap: var(--space-8); }
-  [data-gap="xl"] { --layout-gap: var(--space-12); }
-  [data-min="compact"] { --layout-grid-min: var(--layout-grid-compact); }
-  [data-min="standard"] { --layout-grid-min: var(--layout-grid-standard); }
-  [data-min="wide"] { --layout-grid-min: var(--layout-grid-wide); }
-</style>

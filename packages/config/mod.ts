@@ -1,7 +1,8 @@
 export const siteConfig = {
   name: "Lunacea",
-  title: "Lunacea — code, research, and quiet records",
-  description: "人のいなくなった近未来建築に、コード、研究、写真、土地の記憶を残す個人アーカイブ。",
+  title: "Lunacea — Web, UX & Design",
+  description:
+    "UI・UX設計、Webエンジニアリング、グラフィックデザイン。設計と実装の考え方を綴る技術ブログ。",
   url: "https://blog.lunacea.jp",
   language: "ja",
   sampleMode: true,
@@ -14,9 +15,9 @@ export const siteConfig = {
   featuredArticleTags: [],
   catalogFilters: {
     articles: { categories: [], tags: [] },
-    works: { fields: [], technologies: [], statuses: [] },
-    archive: { kinds: [], tags: [] },
   },
+  /** Representative stack shown under the Home introduction; icons resolve by name. */
+  techStack: ["TypeScript", "Svelte", "SvelteKit", "Deno", "Three.js", "Design"],
   defaultLocation: {
     id: "morioka-jp",
     name: "盛岡",
@@ -31,8 +32,6 @@ export const siteConfig = {
 export const primaryNavigation = [
   { href: "/", label: "Home" },
   { href: "/articles", label: "Articles" },
-  { href: "/works", label: "Works" },
-  { href: "/archive", label: "Archive" },
 ] as const;
 
 export type AuthoredMedia = {

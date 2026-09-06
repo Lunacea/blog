@@ -1,78 +1,105 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import TagLabel from "../components/TagLabel.svelte";
+  import { cn } from "../utils.ts";
+  import type { ArticleCompositionVisual } from "../visuals/article-composition-types.ts";
+  import type { ArticlePreviewVariant } from "./article-preview-variant.ts";
+  import ContentList from "./ContentList.svelte";
+  import ReadingLength from "./ReadingLength.svelte";
 
   let {
+    variant = "column",
     href,
     title,
     summary,
     category,
     publishedAt,
     tags,
-    view = "list",
     hasMedia = false,
     media,
     mediaTransitionName,
+    titleTransitionName,
+    composition,
   }: {
+    variant?: ArticlePreviewVariant;
     href: string;
     title: string;
     summary: string;
     category: string;
     publishedAt: string;
     tags: readonly string[];
-    view?: "grid" | "list";
     hasMedia?: boolean;
     media?: Snippet;
     mediaTransitionName?: string;
+    titleTransitionName?: string;
+    composition?: ArticleCompositionVisual;
   } = $props();
 </script>
 
+{#if variant === "list"}
+  <ContentList
+    embedded
+    entries={[{
+      href,
+      slug: href.split("/").filter(Boolean).at(-1) ?? href,
+      type: "article",
+      title,
+      publishedAt,
+      label: category,
+      hasMedia,
+      mediaTransitionName,
+      titleTransitionName,
+      composition,
+    }]}
+    {media}
+  />
+{:else}
 <a
-  class:grid={view === "grid"}
-  class:list={view === "list"}
+  class={cn(
+    "group relative block h-full text-inherit no-underline",
+    variant === "lead" && hasMedia && media &&
+      "grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start",
+  )}
   {href}
   data-cursor="interactive"
-  data-cursor-label="View more"
+  data-cursor-label="Read more"
+  data-article-preview={variant}
 >
-  {#if hasMedia && media}
-    <figure class:list-media={view === "list"} style:view-transition-name={mediaTransitionName}>
+  {#if hasMedia && media && variant !== "compact"}
+    <figure class={cn("m-0 overflow-hidden bg-panel", variant === "lead" ? "aspect-4/3 lg:order-2" : "mb-4 aspect-16/10")} style:view-transition-name={mediaTransitionName}>
       {@render media()}
     </figure>
   {/if}
-  <div class="copy">
-    <div class="meta">
+  <div class="copy relative z-(--z-content) flex h-full flex-col gap-2 text-shadow-ui-mask">
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-(length:--text-caption) text-quiet tabular-nums">
       <TagLabel tag={category} />
       <time datetime={publishedAt}>{publishedAt}</time>
     </div>
-    <h2>{title}</h2>
-    {#if view === "grid"}
-      <p>{summary}</p>
-      <ul aria-label="代表タグ">
-        {#each tags.slice(0, 4) as tag}<li><TagLabel {tag} /></li>{/each}
-      </ul>
+    <h3
+      class={cn(
+        "m-0 font-editorial font-regular text-balance transition-colors duration-(--motion-duration-fast) group-hover:text-signal group-focus-visible:text-signal",
+        variant === "lead" && "text-h2 leading-tight tracking-(--tracking-heading)",
+        variant === "column" && "text-h3 leading-heading",
+        variant === "compact" && "text-(length:--text-body) leading-heading",
+      )}
+      style:view-transition-name={titleTransitionName}
+    >{title}</h3>
+    {#if variant !== "compact"}
+      <p class={cn(
+        "m-0 text-quiet",
+        variant === "lead" ? "max-w-[46ch] text-(length:--text-body) leading-relaxed" : "text-(length:--text-small) leading-compact",
+      )}>{summary}</p>
+    {/if}
+    {#if composition || variant === "lead"}
+      <div class="mt-auto flex flex-wrap items-end justify-between gap-x-4 gap-y-2 pt-1">
+        {#if variant === "lead" && tags.length}
+          <ul class="m-0 flex min-w-0 list-none flex-wrap gap-1 p-0 text-(length:--text-caption) text-quiet" aria-label="代表タグ">
+            {#each tags.slice(0, 3) as tag}<li><TagLabel {tag} /></li>{/each}
+          </ul>
+        {/if}
+        {#if composition}<ReadingLength class="ml-auto" {composition} />{/if}
+      </div>
     {/if}
   </div>
 </a>
-
-<style>
-  a { position: relative; display: block; color: inherit; text-decoration: none; }
-  figure { overflow: hidden; margin: 0 0 var(--space-5); aspect-ratio: 16 / 10; background: var(--color-surface); }
-  .copy { position: relative; z-index: var(--z-content); text-shadow: var(--shadow-text-mask); }
-  a.grid .copy { padding: var(--space-3) 0; }
-  a.list { display: grid; grid-template-columns: minmax(0, 1fr); min-height: 5.5rem; align-items: center; border-top: 1px solid var(--color-line); padding: var(--space-3) var(--space-4); transition: color var(--motion-duration-micro) var(--motion-ease-standard), background var(--motion-duration-micro) var(--motion-ease-standard); }
-  a.list:hover, a.list:focus-visible { color: var(--color-white); background: color-mix(in srgb, var(--color-black) 32%, transparent); text-shadow: 0 1px 1rem rgb(0 0 0 / 45%); }
-  a.list:hover .copy, a.list:focus-visible .copy { text-shadow: 0 1px 1rem rgb(0 0 0 / 45%); }
-  .list-media { position: fixed; z-index: var(--z-backdrop); inset: 0; width: 100vw; height: 100dvh; margin: 0; opacity: 0; pointer-events: none; transition: opacity var(--motion-duration-base) var(--motion-ease-enter); }
-  .list-media :global(picture), .list-media :global(img) { width: 100%; height: 100%; object-fit: cover; }
-  a.list:hover .list-media, a.list:focus-visible .list-media { opacity: .92; }
-  .meta { display: grid; justify-items: start; gap: var(--space-2); color: var(--color-muted); font-size: var(--text-caption); font-variant-numeric: tabular-nums; }
-  a.list:hover .meta, a.list:focus-visible .meta, a.list:hover p, a.list:focus-visible p, a.list:hover ul, a.list:focus-visible ul { color: currentColor; }
-  h2 { margin: var(--space-1) 0; font-family: var(--font-serif); font-size: var(--text-h3); font-weight: var(--weight-regular); line-height: var(--leading-heading); }
-  .grid h2 { font-family: var(--font-serif); font-size: var(--text-h2); font-weight: var(--weight-regular); }
-  .copy > p { max-width: 40rem; margin: 0; color: var(--color-muted); line-height: var(--leading-ui); }
-  ul { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-3) 0 0; padding: 0; list-style: none; color: var(--color-muted); font-size: var(--text-caption); }
-  @media (hover: none), (pointer: coarse) {
-    .list-media { display: none; }
-    a.list:hover, a.list:focus-visible { color: inherit; background: var(--color-surface); text-shadow: none; }
-  }
-</style>
+{/if}

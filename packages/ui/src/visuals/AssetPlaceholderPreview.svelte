@@ -18,7 +18,7 @@
   } = $props();
 </script>
 
-<div class="placeholder-frame" style={`--preview-ratio: ${aspectRatio}`}>
+<div class="aspect-(--preview-ratio) w-[min(100%,36rem)]" style={`--preview-ratio: ${aspectRatio}`}>
   <AssetPlaceholder
     {assetId}
     {role}
@@ -28,10 +28,3 @@
     {transparencyRequired}
   />
 </div>
-
-<style>
-  .placeholder-frame {
-    width: min(100%, 36rem);
-    aspect-ratio: var(--preview-ratio);
-  }
-</style>

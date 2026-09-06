@@ -10,9 +10,9 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const ArticleGrid: Story = { args: { kind: "article", view: "grid", image: true } };
+export const ArticleLead: Story = { args: { variant: "lead", image: true } };
+export const ArticleColumn: Story = { args: { variant: "column", image: true } };
+export const ArticleCompact: Story = { args: { variant: "compact", image: false } };
 export const ArticleListWithoutImage: Story = {
-  args: { kind: "article", view: "list", image: false },
+  args: { variant: "list", image: false },
 };
-export const WorkGrid: Story = { args: { kind: "work", view: "grid", image: true } };
-export const WorkListPlaceholder: Story = { args: { kind: "work", view: "list", image: false } };

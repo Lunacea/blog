@@ -2,16 +2,19 @@
   import { onMount, tick } from "svelte";
   import type { Snippet } from "svelte";
   import * as Collapsible from "../primitives/collapsible";
+  import HeaderSearch from "./HeaderSearch.svelte";
   import { announceHeaderDisclosure, listenForHeaderDisclosure } from "./header-disclosures.ts";
 
   let {
     navigation,
     pathname,
+    searchQuery = "",
     theme,
     display,
   }: {
     navigation: ReadonlyArray<{ href: string; label: string }>;
     pathname: string;
+    searchQuery?: string;
     theme?: Snippet;
     display?: Snippet;
   } = $props();
@@ -23,6 +26,9 @@
   let currentPathname = $state("");
   let articleCompact = $state(false);
   const articleDetail = $derived(/^\/articles\/[^/]+\/?$/u.test(pathname));
+  // Search belongs to the catalog; Home and the reading surface stay free of it.
+  const searchable = $derived(/^\/articles\/?$/u.test(pathname));
+  const navigationLinkClass = "relative isolate flex min-h-(--control-size) w-full items-center justify-end overflow-hidden px-(--space-2) py-(--space-1) text-right text-small tracking-ui text-quiet no-underline transition-[color,background] duration-(--motion-duration-fast) ease-standard before:absolute before:inset-0 before:-z-1 before:origin-right before:scale-x-0 before:-skew-x-12 before:bg-[color-mix(in_srgb,var(--color-foreground)_10%,transparent)] before:transition-transform before:duration-(--motion-duration-micro) before:ease-enter hover:bg-[color-mix(in_srgb,var(--color-surface)_72%,transparent)] hover:text-ink hover:no-underline hover:before:origin-left hover:before:scale-x-[1.08] hover:before:skew-x-0 focus-visible:bg-[color-mix(in_srgb,var(--color-surface)_72%,transparent)] focus-visible:text-ink focus-visible:before:origin-left focus-visible:before:scale-x-[1.08] focus-visible:before:skew-x-0 aria-[current=page]:bg-ink aria-[current=page]:text-canvas motion-reduced:duration-(--motion-duration-immediate) motion-reduced:before:duration-(--motion-duration-immediate) motion-off:duration-(--motion-duration-immediate) motion-off:before:duration-(--motion-duration-immediate)";
 
   function isCurrent(href: string) {
     return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -110,32 +116,36 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<header data-ready={ready}>
-  <div class="control-region" bind:this={controlRegion} data-article-compact={articleCompact}>
-    <nav class="desktop-nav" aria-label="主要ナビゲーション">
+<header class="pointer-events-none fixed inset-0 z-(--z-header) h-0 home-opening:animate-home-header-enter [html:not([data-js])_&]:relative [html:not([data-js])_&]:h-auto [html:not([data-js])_&]:px-(--layout-gutter) [html:not([data-js])_&]:pt-[calc(env(safe-area-inset-top)+var(--space-3))] [html:not([data-js])_&]:pb-(--space-3)" data-ready={ready}>
+  <div class="control-region pointer-events-auto absolute top-[calc(env(safe-area-inset-top)+var(--layout-gutter))] right-[calc(env(safe-area-inset-right)+var(--layout-gutter))] w-[calc(var(--header-menu-width)+(2*var(--control-size))+(2*var(--space-1)))] data-[searchable=true]:w-[calc(var(--header-menu-width)+(3*var(--control-size))+(3*var(--space-1)))] max-md:block data-[article-compact=true]:[&_.desktop-nav]:pointer-events-none data-[article-compact=true]:[&_.desktop-nav]:invisible data-[article-compact=true]:[&_.desktop-nav]:-translate-y-(--space-3) data-[article-compact=true]:[&_.desktop-nav]:opacity-0 data-[article-compact=true]:[&_.mobile-nav]:pointer-events-auto data-[article-compact=true]:[&_.mobile-nav]:visible data-[article-compact=true]:[&_.mobile-nav]:animate-compact-control-in [html:not([data-js])_&]:hidden" bind:this={controlRegion} data-article-compact={articleCompact} data-searchable={searchable}>
+    <nav class="desktop-nav absolute top-0 right-0 grid w-(--header-menu-width) justify-items-stretch gap-(--space-3) transition-[opacity,transform] duration-(--motion-duration-micro) ease-exit max-md:hidden motion-reduced:duration-(--motion-duration-immediate) motion-off:duration-(--motion-duration-immediate)" aria-label="主要ナビゲーション">
       {#each navigation as item}
-        <a href={item.href} aria-current={isCurrent(item.href) ? "page" : undefined}>
+        <a class={navigationLinkClass} href={item.href} aria-current={isCurrent(item.href) ? "page" : undefined}>
           {item.label}
         </a>
       {/each}
     </nav>
 
-    <div class="header-actions">
-      {#if theme}<div class="header-theme">{@render theme()}</div>{/if}
-      {#if display}<div class="header-display">{@render display()}</div>{/if}
-      <Collapsible.Root class="mobile-nav" bind:open>
+    <div class="header-actions grid grid-cols-[var(--control-size)_var(--control-size)_var(--header-menu-width)] items-center in-data-[searchable=true]:grid-cols-[var(--control-size)_var(--control-size)_var(--control-size)_var(--header-menu-width)] gap-(--space-1) [&_button:not(.menu-trigger):not(.theme-toggle)]:relative [&_button:not(.menu-trigger):not(.theme-toggle)]:isolate [&_button:not(.menu-trigger):not(.theme-toggle)]:overflow-hidden [&_button:not(.menu-trigger):not(.theme-toggle)]:transition-colors [&_button:not(.menu-trigger):not(.theme-toggle)]:duration-(--motion-duration-fast) [&_button:not(.menu-trigger):not(.theme-toggle)]:before:absolute [&_button:not(.menu-trigger):not(.theme-toggle)]:before:inset-0 [&_button:not(.menu-trigger):not(.theme-toggle)]:before:-z-1 [&_button:not(.menu-trigger):not(.theme-toggle)]:before:translate-y-[115%] [&_button:not(.menu-trigger):not(.theme-toggle)]:before:skew-y-9 [&_button:not(.menu-trigger):not(.theme-toggle)]:before:bg-[color-mix(in_srgb,var(--color-foreground)_11%,transparent)] [&_button:not(.menu-trigger):not(.theme-toggle)]:before:transition-transform [&_button:not(.menu-trigger):not(.theme-toggle)]:before:duration-(--motion-duration-micro) [&_button:not(.menu-trigger):not(.theme-toggle)]:before:ease-enter [&_button:not(.menu-trigger):not(.theme-toggle):hover]:before:translate-y-0 [&_button:not(.menu-trigger):not(.theme-toggle):hover]:before:skew-y-0 [&_button:not(.menu-trigger):not(.theme-toggle):focus-visible]:before:translate-y-0 [&_button:not(.menu-trigger):not(.theme-toggle):focus-visible]:before:skew-y-0 motion-reduced:[&_button]:duration-(--motion-duration-immediate) motion-off:[&_button]:duration-(--motion-duration-immediate)">
+      {#if theme}<div class="header-theme col-start-1 h-(--control-size)">{@render theme()}</div>{/if}
+      {#if display}<div class="header-display col-start-2 h-(--control-size)">{@render display()}</div>{/if}
+      {#if searchable}
+        <div class="header-search-slot col-start-3 h-(--control-size)"><HeaderSearch value={searchQuery} /></div>
+      {/if}
+      <Collapsible.Root class="mobile-nav relative col-start-3 block in-data-[searchable=true]:col-start-4 invisible pointer-events-none max-md:visible max-md:pointer-events-auto" bind:open>
         <Collapsible.Trigger
           bind:ref={menuButton}
-          class="menu-trigger"
+          class="menu-trigger grid min-h-(--control-size) w-(--header-menu-width) cursor-pointer place-items-center border-0 bg-ink p-0 text-canvas hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas data-[state=closed]:hover:[&_.menu-icon_i:first-child]:transform-[translateX(-2px)] data-[state=closed]:hover:[&_.menu-icon_i:last-child]:transform-[translateX(2px)] data-[state=closed]:focus-visible:[&_.menu-icon_i:first-child]:transform-[translateX(-2px)] data-[state=closed]:focus-visible:[&_.menu-icon_i:last-child]:transform-[translateX(2px)] data-[state=open]:bg-ink data-[state=open]:text-canvas data-[state=open]:hover:[&_.menu-icon]:transform-[rotate(90deg)] data-[state=open]:focus-visible:[&_.menu-icon]:transform-[rotate(90deg)]"
           aria-controls="site-navigation"
           aria-label={open ? "メニューを閉じる" : "メニューを開く"}
         >
-          <span class="menu-icon" aria-hidden="true"><i></i><i></i></span>
+          <span class="menu-icon relative block h-(--space-4) w-(--space-5) transition-transform duration-(--motion-duration-micro) ease-standard [button[data-state=open]_&]:rotate-0 [button[data-state=open]:hover_&]:rotate-90 [button[data-state=open]:focus-visible_&]:rotate-90 [&_i]:absolute [&_i]:top-[calc(50%-1px)] [&_i]:left-0 [&_i]:h-px [&_i]:w-full [&_i]:-translate-y-0.75 [&_i]:bg-current [&_i]:transition-transform [&_i]:duration-(--motion-duration-micro) [&_i]:ease-standard [&_i+_i]:translate-y-0.75 [button:not([data-state=open]):hover_&_i]:-translate-x-0.5 [button:not([data-state=open]):focus-visible_&_i]:-translate-x-0.5 [button:not([data-state=open]):hover_&_i+_i]:translate-x-0.5 [button:not([data-state=open]):focus-visible_&_i+_i]:translate-x-0.5 [button[data-state=open]_&_i]:translate-y-0 [button[data-state=open]_&_i]:rotate-45 [button[data-state=open]_&_i+_i]:-rotate-45" aria-hidden="true"><i></i><i></i></span>
         </Collapsible.Trigger>
-        <Collapsible.Content id="site-navigation" class="menu-panel">
-          <nav aria-label="主要ナビゲーション（モバイル）">
+        <Collapsible.Content id="site-navigation" class="menu-panel absolute top-[calc(100%+var(--space-2))] right-0 z-(--z-overlay) w-(--header-menu-width) max-w-[calc(100vw-2*var(--layout-gutter))] origin-top-right border border-rule bg-(--color-glass) p-(--space-3) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-disclosure-in data-[state=closed]:animate-disclosure-out">
+          <nav class="grid justify-items-stretch gap-(--space-3)" aria-label="主要ナビゲーション（モバイル）">
             {#each navigation as item}
               <a
+                class={navigationLinkClass}
                 href={item.href}
                 aria-current={isCurrent(item.href) ? "page" : undefined}
                 onclick={() => void dismissMenu()}
@@ -149,303 +159,10 @@
     </div>
   </div>
 
-  <nav class="no-js-nav" aria-label="JavaScriptなしのサイトナビゲーション">
-    {#each navigation as item}<a href={item.href}>{item.label}</a>{/each}
-  </nav>
+  <div class="no-js-header hidden grid-cols-1 gap-(--space-3) pointer-events-auto [html:not([data-js])_&]:grid">
+    <nav class="no-js-nav flex flex-wrap gap-x-(--space-5) gap-y-(--space-3)" aria-label="JavaScriptなしのサイトナビゲーション">
+      {#each navigation as item}<a class="text-caption text-quiet" href={item.href}>{item.label}</a>{/each}
+    </nav>
+    {#if searchable}<HeaderSearch value={searchQuery} variant="static" />{/if}
+  </div>
 </header>
-
-<style>
-  header {
-    position: fixed;
-    z-index: var(--z-header);
-    inset: 0;
-    height: 0;
-    pointer-events: none;
-  }
-
-  .control-region {
-    position: absolute;
-    top: calc(env(safe-area-inset-top) + var(--layout-gutter));
-    right: calc(env(safe-area-inset-right) + var(--layout-gutter));
-    display: grid;
-    justify-items: end;
-    gap: var(--space-6);
-    pointer-events: auto;
-  }
-
-  .desktop-nav {
-    display: grid;
-    justify-items: stretch;
-    gap: var(--space-3);
-    transition:
-      opacity var(--motion-duration-fast) var(--motion-ease-standard),
-      transform var(--motion-duration-micro) var(--motion-ease-exit);
-  }
-
-  .desktop-nav a,
-  :global(.menu-panel a) {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    padding: var(--space-1) var(--space-2);
-    color: var(--color-muted);
-    font-size: var(--text-small);
-    letter-spacing: var(--tracking-ui);
-    text-decoration: none;
-    transition: color var(--motion-duration-fast) var(--motion-ease-standard),
-      background var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-
-  .desktop-nav a {
-    width: 100%;
-    text-align: right;
-  }
-
-  .desktop-nav a::before,
-  :global(.menu-panel a::before) {
-    position: absolute;
-    z-index: var(--z-backdrop);
-    inset: 0;
-    background: color-mix(in srgb, var(--color-foreground) 10%, transparent);
-    content: "";
-    transform: scaleX(0) skewX(-12deg);
-    transform-origin: right center;
-    transition: transform var(--motion-duration-micro) var(--motion-ease-enter);
-  }
-
-  .desktop-nav a:hover::before,
-  .desktop-nav a:focus-visible::before,
-  :global(.menu-panel a:hover::before),
-  :global(.menu-panel a:focus-visible::before) {
-    transform: scaleX(1.08) skewX(0);
-    transform-origin: left center;
-  }
-
-  .desktop-nav a:hover,
-  .desktop-nav a:focus-visible {
-    color: var(--color-foreground);
-    background: color-mix(in srgb, var(--color-surface) 72%, transparent);
-  }
-
-  .desktop-nav a[aria-current="page"],
-  :global(.menu-panel a[aria-current="page"]) {
-    color: var(--color-background);
-    background: var(--color-foreground);
-  }
-
-  .desktop-nav a:hover,
-  .desktop-nav a[aria-current="page"] {
-    text-decoration: none;
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: var(--space-1);
-  }
-
-  .header-actions :global(button:not(.menu-trigger):not(.theme-toggle)) {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    transition: color var(--motion-duration-fast) var(--motion-ease-standard);
-  }
-
-  .header-actions :global(button:not(.menu-trigger):not(.theme-toggle)::before) {
-    position: absolute;
-    z-index: var(--z-backdrop);
-    inset: 0;
-    background: color-mix(in srgb, var(--color-foreground) 11%, transparent);
-    content: "";
-    transform: translateY(115%) skewY(9deg);
-    transition: transform var(--motion-duration-micro) var(--motion-ease-enter);
-  }
-
-  .header-actions :global(button:not(.menu-trigger):not(.theme-toggle):hover::before),
-  .header-actions :global(button:not(.menu-trigger):not(.theme-toggle):focus-visible::before) {
-    transform: translateY(0) skewY(0);
-  }
-
-  :global(.mobile-nav) {
-    position: relative;
-    display: none;
-  }
-
-  .control-region[data-article-compact="true"] .desktop-nav {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(calc(var(--space-3) * -1));
-    visibility: hidden;
-  }
-
-  .control-region[data-article-compact="true"] :global(.mobile-nav) {
-    display: block;
-    animation: compact-control-in var(--motion-duration-micro) var(--motion-ease-enter);
-  }
-
-  :global(.menu-trigger) {
-    display: grid;
-    width: var(--control-size);
-    min-height: var(--control-size);
-    place-items: center;
-    border: 0;
-    padding: 0;
-    background: var(--color-foreground);
-    color: var(--color-background);
-    cursor: pointer;
-  }
-
-  :global(.menu-trigger:hover),
-  :global(.menu-trigger:focus-visible),
-  :global(.menu-trigger[data-state="open"]) {
-    background: var(--color-foreground);
-    color: var(--color-background);
-  }
-
-  .menu-icon {
-    position: relative;
-    display: block;
-    width: var(--space-5);
-    height: var(--space-4);
-    transition: transform var(--motion-duration-micro) var(--motion-ease-standard);
-  }
-
-  .menu-icon i {
-    position: absolute;
-    top: calc(50% - 1px);
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: currentColor;
-    transform: translateY(-3px);
-    transition: transform var(--motion-duration-micro) var(--motion-ease-standard);
-  }
-
-  .menu-icon i + i { transform: translateY(3px); }
-
-  :global(.menu-trigger:not([data-state="open"]):hover) .menu-icon i,
-  :global(.menu-trigger:not([data-state="open"]):focus-visible) .menu-icon i {
-    transform: translate(-2px, -3px);
-  }
-
-  :global(.menu-trigger:not([data-state="open"]):hover) .menu-icon i + i,
-  :global(.menu-trigger:not([data-state="open"]):focus-visible) .menu-icon i + i {
-    transform: translate(2px, 3px);
-  }
-
-  :global(.menu-trigger[data-state="open"]) .menu-icon i { transform: rotate(45deg); }
-  :global(.menu-trigger[data-state="open"]) .menu-icon i + i { transform: rotate(-45deg); }
-
-  :global(.menu-trigger[data-state="open"]:hover) .menu-icon,
-  :global(.menu-trigger[data-state="open"]:focus-visible) .menu-icon {
-    transform: rotate(90deg);
-  }
-
-  :global(.menu-panel) {
-    position: absolute;
-    z-index: var(--z-overlay);
-    top: calc(100% + var(--space-2));
-    right: 0;
-    width: max-content;
-    max-width: calc(100vw - 2 * var(--layout-gutter));
-    padding: var(--space-3);
-    border: 1px solid var(--color-line);
-    background: var(--color-glass);
-    box-shadow: var(--shadow-overlay);
-    backdrop-filter: blur(var(--glass-blur));
-    transform-origin: top right;
-  }
-
-  :global(.menu-panel[data-state="open"]) {
-    animation: disclosure-in var(--motion-duration-base) var(--motion-ease-enter);
-  }
-
-  :global(.menu-panel[data-state="closed"]) {
-    animation: disclosure-out var(--motion-duration-fast) var(--motion-ease-exit);
-  }
-
-  :global(.menu-panel nav) {
-    display: grid;
-    justify-items: stretch;
-    gap: var(--space-3);
-  }
-
-  :global(.menu-panel nav a) {
-    display: block;
-    width: 100%;
-    min-height: auto;
-    font-family: var(--font-sans);
-    font-size: var(--text-small);
-    text-align: right;
-  }
-
-  @keyframes disclosure-in {
-    from {
-      opacity: 0;
-      transform: translateY(calc(var(--space-2) * -1));
-    }
-  }
-
-  @keyframes disclosure-out {
-    to {
-      opacity: 0;
-      transform: translateY(calc(var(--space-2) * -1));
-    }
-  }
-
-  @keyframes compact-control-in {
-    from {
-      opacity: 0;
-      transform: translateY(calc(var(--space-2) * -1));
-    }
-  }
-
-  .no-js-nav { display: none; }
-
-  @media (max-width: 52rem) {
-    .control-region { display: block; }
-    .desktop-nav { display: none; }
-    :global(.mobile-nav) { display: block; }
-  }
-
-  :global(html[data-motion="reduced"]) .desktop-nav,
-  :global(html[data-motion="off"]) .desktop-nav {
-    transition-duration: var(--motion-duration-immediate);
-  }
-
-  :global(html[data-motion="reduced"]) .desktop-nav a::before,
-  :global(html[data-motion="off"]) .desktop-nav a::before,
-  :global(html[data-motion="reduced"]) .header-actions :global(button),
-  :global(html[data-motion="off"]) .header-actions :global(button),
-  :global(html[data-motion="reduced"]) .header-actions :global(button::before),
-  :global(html[data-motion="off"]) .header-actions :global(button::before) {
-    transition-duration: var(--motion-duration-immediate);
-  }
-
-  :global(html[data-motion="reduced"]) .control-region[data-article-compact="true"] :global(.mobile-nav),
-  :global(html[data-motion="off"]) .control-region[data-article-compact="true"] :global(.mobile-nav) {
-    animation-duration: var(--motion-duration-immediate);
-  }
-
-  :global(html:not([data-js])) header {
-    position: relative;
-    height: auto;
-    padding: calc(env(safe-area-inset-top) + var(--space-3)) var(--layout-gutter) var(--space-3);
-  }
-
-  :global(html:not([data-js]) .control-region) { display: none; }
-
-  :global(html:not([data-js]) .no-js-nav) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3) var(--space-5);
-    pointer-events: auto;
-  }
-
-  :global(html:not([data-js]) .no-js-nav a) {
-    color: var(--color-muted);
-    font-size: var(--text-caption);
-  }
-</style>

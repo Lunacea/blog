@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { LayoutProps } from "./types.ts";
+  import { cn } from "../utils.ts";
 
   let {
     as = "div",
@@ -10,22 +11,16 @@
   }: LayoutProps & { width?: "content" | "prose" | "full" } = $props();
 </script>
 
-<svelte:element this={as} class={`layout-container ${className}`} data-width={width} {...restProps}>
+<svelte:element
+  this={as}
+  class={cn(
+    "mx-auto w-[min(calc(100%-2*var(--layout-gutter)),var(--content-width))]",
+    width === "prose" && "max-w-prose",
+    width === "full" && "w-full max-w-none",
+    className,
+  )}
+  data-width={width}
+  {...restProps}
+>
   {@render children?.()}
 </svelte:element>
-
-<style>
-  .layout-container {
-    width: min(calc(100% - (2 * var(--layout-gutter))), var(--content-width));
-    margin-inline: auto;
-  }
-
-  .layout-container[data-width="prose"] {
-    max-width: var(--prose-width);
-  }
-
-  .layout-container[data-width="full"] {
-    width: 100%;
-    max-width: none;
-  }
-</style>

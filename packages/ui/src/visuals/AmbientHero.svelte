@@ -1,10 +1,15 @@
 <script lang="ts">
+  import WeatherAtmosphere from "./WeatherAtmosphere.svelte";
   import { onMount, tick } from "svelte";
   import type { Component } from "svelte";
   import type { WeatherVisualCondition } from "./weather-visual.ts";
 
   type Quality = "low" | "high";
-  type HeroPalette = { foreground: string; primary: string; accent: string };
+  type HeroPalette = {
+    foreground: string;
+    primary: string;
+    accent: string;
+  };
   type Connection = { saveData?: boolean };
 
   let { weather = "neutral" }: { weather?: WeatherVisualCondition } = $props();
@@ -219,7 +224,7 @@
 </script>
 
 <div
-  class="ambient"
+  class="ambient absolute inset-0 z-(--z-content) touch-pan-y overflow-hidden text-support max-md:opacity-68 max-xs:opacity-56"
   bind:this={ambientHost}
   aria-hidden="true"
   data-webgl={enabled}
@@ -238,11 +243,13 @@
   onpointercancel={stopDrag}
   onpointerleave={stopRepulsion}
 >
-  <span class="palette-probe foreground" bind:this={foregroundProbe}></span>
-  <span class="palette-probe primary" bind:this={primaryProbe}></span>
-  <span class="palette-probe accent" bind:this={accentProbe}></span>
-  <div class="weather-fallback"></div>
-  <div class="canvas" bind:this={canvasHost}>
+  <span class="palette-probe foreground absolute size-0 overflow-hidden text-ink" bind:this={foregroundProbe}></span>
+  <span class="palette-probe primary absolute size-0 overflow-hidden text-support" bind:this={primaryProbe}></span>
+  <span class="palette-probe accent absolute size-0 overflow-hidden text-signal" bind:this={accentProbe}></span>
+  <div class="weather-fallback pointer-events-none absolute inset-0">
+    <WeatherAtmosphere condition={weather} />
+  </div>
+  <div class="canvas absolute top-0 right-0 left-0 h-[min(200svh,100%)] w-full" bind:this={canvasHost}>
     {#if Scene && palette}
       <Scene
         {quality}
@@ -253,76 +260,7 @@
         pointerY={repelY}
         pointerAspect={repelAspect}
         pointerActive={repelActive}
-        weather={weather}
       />
     {/if}
   </div>
 </div>
-
-<style>
-  .ambient {
-    position: absolute;
-    z-index: var(--z-content);
-    inset: 0;
-    overflow: hidden;
-    color: var(--color-secondary);
-    touch-action: pan-y;
-  }
-
-  .canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: min(200svh, 100%);
-  }
-
-  .weather-fallback {
-    position: absolute;
-    inset: -8%;
-    pointer-events: none;
-    background: linear-gradient(
-      138deg,
-      color-mix(in srgb, var(--color-secondary) 7%, transparent),
-      transparent 44% 62%,
-      color-mix(in srgb, var(--color-primary) 5%, transparent)
-    );
-    opacity: .72;
-  }
-
-  .palette-probe {
-    position: absolute;
-    width: 0;
-    height: 0;
-    overflow: hidden;
-  }
-
-  .palette-probe.foreground {
-    color: var(--color-foreground);
-  }
-
-  .palette-probe.primary {
-    color: var(--color-secondary);
-  }
-
-  .palette-probe.accent {
-    color: var(--color-accent);
-  }
-
-  .canvas {
-    right: 0;
-  }
-
-  @media (max-width: 52rem) {
-    .ambient {
-      opacity: 0.68;
-    }
-  }
-
-  @media (max-width: 34rem) {
-    .ambient {
-      opacity: 0.56;
-    }
-  }
-
-</style>

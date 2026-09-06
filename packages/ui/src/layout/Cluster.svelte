@@ -1,5 +1,10 @@
 <script lang="ts">
   import type { LayoutGap, LayoutProps } from "./types.ts";
+  import { cn } from "../utils.ts";
+
+  const gapClasses: Record<LayoutGap, string> = { xs: "gap-2", sm: "gap-4", md: "gap-6", lg: "gap-8", xl: "gap-12" };
+  const alignClasses = { start: "items-start", center: "items-center", end: "items-end", baseline: "items-baseline" } as const;
+  const justifyClasses = { start: "justify-start", center: "justify-center", end: "justify-end", between: "justify-between" } as const;
 
   let {
     as = "div",
@@ -18,7 +23,7 @@
 
 <svelte:element
   this={as}
-  class={`layout-cluster ${className}`}
+  class={cn("flex flex-wrap", gapClasses[gap], alignClasses[align], justifyClasses[justify], className)}
   data-gap={gap}
   data-align={align}
   data-justify={justify}
@@ -26,27 +31,3 @@
 >
   {@render children?.()}
 </svelte:element>
-
-<style>
-  .layout-cluster {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: var(--layout-align, center);
-    justify-content: var(--layout-justify, flex-start);
-    gap: var(--layout-gap, var(--space-6));
-  }
-
-  [data-gap="xs"] { --layout-gap: var(--space-2); }
-  [data-gap="sm"] { --layout-gap: var(--space-4); }
-  [data-gap="md"] { --layout-gap: var(--space-6); }
-  [data-gap="lg"] { --layout-gap: var(--space-8); }
-  [data-gap="xl"] { --layout-gap: var(--space-12); }
-  [data-align="start"] { --layout-align: flex-start; }
-  [data-align="center"] { --layout-align: center; }
-  [data-align="end"] { --layout-align: flex-end; }
-  [data-align="baseline"] { --layout-align: baseline; }
-  [data-justify="start"] { --layout-justify: flex-start; }
-  [data-justify="center"] { --layout-justify: center; }
-  [data-justify="end"] { --layout-justify: flex-end; }
-  [data-justify="between"] { --layout-justify: space-between; }
-</style>

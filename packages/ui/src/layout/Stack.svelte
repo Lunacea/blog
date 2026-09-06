@@ -1,5 +1,14 @@
 <script lang="ts">
   import type { LayoutGap, LayoutProps } from "./types.ts";
+  import { cn } from "../utils.ts";
+
+  const gapClasses: Record<LayoutGap, string> = {
+    xs: "gap-2",
+    sm: "gap-4",
+    md: "gap-6",
+    lg: "gap-8",
+    xl: "gap-12",
+  };
 
   let {
     as = "div",
@@ -10,20 +19,6 @@
   }: LayoutProps & { gap?: LayoutGap } = $props();
 </script>
 
-<svelte:element this={as} class={`layout-stack ${className}`} data-gap={gap} {...restProps}>
+<svelte:element this={as} class={cn("flex flex-col", gapClasses[gap], className)} data-gap={gap} {...restProps}>
   {@render children?.()}
 </svelte:element>
-
-<style>
-  .layout-stack {
-    display: flex;
-    flex-direction: column;
-    gap: var(--layout-gap, var(--space-6));
-  }
-
-  [data-gap="xs"] { --layout-gap: var(--space-2); }
-  [data-gap="sm"] { --layout-gap: var(--space-4); }
-  [data-gap="md"] { --layout-gap: var(--space-6); }
-  [data-gap="lg"] { --layout-gap: var(--space-8); }
-  [data-gap="xl"] { --layout-gap: var(--space-12); }
-</style>

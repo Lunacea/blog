@@ -16,6 +16,11 @@ export const reactionTargetSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
 });
 
+export const impressionSummarySchema = z.object({
+  contentId: z.string(),
+  impressions: z.number().int().nonnegative(),
+});
+
 export const locationSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -46,6 +51,7 @@ export const weatherStateSchema = z.object({
 });
 
 export type ReactionSummary = z.infer<typeof reactionSummarySchema>;
+export type ImpressionSummary = z.infer<typeof impressionSummarySchema>;
 export type Location = z.infer<typeof locationSchema>;
 export type WeatherCondition = z.infer<typeof weatherConditionSchema>;
 export type WeatherState = z.infer<typeof weatherStateSchema>;

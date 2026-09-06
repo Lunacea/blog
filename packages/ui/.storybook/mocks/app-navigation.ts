@@ -1,4 +1,9 @@
-type Navigation = { complete: Promise<void> };
+type Navigation = {
+  complete: Promise<void>;
+  from: { url: URL } | null;
+  to: { url: URL } | null;
+  type: "form" | "leave" | "link" | "goto" | "popstate";
+};
 type OnNavigate = (navigation: Navigation) => unknown;
 type AfterNavigate = () => unknown;
 
@@ -23,7 +28,9 @@ export async function simulateNavigation(update: () => void) {
   const complete = new Promise<void>((resolve) => {
     completeNavigation = resolve;
   });
-  const readiness = [...onNavigateCallbacks].map((callback) => callback({ complete }));
+  const readiness = [...onNavigateCallbacks].map((callback) =>
+    callback({ complete, from: null, to: null, type: "goto" })
+  );
   await Promise.all(
     readiness.filter((value): value is PromiseLike<unknown> =>
       typeof (value as PromiseLike<unknown> | undefined)?.then === "function"

@@ -24,6 +24,13 @@
           root.dataset.theme = theme;
           root.dataset.motionPreference = motionPreference;
           root.dataset.motion = motion;
+          if (
+            location.pathname === "/" && motion === "full" &&
+            !sessionStorage.getItem("lunacea-home-opening")
+          ) {
+            sessionStorage.setItem("lunacea-home-opening", "started");
+            root.dataset.homeOpening = "pending";
+          }
         } catch {
           document.documentElement.dataset.motion = "reduced";
         }
