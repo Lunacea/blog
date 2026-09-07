@@ -71,6 +71,13 @@ control.
   doubled card tilt; the footer address warps only inside a small lens that follows the pointer and
   not at all with motion off; and page transitions dissolve the `root` snapshot rather than naming
   `main`, which had dragged the outgoing page down the viewport when leaving a scrolled Home.
+- Later rounds again: the light answers scroll rather than touch where there is no pointer; the card
+  carries a bio, a preloaded mark at 4 KiB instead of a 538 KiB PNG, keyboard nudging and a printed
+  proportion held by a spacer rather than by `aspect-ratio` on a flex item; every control has a
+  press state and one monochrome focus ring; code and diagram blocks pair a rendered view with an
+  editable source that can be copied and reset; the X action follows the documented post intent
+  (`text`, `url`, `via`, `hashtags`, percent-encoded); praise celebrates on the press instead of on
+  the response; and the address is a plain `mailto:` with copying as its own labelled control.
 - Not done: a custom cursor. It was removed as part of this redesign and reintroducing it would add
   a JavaScript-driven layer to every page for no reading benefit; raised with the client instead.
 

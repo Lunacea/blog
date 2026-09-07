@@ -1,8 +1,8 @@
 export const siteConfig = {
   name: "Lunacea",
-  title: "LUNACEA — Cold Logic, Warm UX",
+  title: "LUNACEA — Web Developer's Blog",
   description:
-    "UI・UX設計、Webエンジニアリング、グラフィックデザイン。設計と実装の考え方を綴る技術ブログ。",
+    "Lunaceaの技術ブログです。UI・UX設計、Webエンジニアリング、グラフィックデザインについて書いています。",
   url: "https://blog.lunacea.jp",
   language: "ja",
   sampleMode: true,
@@ -11,7 +11,7 @@ export const siteConfig = {
     github: "https://github.com/Lunacea",
     x: "https://x.com/_Lunacea",
     email: "hi@lunacea.jp",
-    bio: "UIとタイポグラフィを中心に、デザインから実装までを一人で手がけています。",
+    bio: "UIデザインとWeb開発を中心に、設計から実装までを手がけています。",
   },
   featuredArticleTags: [],
   catalogFilters: {
@@ -87,7 +87,8 @@ export const visualAssets = {
   },
   profile: {
     src: "/images/Lunacea-nobg.png",
-    alt: "黄色いウーパールーパーと魚の中間のキャラクター",
+    alt:
+      "Lunaceaのプロフィールキャラクター。黄色いウーパールーパーと魚の中間のキャラクターで、三日月状の構図を持つ。",
     width: 960,
     height: 960,
     aspectRatio: "1 / 1",

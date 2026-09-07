@@ -207,6 +207,21 @@ TOC. Missing composition data never prevents reading or navigation.
 
 Article titles use the sans role at `--text-h2`; the serif accent never appears in a record.
 
+Code and diagram blocks share one shell (`patterns/block-tools`): a bar carrying the block's own
+identity, a Preview/Source pair of tabs, Copy and — once the source has been changed — Reset. The
+source view is an editable textarea; editing a diagram re-renders it after a pause in the typing,
+and editing code shows the reader's own text in the preview rather than the highlighted original.
+Both tabs stay in the tab order, and the whole shell is an enhancement: without it the block still
+renders, still names itself through its CSS bar, and still reads correctly. Each frame declares its
+own ink in `--block-ink`, so one set of controls serves the code palette and the page surface.
+
+Every control answers a press through the `pressable` utility: it sinks `--press-shift` and gives
+`--press-scale`, immediately on the way down and eased on the way back. Controls that already
+animate a transform on hover declare their own `active:` step instead. Focus is one indicator
+everywhere — a solid 2px ink ring at `--radius-small`, offset outward by 1px, and drawn inside the
+control wherever it sits in something that clips or scrolls (the table of contents, the rail
+disclosures, code and diagram blocks).
+
 ## Reading behavior retained
 
 Link cards resolve authored hrefs through the generated local preview registry; no runtime external
