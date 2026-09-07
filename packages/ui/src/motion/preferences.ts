@@ -9,7 +9,10 @@ const themeKey = "lunacea-theme";
 const motionKey = "lunacea-motion";
 
 function storedValue<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
-  const value = localStorage.getItem(key);
+  let value: string | null = null;
+  try {
+    value = localStorage.getItem(key);
+  } catch { /* Storage is optional. */ }
   return allowed.includes(value as T) ? (value as T) : fallback;
 }
 
@@ -18,7 +21,9 @@ export function readThemePreference(): ThemePreference {
 }
 
 export function readMotionPreference(): MotionPreference {
-  return storedValue(motionKey, ["full", "reduced", "off"] as const, "full");
+  return storedValue(motionKey, ["full", "reduced", "off"] as const, "full") === "full"
+    ? "full"
+    : "off";
 }
 
 export function resolveEffectiveMotion(preference: MotionPreference): EffectiveMotion {
@@ -26,7 +31,7 @@ export function resolveEffectiveMotion(preference: MotionPreference): EffectiveM
   const connection = (navigator as Navigator & { connection?: Connection }).connection;
   const capabilityLimit = matchMedia("(prefers-reduced-motion: reduce)").matches ||
     matchMedia("(forced-colors: active)").matches || connection?.saveData;
-  return preference === "reduced" || capabilityLimit ? "reduced" : "full";
+  return preference === "reduced" || capabilityLimit ? "off" : "full";
 }
 
 export function resolveEffectiveTheme(preference: ThemePreference): EffectiveTheme {
@@ -52,14 +57,18 @@ export function applyMotionPreference(motionPreference = readMotionPreference())
 }
 
 export function setThemePreference(preference: ThemePreference) {
-  localStorage.setItem(themeKey, preference);
+  try {
+    localStorage.setItem(themeKey, preference);
+  } catch { /* Keep in-memory controls usable. */ }
   const state = applyThemePreference(preference);
   globalThis.dispatchEvent(new CustomEvent("lunacea:theme", { detail: state }));
   return state;
 }
 
 export function setMotionPreference(preference: MotionPreference) {
-  localStorage.setItem(motionKey, preference);
+  try {
+    localStorage.setItem(motionKey, preference);
+  } catch { /* Keep in-memory controls usable. */ }
   const state = { ...applyThemePreference(), ...applyMotionPreference(preference) };
   globalThis.dispatchEvent(new CustomEvent("lunacea:motion", { detail: state }));
   return state;

@@ -23,7 +23,7 @@
 
   onMount(() => {
     const compact = matchMedia("(max-width: 44rem)");
-    const synchronize = () => (filtersOpen = !collapseFilters && !compact.matches);
+    const synchronize = () => (filtersOpen = activeFilterCount > 0 || (!collapseFilters && !compact.matches));
     synchronize();
     compact.addEventListener("change", synchronize);
     return () => compact.removeEventListener("change", synchronize);
@@ -36,7 +36,7 @@
     bind:open={filtersOpen}
   >
     <summary
-      class="hidden min-h-control cursor-pointer list-none items-center justify-between border-y border-rule text-(length:--text-small) tracking-(--tracking-ui) text-quiet max-sm:flex [&::-webkit-details-marker]:hidden after:grid after:size-8 after:place-items-center after:text-ink after:content-['+'] open:after:rotate-180 open:after:content-['−'] motion-reduce:after:transition-none"
+      class="flex min-h-control cursor-pointer list-none items-center justify-between border-y border-rule text-(length:--text-small) tracking-(--tracking-ui) text-quiet max-sm:flex [&::-webkit-details-marker]:hidden after:grid after:size-8 after:place-items-center after:text-ink after:content-['+'] open:after:rotate-180 open:after:content-['−'] motion-reduce:after:transition-none"
       >絞り込み{activeFilterCount ? ` / ${activeFilterCount}件の条件` : ""}</summary
     >
     <div class="filter-groups grid gap-2 max-sm:pt-3">{@render children()}</div>

@@ -13,6 +13,7 @@ node_modules/
 dist/
 storybook-static/
 .svelte-kit/
+.deno-deploy/
 .vite/
 .generated/
 apps/web/static/images/generated/

@@ -53,7 +53,7 @@ themeを持ちません。
   keyとする `public, max-age=0, s-maxage=3600, stale-while-revalidate=86400`
   を維持する。絞り込みURLは `noindex,follow`、canonicalは `/articles`。
 - Articlesは `view=grid|list` をURLで管理する。初期状態と `grid` は新聞表示、`view=list`
-  だけがlistである。category、tag、sort、検索語は表示形式を変更せず、絞り込みは新聞のままでも成立する。categoryは常時表示のstrip、検索はHeaderにあり、tagとsortと結果件数はlistが所有する。viewのみの変更はFull
+  だけがlistである。category、tag、sort、検索語は表示形式を変更せず、絞り込みは新聞のままでも成立する。categoryは常時表示のstrip、検索はHeaderにあり、tagとsortは両表示の折りたたみ領域に配置し、結果件数は常時表示する。viewのみの変更はFull
   motion時にitem-level View Transitionを使用できる。
 - 新聞の「本日のPick
   Up」は、front記事を除いた残りからUTC日付をseedとする決定的な抽選で選び、SSRとshared
@@ -72,37 +72,37 @@ themeを持ちません。
 - Mermaidは該当DOMがある記事でだけ遅延importする。
 - SVXのGFM、heading、Shiki、Mermaid source、KaTeX変換設定はUI packageの共通build設定を
   WebとStorybookが利用する。KaTeXはbuild時にHTML化し、client runtimeを追加しない。
-- Three.jsのHome rendererは`motion=full`かつ端末条件を満たした場合だけdynamic importする。通常は
-  idle時、tab内で最初のHome
-  openingだけは導入開始時に読み込みを始めるが、表示完了を待たない。描画層は
-  中央点群を単一renderer/schedulerへ集約し、wrapper runtimeをWebGL graphへ含めない。
-  天候は初期SVGからWebGLへの二段階切替を廃止し、全route共通の固定軽量層で表示する（雨はCanvas
-  2D、その他はSVG/CSS）。 雨は奥行き・風・露光による雨筋、雪は奥行きの異なる降雪を表現し、
-  本文やnavigationへのpointer入力を透過する。 save-data、Reduced/Off、forced
-  colors、低能力端末、WebGL失敗時は静的Homeへ縮退する。記事routeはThree.jsを参照せず、天候は軽量CSS背景へ縮退する。
-- Homeは上部の100svh Heroと、最小100svhから内容量に応じて伸びるAboutをまたぐfull-bleedの単一visual
-  layerを中央Hero用に持つ。天候層はlayoutに所有させ、opening・scroll・WebGLの読み込みから独立する。
-  WebGLはscroll位置を読まず、
-  morph、位置、scale、pauseをscrollへ結び付けない。中央Heroのdrag/touchは観察角度だけを変更し、 fine
-  pointerの近傍では点群が局所的に反発してpointer離脱後に原形へ戻る。Aboutのprofile cardは同
-  sectionのpadding boxを論理境界とする任意の装飾操作とし、Fullのrelease時だけ短いrubber-band
-  overshootを許可してdamped springで境界内へ戻す。慣性は保存せず、Reduced/Offでは無効にする。
-  どちらもlink、text selection、native touch scrollを妨げず、情報アクセスに必須としない。
-- Homeの2区間はroot scrollのmandatory snapを使う。小さなwheel/trackpad入力だけはHome限定controllerが
-  36pxまで方向別に累積し、一度に隣接する1区間だけへ移動する。nested scrollを優先し、移動中は短時間
-  lockして追加入力の振動を防ぐ。keyboardとtouchはbrowser標準のroot scrollへ委ねる。
-- Home専用openingはtab内の初回だけ約1.8秒で、loading mark、visual/点群、title、残りのHTMLを順に
-  明らかにする。sessionStorageは再生済みflagだけを持つ。navigationとHTMLは最初から存在し、openingは
-  pointerを遮らず、WebGL準備を待たない。Reduced/Off、save-data、forced colors、JavaScript無効では
-  再生しない。
-- 共通RevealはIntersectionObserverで一度だけ表示し、同時対象へ最大240msのstaggerを付ける。scroll
-  parallaxはin-viewのmediaだけを単一requestAnimationFrameで最大16px動かし、本文とcontrolは動かさない。
-  hidden tabと能力fallbackでは停止してCSS変数を除去する。
-- route間のView Transitionは`main`だけを対象とし、先に旧mainのexitを完了してから新mainを表示する。
-  固定Header、Theme、Display、環境背景などroute間で継続するchromeは移動させない。Catalogの
-  Grid/List切替だけは従来どおりitem-level transitionを使う。一覧から詳細へのtitleとcoverはcontent
-  ID単位のshared transitionを使用できる。Reduced/Offと履歴移動では即時切替する。
-- 天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。
+- Home is prerendered as an uppercase LUNACEA masthead that bleeds past both gutters, a
+  business-card introduction, category links and six latest public articles in the shared numbered
+  index. It carries no header; every other route gets one hairline sticky bar, and a site-wide
+  footer closes all routes. Scrolling is native and continuous; there is no snap controller or
+  draggable profile.
+- `StaticLight` draws the light, shadow and grain in SVG with no JavaScript. Home renders the full
+  field; reading routes keep the grain alone. Home and the article catalog dynamically import
+  `editorial-light.ts` when motion is Full and device capabilities permit it, layering one animated
+  full-bleed field of key light, cloud cover and grain between the static light and the static
+  grain. Text and the C theme control remain HTML and usable before fonts/WebGL resolve. No
+  point-cloud hero or custom cursor is mounted. DPR is capped at 1.2/1.5. Offscreen/hidden rendering
+  pauses; unmount, Off and context loss dispose the renderer and leave the static composition.
+- Theme and motion controls both live in the site footer; Home additionally exposes the theme as the
+  masthead C. Motion UI exposes ON/OFF. Persisted `full` maps to ON, `reduced` and `off` map to OFF;
+  the existing storage key is retained. OS reduced motion, save-data and forced colors force static
+  behavior. The initial Home opening is a nonblocking 1.2-second grain clearing plus masthead
+  sharpening, once per tab, never an overlay or content gate.
+- Fixed-location weather is fetched only while visiting Home and is expressed solely as how much
+  light gets through: clear opens the key light, cloudy/rain/snow close it down. No falling
+  particles, labels or location UI. Unavailable weather is neutral. Static shading works without
+  WebGL; articles have no weather layer or request. API contracts are unchanged.
+- Reveal/parallax remains a reusable UI capability but is not installed by the redesigned global
+  layout. Home opening and WebGL own their scoped motion.
+- route間のView Transitionは`root`snapshotだけを対象とし、旧pageと新pageを重ねてdissolveする。
+  `main`にnameを与えるとgroupが自身のboxをanimateし、長いpageをscrollしてから離脱したときに旧
+  snapshotがviewportを縦に流れてしまうため、page内のどのelementにも`view-transition-name`を与えない。
+  重ねる理由はHeaderとFooterが両側で同一pixelになりdissolveでは静止して見える一方、順番に切り替えると
+  1frameだけ画面全体が空くこと。query
+  stringだけの遷移はより速く、記事の前後移動は全面slideとして扱う。
+  Reduced/Offと履歴移動では即時切替する。
+- Homeの天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。
   `fog`は`cloudy`、`storm`は`rain`、取得fallbackは`neutral`な環境表現へ正規化する。
 - ロゴ、人物、植物などの著作素材は`config.visualAssets`から`MediaSlot`へ渡す。空slotは構造だけを示し、有機的な図像をコード生成しない。
 - 記事内LinkCardは`href`を安定keyとして、明示実行する`deno task links:refresh`だけが外部ページの
@@ -117,8 +117,8 @@ KiBを超えたら失敗します。MermaidとWebGLのdynamic importはこの集
 graphはgzip 230 KiBを上限とします。
 
 Articles SSRを戻す場合はquery parserを残したまま一覧をprerenderへ戻し、`/search`のGET実装を
-復元します。互換routeは独立して戻せます。Home WebGLはdynamic scene/controllerを外すだけで
-静的geometryとHTML contentへ戻せます。
+復元します。互換routeは独立して戻せます。Home WebGLはdynamic lighting
+moduleを外すだけでHTML誌名と静止陰影へ戻せます。
 
 ## コンテンツと検索
 
@@ -149,11 +149,19 @@ checkを使ったatomic retryで集計と選択を同時に更新します。公
 ## 障害時の縮退
 
 - Open-Meteo失敗: config固定地点の現地時刻とday/nightだけを返し、画面はneutral背景を使う。
-- WebGL未対応・低メモリ・save-data・Reduced/Off: Homeの中央motifとopeningは非表示にし、full-bleedの
-  静的天候背景とHTML contentだけを残す。他routeは疎で低速なCSS天候背景を使う。
+- WebGL未対応・低メモリ・save-data・Reduced/Off:
+  HomeのHTML誌名と静止した陰影を維持し、他routeには天候装飾を表示しない。
 - Mermaid変換失敗: ソースを残し、表示失敗のaria-labelを付ける。
 - リアクション失敗: 本文を妨げず、live regionにだけ通知する。
 - JavaScript無効: 本文、主要ナビゲーション、Articles
   GET検索、フィードendpointは利用可能。新聞とリストの切替、目次の通常リンクを利用できる。
 
-Homeのプロフィールは紙の名刺、短い専門領域の紹介、Articlesへのリンクを持ち、区間のviewport中央に配置する。内容が収まらない画面では区間が伸びる。技術名一覧は掲載しない。
+Homeのプロフィールは名刺（91×55mm比）を模したカードで、`config.visualAssets.profile`のポートレート、名前、専門領域、GitHub/X/Emailのアイコンリンクだけを持ち、最新記事へ続く。技術名一覧は掲載しない。
+
+## Editorial OG images
+
+Article OG URLs remain stable and prerendered. Every cover variant uses the same 1200×630 monochrome
+composition: LUNACEA in Archivo, the actual article category, the complete title in Zen Kaku Gothic
+New Bold, two hairline rules and a lunar disc bleeding off the right edge. Sharp/Pango uses
+repository-pinned fonts and measured wrapping/auto-fit; no foreignObject or cover-dependent template
+is used.

@@ -60,43 +60,42 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"][data-vi
   }
 }
 
-::view-transition-old(root) {
-  animation: none;
-}
+/*
+  The page crosses over as one image. Naming the scrolling <main> made the transition group animate
+  its own box, so leaving a long page dragged the outgoing snapshot down across the viewport before
+  the incoming page appeared. The root snapshot is always the viewport, so the crossing is the same
+  wherever the reader had scrolled to.
 
-::view-transition-new(root) {
-  animation: none;
+  The two images overlap rather than queue: the header and the footer are identical on both sides,
+  so a dissolve holds them perfectly still, while a gap between the outgoing and incoming page
+  would blank the whole window for a frame.
+*/
+::view-transition-group(*) {
+  animation-duration: var(--motion-duration-page);
+  animation-timing-function: var(--motion-ease-enter);
 }
 
 ::view-transition-group(root) {
   animation: none;
 }
 
-::view-transition-old(page-content) {
-  animation: page-exit var(--motion-duration-exit) var(--motion-ease-exit) both;
+::view-transition-old(root) {
+  animation: page-exit calc(var(--motion-duration-exit) + var(--motion-duration-fast))
+    var(--motion-ease-exit) both;
 }
 
-::view-transition-new(page-content) {
+::view-transition-new(root) {
   animation: page-enter var(--motion-duration-base) var(--motion-ease-enter)
-    var(--motion-duration-exit) both;
+    calc(var(--motion-duration-exit) * 0.5) both;
 }
 
-::view-transition-group(*) {
-  animation-duration: var(--motion-duration-page);
-  animation-timing-function: var(--motion-ease-enter);
-}
-
-::view-transition-group(page-content) {
-  animation-duration: calc(var(--motion-duration-exit) + var(--motion-duration-base));
-}
-
-/* Switching view keeps the records morphing, but the surrounding controls cross-fade
-   instead of standing on top of each other. */
-html[data-catalog-transition="true"]::view-transition-old(page-content) {
+/* A navigation that only changes the query string stays on the same page, so it crosses over
+   faster. */
+html[data-catalog-transition="true"]::view-transition-old(root) {
   animation: catalog-exit var(--motion-duration-fast) var(--motion-ease-exit) both;
 }
 
-html[data-catalog-transition="true"]::view-transition-new(page-content) {
+html[data-catalog-transition="true"]::view-transition-new(root) {
   animation: catalog-enter var(--motion-duration-base) var(--motion-ease-enter) both;
 }
 
@@ -126,43 +125,32 @@ html[data-catalog-transition="true"]::view-transition-group(*) {
   }
 }
 
+/* Opacity only: the incoming image covers the shell too, and a rise would ghost the hairline. */
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
-html[data-content-direction="next"]::view-transition-old(page-content) {
+html[data-content-direction="next"]::view-transition-old(root) {
   animation: content-exit-next var(--motion-duration-exit) var(--motion-ease-exit) both;
 }
 
-html[data-content-direction="next"]::view-transition-new(page-content) {
+html[data-content-direction="next"]::view-transition-new(root) {
   animation: content-enter-next var(--motion-duration-base) var(--motion-ease-enter)
     var(--motion-duration-exit) both;
 }
 
-html[data-content-direction="previous"]::view-transition-old(page-content) {
+html[data-content-direction="previous"]::view-transition-old(root) {
   animation: content-exit-previous var(--motion-duration-exit) var(--motion-ease-exit) both;
 }
 
-html[data-content-direction="previous"]::view-transition-new(page-content) {
+html[data-content-direction="previous"]::view-transition-new(root) {
   animation: content-enter-previous var(--motion-duration-base) var(--motion-ease-enter)
     var(--motion-duration-exit) both;
-}
-
-html[data-content-direction="next"]::view-transition-old(content-sequence-number),
-html[data-content-direction="previous"]::view-transition-new(content-sequence-number) {
-  animation: count-up-old var(--motion-duration-base) var(--motion-ease-enter) both;
-}
-
-html[data-content-direction="next"]::view-transition-new(content-sequence-number),
-html[data-content-direction="previous"]::view-transition-old(content-sequence-number) {
-  animation: count-up-new var(--motion-duration-base) var(--motion-ease-enter) both;
 }
 
 @keyframes content-exit-next {
@@ -198,24 +186,6 @@ html[data-content-direction="previous"]::view-transition-old(content-sequence-nu
   to {
     opacity: 1;
     transform: translateX(0);
-  }
-}
-
-@keyframes count-up-old {
-  to {
-    opacity: 0;
-    transform: translateY(-100%);
-  }
-}
-
-@keyframes count-up-new {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 

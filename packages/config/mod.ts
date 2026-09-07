@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "Lunacea",
-  title: "Lunacea — Web, UX & Design",
+  title: "LUNACEA — Cold Logic, Warm UX",
   description:
     "UI・UX設計、Webエンジニアリング、グラフィックデザイン。設計と実装の考え方を綴る技術ブログ。",
   url: "https://blog.lunacea.jp",

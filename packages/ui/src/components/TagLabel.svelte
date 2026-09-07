@@ -1,7 +1,4 @@
 <script lang="ts">
-  import Icon from "../icons/Icon.svelte";
-  import { tagIconName } from "../icons/semantic.ts";
-  import Badge from "../primitives/Badge.svelte";
   import { cn } from "../utils.ts";
 
   let {
@@ -16,13 +13,7 @@
 </script>
 
 {#if href}
-  <Badge variant="solid" class={cn("tag-label text-shadow-none", className)} {href}>
-    <Icon name={tagIconName(tag)} />
-    <span>{tag}</span>
-  </Badge>
+  <a class={cn("tag-label inline-flex min-h-8 items-center text-caption text-quiet underline decoration-transparent underline-offset-4 hover:text-ink hover:decoration-current focus-visible:decoration-current", className)} {href}>#{tag}</a>
 {:else}
-  <Badge variant="solid" class={cn("tag-label text-shadow-none", className)}>
-    <Icon name={tagIconName(tag)} />
-    <span>{tag}</span>
-  </Badge>
+  <span class={cn("tag-label text-caption text-quiet", className)}>#{tag}</span>
 {/if}

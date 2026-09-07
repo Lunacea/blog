@@ -1,4 +1,6 @@
 export { default as ContentList } from "./ContentList.svelte";
+export { default as IndexList } from "./IndexList.svelte";
+export type { IndexEntry } from "./index-entry.ts";
 export { default as GlassProfileCard } from "./GlassProfileCard.svelte";
 export { default as EngineeringProfile } from "./EngineeringProfile.svelte";
 export { default as ArticlePreview } from "./ArticlePreview.svelte";
@@ -7,3 +9,4 @@ export { default as ReadingLength } from "./ReadingLength.svelte";
 export { default as CatalogControls } from "./CatalogControls.svelte";
 export { default as ContentDetailView } from "./ContentDetailView.svelte";
 export { default as ReadingSurface } from "./ReadingSurface.svelte";
+export { default as ProfileCard } from "./ProfileCard.svelte";

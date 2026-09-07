@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja" data-theme="light" data-motion="reduced">
+<html lang="ja" data-theme="light" data-motion="off">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,21 +18,19 @@
             matchMedia("(forced-colors: active)").matches || connection?.saveData;
           const motion = motionPreference === "off"
             ? "off"
-            : (motionPreference === "reduced" || limited ? "reduced" : "full");
+            : (motionPreference === "reduced" || limited ? "off" : "full");
           const root = document.documentElement;
           root.dataset.themePreference = themePreference;
           root.dataset.theme = theme;
           root.dataset.motionPreference = motionPreference;
           root.dataset.motion = motion;
-          if (
-            location.pathname === "/" && motion === "full" &&
-            !sessionStorage.getItem("lunacea-home-opening")
-          ) {
-            sessionStorage.setItem("lunacea-home-opening", "started");
-            root.dataset.homeOpening = "pending";
+          // Declared before the first paint so the opening starts with the page rather than
+          // replaying once hydration catches up.
+          if (location.pathname === "/" && motion === "full") {
+            root.dataset.homeOpening = "active";
           }
         } catch {
-          document.documentElement.dataset.motion = "reduced";
+          document.documentElement.dataset.motion = "off";
         }
       })();
     </script>

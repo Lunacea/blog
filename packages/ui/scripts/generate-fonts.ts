@@ -95,12 +95,30 @@ async function corpora(): Promise<{ full: string; editorial: string; code: strin
 
 const fonts = [
   {
-    family: "Manrope",
-    key: "manrope",
-    weight: "200 800",
-    file: "manrope/Manrope[wght].ttf",
+    family: "Archivo",
+    key: "archivo",
+    weight: "100 900",
+    stretch: "62% 125%",
+    file: "archivo/Archivo[wdth,wght].ttf",
     role: "latin",
     preload: true,
+  },
+  {
+    family: "Instrument Serif",
+    key: "instrument-serif",
+    weight: 400,
+    file: "instrument-serif/InstrumentSerif-Regular.ttf",
+    role: "latin",
+    preload: false,
+  },
+  {
+    family: "Instrument Serif",
+    key: "instrument-serif-italic",
+    weight: 400,
+    style: "italic",
+    file: "instrument-serif/InstrumentSerif-Italic.ttf",
+    role: "latin",
+    preload: false,
   },
   {
     family: "Zen Kaku Gothic New",
@@ -127,30 +145,6 @@ const fonts = [
     preload: false,
   },
   {
-    family: "Newsreader",
-    key: "newsreader",
-    weight: "200 800",
-    file: "newsreader/Newsreader[opsz,wght].ttf",
-    role: "editorial-latin",
-    preload: false,
-  },
-  {
-    family: "Zen Old Mincho",
-    key: "zen-mincho-500",
-    weight: 500,
-    file: "zen-old-mincho/ZenOldMincho-Medium.ttf",
-    role: "editorial",
-    preload: true,
-  },
-  {
-    family: "DotGothic16",
-    key: "dot-400",
-    weight: 400,
-    file: "dot-gothic-16/DotGothic16-Regular.ttf",
-    role: "accent",
-    preload: false,
-  },
-  {
     family: "Fira Code",
     key: "fira-code",
     weight: "300 700",
@@ -167,7 +161,10 @@ export async function generateFontSubsets(): Promise<void> {
   );
   await Deno.mkdir(output, { recursive: true });
 
-  const generated: Array<typeof fonts[number] & { output: string; bytes: number }> = [];
+  type GeneratedFont =
+    & { family: string; key: string; weight: string | number; role: string; preload: boolean }
+    & { style?: string; stretch?: string; output: string; bytes: number };
+  const generated: GeneratedFont[] = [];
   for (const font of fonts) {
     const input = await Deno.readFile(new URL(font.file, source));
     const text = font.role === "accent"
@@ -188,8 +185,8 @@ export async function generateFontSubsets(): Promise<void> {
     `@font-face {
   font-family: "${font.family}";
   src: url("./${font.output}") format("woff2");
-  font-style: normal;
-  font-weight: ${font.weight};
+  font-style: ${font.style ?? "normal"};
+  font-weight: ${font.weight};${font.stretch ? `\n  font-stretch: ${font.stretch};` : ""}
   font-display: swap;
 }`
   ).join("\n\n");
@@ -203,29 +200,20 @@ export async function generateFontSubsets(): Promise<void> {
 }
 
 @font-face {
-  font-family: "Zen Old Mincho Fallback";
-  src: local("Yu Mincho"), local("Hiragino Mincho ProN");
+  font-family: "Archivo Fallback";
+  src: local("Helvetica Neue"), local("Arial"), local("Helvetica");
   size-adjust: 100%;
-  ascent-override: 90%;
-  descent-override: 22%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: "Manrope Fallback";
-  src: local("Arial"), local("Helvetica");
-  size-adjust: 101%;
-  ascent-override: 94%;
+  ascent-override: 93%;
   descent-override: 24%;
   line-gap-override: 0%;
 }
 
 @font-face {
-  font-family: "Newsreader Fallback";
+  font-family: "Instrument Serif Fallback";
   src: local("Georgia"), local("Times New Roman");
-  size-adjust: 100%;
-  ascent-override: 91%;
-  descent-override: 23%;
+  size-adjust: 94%;
+  ascent-override: 92%;
+  descent-override: 22%;
   line-gap-override: 0%;
 }`;
   await Deno.writeTextFile(new URL("fonts.css", output), `${faces}\n\n${fallbacks}\n`);

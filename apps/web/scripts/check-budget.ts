@@ -10,19 +10,30 @@ const manifest = JSON.parse(
 ) as Record<string, ManifestEntry>;
 
 const generatedNodes = new URL("../.svelte-kit/generated/client-optimized/nodes/", import.meta.url);
-async function nodeKeyFor(routeFile: string): Promise<string> {
+
+/**
+ * Stale generated nodes survive rebuilds, so every match is collected and then narrowed to the
+ * ones the current manifest actually knows about.
+ */
+async function nodeKeysFor(routeFile: string): Promise<string[]> {
+  const keys: string[] = [];
   for await (const entry of Deno.readDir(generatedNodes)) {
     if (!entry.isFile || !entry.name.endsWith(".js")) continue;
     const source = await Deno.readTextFile(new URL(entry.name, generatedNodes));
-    if (source.includes(`/${routeFile}\"`)) {
-      return `.svelte-kit/generated/client-optimized/nodes/${entry.name}`;
-    }
+    if (!source.includes(`/${routeFile}"`)) continue;
+    const key = `.svelte-kit/generated/client-optimized/nodes/${entry.name}`;
+    if (manifest[key]) keys.push(key);
   }
-  throw new Error(`Unable to resolve generated client node for ${routeFile}.`);
+  if (!keys.length) throw new Error(`Unable to resolve generated client node for ${routeFile}.`);
+  return keys;
 }
 
-const homeNodeKey = await nodeKeyFor("src/routes/+page.svelte");
-const articleDetailNodeKey = await nodeKeyFor("src/routes/articles/[slug]/+page.svelte");
+const homeNodeKeys = await nodeKeysFor("src/routes/+page.svelte");
+const catalogNodeKeys = await nodeKeysFor("src/routes/articles/+page.svelte");
+const articleDetailNodeKeys = await nodeKeysFor("src/routes/articles/[slug]/+page.svelte");
+/** Routes allowed to mount the animated field: Home and the article catalog. */
+const fieldRoutes = new Set([...homeNodeKeys, ...catalogNodeKeys]);
+const articleDetailNodeKey = articleDetailNodeKeys[0];
 
 const roots = [
   "../../node_modules/.deno/@sveltejs+kit@2.69.2/node_modules/@sveltejs/kit/src/runtime/client/entry.js",
@@ -67,7 +78,7 @@ function collectKeys(key: string, keys: Set<string>): void {
 
 for (const key of Object.keys(manifest)) {
   const match = key.match(/generated\/client-optimized\/nodes\/(\d+)\.js$/u);
-  if (!match || key === homeNodeKey) continue;
+  if (!match || fieldRoutes.has(key)) continue;
   const routeKeys = new Set<string>();
   collectKeys(key, routeKeys);
   for (const dependency of forbiddenInitialDependencies.slice(2)) {
@@ -77,9 +88,14 @@ for (const key of Object.keys(manifest)) {
     }
   }
   const heroImport = [...routeKeys].some((routeKey) =>
-    manifest[routeKey]?.dynamicImports?.some((path) => path.includes("HeroScene"))
+    manifest[routeKey]?.dynamicImports?.some((path) => /HeroScene|editorial-light/.test(path))
   );
-  if (heroImport) throw new Error(`Home Hero entered non-Home route ${key}.`);
+  if (heroImport) {
+    const via = [...routeKeys].filter((routeKey) =>
+      manifest[routeKey]?.dynamicImports?.some((path) => /HeroScene|editorial-light/.test(path))
+    );
+    throw new Error(`The editorial light entered reading route ${key} via ${via.join(", ")}.`);
+  }
 }
 
 let gzipBytes = 0;
@@ -97,7 +113,7 @@ if (gzipBytes > limit) {
 }
 
 const detail = manifest[articleDetailNodeKey];
-if (detail?.dynamicImports?.some((path) => path.includes("HeroScene"))) {
+if (detail?.dynamicImports?.some((path) => /HeroScene|editorial-light/.test(path))) {
   throw new Error("Article route must not import the WebGL hero.");
 }
 
@@ -112,7 +128,11 @@ function collectWebgl(key: string): void {
   webglFiles.add(entry.file);
   for (const imported of entry.imports ?? []) collectWebgl(imported);
 }
-collectWebgl("../../packages/ui/src/visuals/HeroScene.svelte");
+const webglRoot = "../../packages/ui/src/visuals/editorial-light.ts";
+if (!manifest[webglRoot]) {
+  throw new Error("Home editorial WebGL graph is missing from the manifest.");
+}
+collectWebgl(webglRoot);
 let webglGzipBytes = 0;
 for (const file of webglFiles) {
   if (!file.endsWith(".js")) continue;

@@ -1,3 +1,4 @@
+export { default as StaticLight } from "./StaticLight.svelte";
 export { default as AssetPlaceholder } from "./AssetPlaceholder.svelte";
 export { default as MediaSlot } from "./MediaSlot.svelte";
 export { default as WeatherBackdrop } from "./WeatherBackdrop.svelte";

@@ -22,7 +22,7 @@
 
   <section aria-labelledby="measure-title">
     <h3 class="mb-(--space-6) text-small tracking-label uppercase" id="measure-title">Reading measure</h3>
-    <p class="m-0 max-w-(--prose-width) text-body leading-body">
+    <p class="m-0 max-w-prose text-body leading-body">
       日本語とLatin textが混在する長文でも、行長、句読点、英数字の間隔が落ち着いて見えることを確認します。Design tokens keep the reading rhythm consistent across narrow and wide viewports.
     </p>
   </section>

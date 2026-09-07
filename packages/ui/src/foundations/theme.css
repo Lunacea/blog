@@ -3,43 +3,43 @@
 @property --color-background {
   syntax: "<color>";
   inherits: true;
-  initial-value: #d7dbd5;
+  initial-value: #f7f7f5;
 }
 
 @property --color-surface {
   syntax: "<color>";
   inherits: true;
-  initial-value: #eef0eb;
+  initial-value: #ffffff;
 }
 
 @property --color-foreground {
   syntax: "<color>";
   inherits: true;
-  initial-value: #151a17;
+  initial-value: #171717;
 }
 
 @property --color-primary {
   syntax: "<color>";
   inherits: true;
-  initial-value: #173d2d;
+  initial-value: #222222;
 }
 
 @property --color-secondary {
   syntax: "<color>";
   inherits: true;
-  initial-value: #466451;
+  initial-value: #555555;
 }
 
 @property --color-accent {
   syntax: "<color>";
   inherits: true;
-  initial-value: #705800;
+  initial-value: #171717;
 }
 
 @property --color-muted {
   syntax: "<color>";
   inherits: true;
-  initial-value: #46524c;
+  initial-value: #626262;
 }
 
 @property --paper-dogear {
@@ -70,6 +70,11 @@
   --font-weight-emphasis: var(--weight-emphasis);
   --font-weight-strong: var(--weight-strong);
   --font-weight-label: var(--weight-label);
+  --text-masthead: var(--type-size-masthead);
+  --text-page-title: var(--type-size-page-title);
+  --text-oversize: var(--type-size-oversize);
+  --text-index: var(--type-size-index);
+  --text-folio: var(--type-size-folio);
   --text-display: var(--type-size-display);
   --text-h1: var(--type-size-h1);
   --text-h2: var(--type-size-h2);
@@ -95,6 +100,8 @@
   --leading-copy: var(--type-leading-copy);
   --leading-relaxed: var(--type-leading-relaxed);
   --leading-hero-copy: var(--type-leading-hero-copy);
+  --tracking-masthead: var(--type-tracking-masthead);
+  --tracking-folio: var(--type-tracking-folio);
   --tracking-display: var(--type-tracking-display);
   --tracking-heading: var(--type-tracking-heading);
   --tracking-prose-heading: var(--type-tracking-prose-heading);
@@ -111,6 +118,7 @@
   --radius-sharp: var(--radius-none);
   --radius-subtle: var(--radius-small);
   --radius-ui-round: var(--radius-round);
+  --radius-ui-card: var(--radius-card);
   --shadow-ui-overlay: var(--shadow-overlay);
   --shadow-ui-profile: var(--shadow-profile);
   --text-shadow-ui-mask: var(--shadow-text-mask);
@@ -118,6 +126,7 @@
   --ease-standard: var(--motion-ease-standard);
   --ease-enter: var(--motion-ease-enter);
   --ease-exit: var(--motion-ease-exit);
+  --ease-spring: var(--motion-ease-spring);
   --breakpoint-xs: 34rem;
   --breakpoint-sm: 44rem;
   --breakpoint-md: 52rem;
@@ -126,8 +135,7 @@
   --animate-praise-hover: praise-heart-hover var(--motion-duration-base) var(--motion-ease-standard) infinite alternate;
   --animate-praise-select: praise-heart-select var(--motion-duration-base) var(--motion-ease-enter) both;
   --animate-praise-burst: praise-burst var(--motion-duration-base) var(--motion-ease-enter) both;
-  --animate-praise-bloom: praise-bloom 900ms var(--motion-ease-standard) both;
-  --animate-praise-clear: praise-clear 1000ms var(--motion-ease-exit) both;
+  --animate-praise-liquid: praise-liquid 880ms var(--motion-ease-spring) both;
   --animate-hand-write: hand-write 200ms var(--motion-ease-standard) calc(320ms + var(--stroke-order) * 22ms) both;
   --animate-thanks-linger: thanks-linger 1200ms var(--motion-ease-exit) 300ms both;
   --animate-motion-wave: motion-wave-phase var(--motion-duration-resume) linear infinite;
@@ -192,22 +200,35 @@
     }
   }
 
-  @keyframes praise-bloom {
+  /* Squash and stretch out of phase: the heart behaves like a drop, not a pop. */
+  @keyframes praise-liquid {
     0% {
-      scale: 0.012;
+      scale: 1 1;
+      translate: 0 0;
     }
-    78%,
+    16% {
+      scale: 1.3 0.76;
+      translate: 0 6%;
+    }
+    34% {
+      scale: 0.82 1.26;
+      translate: 0 -7%;
+    }
+    52% {
+      scale: 1.16 0.9;
+      translate: 0 2%;
+    }
+    70% {
+      scale: 0.94 1.08;
+      translate: 0 -2%;
+    }
+    86% {
+      scale: 1.04 0.98;
+      translate: 0 0;
+    }
     100% {
-      scale: 1;
-    }
-  }
-
-  @keyframes praise-clear {
-    0% {
-      scale: 0.02;
-    }
-    100% {
-      scale: 260;
+      scale: 1 1;
+      translate: 0 0;
     }
   }
 
@@ -491,34 +512,43 @@
   color-scheme: light dark;
 
   /* Semantic values use light-dark() so each role is declared exactly once. */
-  --color-background: light-dark(#d7dbd5, #0c110f);
-  --color-surface: light-dark(#eef0eb, #151b18);
-  --color-foreground: light-dark(#151a17, #e7ede8);
-  --color-primary: light-dark(#173d2d, #a1c9b2);
-  --color-secondary: light-dark(#466451, #83a58f);
-  --color-accent: light-dark(#705800, #e2c654);
-  --color-muted: light-dark(#46524c, #aab5ae);
-  --color-line: light-dark(rgb(21 26 23 / 24%), rgb(231 237 232 / 20%));
-  --color-glass: light-dark(rgb(244 247 242 / 72%), rgb(20 31 26 / 76%));
-  --color-glass-solid: light-dark(rgb(246 248 244), rgb(23 33 28));
-  --color-positive: light-dark(#245d40, #8bc6a1);
-  --color-negative: light-dark(#8a343c, #e69aa0);
-  --color-concrete: light-dark(#adb5ae, #68726c);
-  --color-forest: light-dark(#102f23, #173e2d);
-  --color-moss: light-dark(#587460, #739880);
-  --color-neon: light-dark(#c3a92f, #e2c654);
-  --color-white: #f7f8f4;
-  --color-black: #090c0a;
+  --color-background: light-dark(#f7f7f5, #111111);
+  --color-surface: light-dark(#ffffff, #1b1b1b);
+  --color-foreground: light-dark(#171717, #eeeeec);
+  --color-primary: light-dark(#222222, #dddddd);
+  --color-secondary: light-dark(#3f3f3f, #cccccc);
+  --color-accent: light-dark(#171717, #eeeeec);
+  --color-muted: light-dark(#4a4a4a, #c0c0c0);
+  --color-line: light-dark(rgb(23 23 23 / 24%), rgb(238 238 236 / 20%));
+  --color-glass: light-dark(rgb(247 247 245 / 72%), rgb(27 27 27 / 76%));
+  --color-glass-solid: light-dark(rgb(247 247 245), rgb(27 27 27));
+  --color-positive: light-dark(#333333, #dddddd);
+  --color-negative: light-dark(#333333, #dddddd);
+  --color-concrete: light-dark(#aaaaaa, #777777);
+  --color-forest: light-dark(#222222, #333333);
+  --color-moss: light-dark(#666666, #999999);
+  --color-neon: light-dark(#555555, #eeeeec);
+  --color-white: #f7f7f5;
+  --color-black: #111111;
+  /* Pure primaries for the light field; the alpha channel does the theming. */
+  --color-light-source: #ffffff;
+  --color-shadow-body: #000000;
   --color-graph-marker: var(--color-white);
-  --color-code-background: #0b100e;
-  --color-code-foreground: #e7ede8;
+  --color-code-background: #161616;
+  --color-code-foreground: #eeeeec;
   --color-print-background: #fff;
   --color-print-foreground: #000;
 
-  --font-sans: "Manrope", "Manrope Fallback", "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
-  --font-serif: "Newsreader", "Newsreader Fallback", "Zen Old Mincho", "Zen Old Mincho Fallback", "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
-  --font-accent: "DotGothic16", "MS Gothic", "Japanese gothic", monospace;
+  /* Sans carries the whole system; serif is a Latin-only decorative accent. */
+  --font-sans: "Archivo", "Archivo Fallback", "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-serif: "Instrument Serif", "Instrument Serif Fallback", "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", Georgia, serif;
   --font-mono: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  /* Masthead is sized to bleed past both gutters; the wrapper clips, never scrolls. */
+  --type-size-masthead: clamp(3.5rem, 20.4vw, 21rem);
+  --type-size-page-title: clamp(3rem, 19vw, 19.5rem);
+  --type-size-oversize: clamp(2.25rem, 8.4vw, 8.5rem);
+  --type-size-index: clamp(1.375rem, 3.2vw, 2.75rem);
+  --type-size-folio: 0.6875rem;
   --type-size-display: clamp(3.75rem, 8.1vw, 7.5rem);
   --type-size-h1: clamp(2.625rem, 6.5vw, 6rem);
   --type-size-h2: clamp(1.75rem, 3.6vw, 3.25rem);
@@ -530,7 +560,7 @@
   --type-size-small: 0.875rem;
   --type-size-caption: 0.75rem;
   --type-size-title-glyph: .74em;
-  --weight-regular: 500;
+  --weight-regular: 550;
   --weight-quiet: 500;
   --weight-display: 700;
   --weight-component: 700;
@@ -549,13 +579,15 @@
   --type-leading-ui: 1.5;
   --type-leading-card: 1.6;
   --type-leading-body: 1.86;
-  --type-leading-copy: 1.7;
+  --type-leading-copy: 1.9;
   --type-leading-relaxed: 1.75;
   --type-leading-hero-copy: 1.8;
+  --type-tracking-masthead: -0.055em;
+  --type-tracking-folio: 0.085em;
   --type-tracking-display: -0.055em;
   --type-tracking-heading: -0.045em;
   --type-tracking-prose-heading: -0.025em;
-  --type-tracking-label: 0.1em;
+  --type-tracking-label: 0.08em;
   --type-tracking-ui: 0.035em;
 
   --space-1: 0.25rem;
@@ -577,11 +609,13 @@
   --layout-gutter: clamp(1.125rem, 4vw, 3.75rem);
   --section-space: clamp(4rem, 9vw, 8rem);
   --content-width: 78rem;
-  --prose-width: 72ch;
+  --prose-width: 42em;
   --layout-grid-compact: 12rem;
   --layout-grid-standard: 18rem;
   --layout-grid-wide: 24rem;
   --profile-card-width: 20rem;
+  /* A 91x55mm business card reads at roughly this width on screen. */
+  --profile-card-print: 24rem;
   --profile-card-media: 3.5rem;
   --profile-card-padding: var(--space-5);
   --profile-card-gap: var(--space-4);
@@ -597,13 +631,15 @@
   --control-size: 2.75rem;
   --header-menu-width: var(--space-28);
   --site-header-block: 4.3125rem;
-  --header-inline-reserve: 17rem;
+  /* The header is a normal in-flow bar now, so nothing is reserved beside the content. */
+  --header-inline-reserve: 0rem;
   --page-start-clearance: calc(env(safe-area-inset-top) + var(--layout-gutter));
   --article-anchor-offset: var(--space-28);
 
   --radius-none: 0;
   --radius-small: 0.1875rem;
   --radius-round: 999px;
+  --radius-card: 0.625rem;
   --shadow-overlay: 0 0.75rem 2.5rem light-dark(rgb(16 47 35 / 14%), rgb(0 0 0 / 34%));
   --shadow-profile: 0 0.5rem 1.5rem light-dark(rgb(16 47 35 / 10%), rgb(0 0 0 / 24%));
   --shadow-accent-rule: inset 3px 0 var(--color-accent);
@@ -625,6 +661,7 @@
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --motion-ease-spring: cubic-bezier(0.34, 1.42, 0.52, 1);
 
   --z-base: 0;
   --z-backdrop: -1;
@@ -656,26 +693,107 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --color-graph-marker: var(--color-black);
+  --home-light-opacity: 0.15;
+}
+
+/* `opacity` takes no light-dark(), so the dark value is set per theme instead. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --home-light-opacity: 0.15;
+  }
 }
 
 @media (max-width: 44rem) {
   :root {
+    /* Reading copy sits a step smaller on a phone; its weight is the same everywhere. */
+    --type-size-body: 1rem;
     --layout-gutter: 1.125rem;
     --section-space: clamp(3.5rem, 14vw, 5rem);
     --type-size-display: clamp(3.2rem, 18vw, 5.8rem);
   }
 }
 
-@media (max-width: 52rem) {
-  :root {
-    --header-inline-reserve: 0rem;
-    --page-start-clearance: calc(
-      env(safe-area-inset-top) + var(--layout-gutter) + var(--control-size) + var(--space-8)
-    );
-  }
-}
-
 @theme {
   --color-paper: var(--color-surface);
   --shadow-paper: 0 1px 0 var(--color-rule), 0 4px 12px light-dark(rgb(16 47 35 / 12%), rgb(0 0 0 / 46%));
+}
+
+/* Cold Logic, Warm UX: editorial dimensions, the lunar disc and the opening. */
+@theme {
+  --animate-opening-resolve: opening-resolve 1250ms var(--ease-enter) both;
+  --animate-opening-rise: opening-rise 820ms var(--ease-spring) 340ms both;
+  --animate-disc-arrive: disc-arrive 1000ms var(--ease-spring) 220ms both;
+  /* Backwards only: the last frame is the resting state, so the tilt is not applied twice. */
+  --animate-card-arrive: card-arrive 900ms var(--ease-spring) 480ms backwards;
+}
+
+/*
+  The masthead is the opening: the wordmark is displaced like wet ink and settles onto its mark.
+  Nothing here gates content visibility, and the keyframes must not declare `filter` — that would
+  override the displacement filter the animation exists to show.
+*/
+@keyframes opening-resolve {
+  0% {
+    opacity: 0;
+  }
+  26% {
+    opacity: 1;
+  }
+}
+
+@keyframes opening-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-4));
+  }
+}
+
+/* The disc swings in past its mark and settles, so the wordmark lands rather than fades. */
+@keyframes disc-arrive {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, calc(var(--space-8) * -1), 0) scale(0.7) rotate(-24deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+}
+
+@keyframes card-arrive {
+  0% {
+    opacity: 0;
+    translate: 0 var(--space-6);
+    rotate: 0deg;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    rotate: var(--card-tilt);
+  }
+}
+
+:root {
+  --home-section-space: clamp(4rem, 8vw, 9rem);
+  --home-light-opacity: 0.2;
+  /* Lunar disc dimensions are expressed against the masthead cap height. */
+  --masthead-disc-size: 0.92em;
+  --masthead-disc-rise: 0.07em;
+  --masthead-disc-stroke: 0.012em;
+  --grain-opacity: 0.05;
+  --index-row-space: clamp(1.25rem, 2.2vw, 2.25rem);
+  --card-tilt: 10deg;
+  --index-rail-width: 11rem;
+  /* The reach of the lens that warps the footer address under the pointer. */
+  --footer-lens: 5.5rem;
+}
+
+@media (max-width: 34rem) {
+  :root {
+    --control-size: 44px;
+    --header-menu-width: min(7rem, 24vw);
+    --masthead-disc-size: 0.86em;
+    /* A tilted card needs room for its rotated bounding box on narrow screens. */
+    --card-tilt: 6deg;
+  }
 }

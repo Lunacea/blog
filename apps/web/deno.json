@@ -16,7 +16,7 @@
   "imports": {
     "@axe-core/playwright": "npm:@axe-core/playwright@4.12.1",
     "@playwright/test": "npm:@playwright/test@1.61.1",
-    "@sveltejs/adapter-auto": "npm:@sveltejs/adapter-auto@7.0.1",
+    "@deno/svelte-adapter": "npm:@deno/svelte-adapter@0.2.1",
     "@sveltejs/kit": "npm:@sveltejs/kit@2.69.2",
     "@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte@7.1.2",
     "@tailwindcss/vite": "npm:@tailwindcss/vite@4.3.1",

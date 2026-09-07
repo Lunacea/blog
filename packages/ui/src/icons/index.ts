@@ -4,6 +4,7 @@ export { default as Icon } from "./Icon.svelte";
 export type { ApprovedIconName } from "./Icon.svelte";
 export { default as ThemeGlyph } from "./ThemeGlyph.svelte";
 export { default as BackGlyph } from "./BackGlyph.svelte";
+export { default as ForwardGlyph } from "./ForwardGlyph.svelte";
 export { default as HeartGlyph } from "./HeartGlyph.svelte";
 export { default as IndexGlyph } from "./IndexGlyph.svelte";
 export { default as ScrollGlyph } from "./ScrollGlyph.svelte";

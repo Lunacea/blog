@@ -36,24 +36,19 @@ describe("display preferences", () => {
   it("cycles and persists motion through one keyboard-accessible icon control", async () => {
     localStorage.setItem("lunacea-motion", "full");
     const view = render(SettingsPanel);
-    const display = view.getByRole("button", { name: /モーション: フル/ });
+    const display = view.getByRole("button", { name: /アニメーション: ON/ });
     display.focus();
     expect(document.activeElement).toBe(display);
     expect(display.querySelectorAll('[data-stroke="wave"]')).toHaveLength(2);
     expect(display.querySelector(".motion-glyph")?.getAttribute("data-mode")).toBe("full");
     await fireEvent.click(display);
-    expect(document.documentElement.dataset.motion).toBe("reduced");
-    expect(display.querySelectorAll('[data-stroke="wave"]')).toHaveLength(2);
-    expect(display.querySelector(".motion-glyph")?.getAttribute("data-mode")).toBe("reduced");
-    await fireEvent.click(display);
-
     expect(document.documentElement.dataset.motion).toBe("off");
     expect(display.querySelectorAll('[data-stroke="wave"]')).toHaveLength(2);
     expect(display.querySelector(".motion-glyph")?.getAttribute("data-mode")).toBe("off");
     expect(display.querySelector(".wave-primary")).toBeTruthy();
     expect(display.querySelector(".wave-secondary")).toBeTruthy();
     expect(localStorage.getItem("lunacea-motion")).toBe("off");
-    expect(display.getAttribute("aria-label")).toContain("モーション: なし");
+    expect(display.getAttribute("aria-label")).toContain("アニメーション: OFF");
     expect(view.queryByLabelText("Theme")).toBeNull();
   });
 
@@ -222,22 +217,18 @@ describe("article catalog", () => {
     }],
   };
 
-  it("keeps filters, records and the reading length without an in-page search form", () => {
+  it("keeps the category rail, the filter summary and the search form the catalog closes with", () => {
     const view = render(ArticlesPage, { data: structuredClone(catalogData) });
 
-    expect(view.queryByRole("searchbox")).toBeNull();
-    expect(view.container.querySelector("details")?.hasAttribute("open")).toBe(true);
     expect(view.getByRole("navigation", { name: "カテゴリ" })).toBeTruthy();
-    const article = view.getByRole("link", { name: /天候を環境情報にする/ });
-    expect(article.getAttribute("data-cursor-label")).toBe("Read more");
-    expect(view.getByText("3分")).toBeTruthy();
-    expect(view.container.querySelector("[data-paper-mark]")?.getAttribute("data-paper-mark"))
-      .toBe("3");
-    expect(view.getByText(/^1件/)).toBeTruthy();
-    expect(view.getByRole("link", { name: "条件を解除" })).toBeTruthy();
+    // Search and tags are demoted to the end of the page rather than removed.
+    expect(view.getByRole("searchbox")).toBeTruthy();
+    expect(view.getByRole("link", { name: /天候を環境情報にする/ })).toBeTruthy();
+    expect(view.getByRole("link", { name: "Clear" })).toBeTruthy();
+    expect(view.getByRole("link", { name: "#Weather" })).toBeTruthy();
   });
 
-  it("opens the newspaper with a lead story and a daily serendipity box", () => {
+  it("lists every record in one index with its date, category and tags", () => {
     const entries = ["a", "b", "c", "d", "e", "f", "g"].map((slug, index) => ({
       ...catalogData.entries[0],
       id: `article:${slug}`,
@@ -251,22 +242,21 @@ describe("article catalog", () => {
         ...structuredClone(catalogData),
         query: "",
         sort: "published" as const,
-        view: "grid" as const,
         isFiltered: false,
         entries,
-        serendipity: ["e", "g"],
       },
     });
 
-    expect(view.container.querySelectorAll(".article-collection > li")).toHaveLength(7);
-    expect(view.container.querySelector('[data-article-preview="lead"] h3')?.textContent)
-      .toBe("記事a");
-    const box = view.getByRole("complementary", { name: "本日のPick Up" });
-    expect(box.querySelectorAll('[data-article-preview="compact"]')).toHaveLength(2);
-    // Without recorded impressions the rail indexes the remaining records instead of ranking them.
-    const rail = view.getByRole("complementary", { name: "そのほかの記事" });
-    expect(rail.querySelectorAll("li")).toHaveLength(3);
-    expect(view.queryByText("絞り込み")).toBeNull();
+    const list = view.getByRole("list", { name: "記事一覧" });
+    const rows = list.querySelectorAll(":scope > li");
+    expect(rows).toHaveLength(7);
+    expect(rows[0]?.querySelector("h3")?.textContent).toBe("記事a");
+    // The date replaces the folio number, and tags no longer wait for a hover.
+    expect(rows[0]?.querySelector("time")?.textContent).toBe("2026.01.01");
+    expect(rows[6]?.querySelector("time")?.textContent).toBe("2026.07.01");
+    expect(rows[0]?.textContent).toContain("#Weather");
+    expect(rows[0]?.textContent).toContain("design");
+    expect(view.queryByRole("link", { name: "Clear" })).toBeNull();
   });
 });
 

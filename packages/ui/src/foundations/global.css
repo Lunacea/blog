@@ -36,13 +36,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  html[data-motion="reduced"] .motion-preference-feedback[data-motion-feedback="true"] .wave,
-  html[data-motion="off"] .motion-preference-feedback[data-motion-feedback="true"] .wave {
-    transition-duration: var(--motion-duration-fast) !important;
-  }
-}
-
 @layer base {
   body {
     font-synthesis: none;
@@ -50,13 +43,7 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
     min-height: 100dvh;
     margin: 0;
     color: var(--color-foreground);
-    background:
-      radial-gradient(
-      circle at 78% 12%,
-      color-mix(in srgb, var(--color-secondary) 8%, transparent),
-      transparent 30rem
-    ),
-      var(--color-background);
+    background: var(--color-background);
     font-family: var(--font-sans);
     font-size: var(--text-body);
     font-weight: var(--weight-regular);
@@ -135,8 +122,33 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   white-space: nowrap;
 }
 
+@utility rail-disclosure {
+  interpolate-size: allow-keywords;
+
+  &::details-content {
+    overflow: hidden;
+    block-size: 0;
+    transition:
+      block-size var(--motion-duration-micro) var(--motion-ease-enter),
+      content-visibility var(--motion-duration-micro) allow-discrete;
+  }
+
+  &[open]::details-content {
+    block-size: auto;
+  }
+
+  html[data-motion="off"] &::details-content,
+  html[data-motion="reduced"] &::details-content {
+    transition-duration: var(--motion-duration-immediate);
+  }
+}
+
 @utility shell {
-  width: min(calc(100% - (2 * var(--layout-gutter))), var(--content-width));
+  /* Matches the header and the catalog: the content box, not the container box. */
+  width: min(
+    calc(100% - (2 * var(--layout-gutter))),
+    calc(var(--content-width) - (2 * var(--layout-gutter)))
+  );
   margin-inline: auto;
 }
 
@@ -222,16 +234,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 }
 
-@utility home-continuum {
-  position: relative;
-  min-height: 200svh;
-  overflow: clip;
-
-  html:has(&) {
-    scroll-snap-type: y mandatory;
-  }
-}
-
 @utility page {
   min-height: 65vh;
   padding-block: var(--page-start-clearance) var(--section-space);
@@ -246,16 +248,12 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
 }
 
 @utility content-shell {
-  width: min(calc(100% - (2 * var(--layout-gutter)) - var(--header-inline-reserve)),
-    var(--content-width));
-  margin-inline-start: max(var(--layout-gutter), calc((100% - var(--content-width) -
-    var(--header-inline-reserve)) / 2));
-  margin-inline-end: auto;
-
-  @media (max-width: 52rem) {
-    width: min(calc(100% - (2 * var(--layout-gutter))), var(--content-width));
-    margin-inline: auto;
-  }
+  /* The bar reserves no space any more, so this is simply the shared content box. */
+  width: min(
+    calc(100% - (2 * var(--layout-gutter))),
+    calc(var(--content-width) - (2 * var(--layout-gutter)))
+  );
+  margin-inline: auto;
 }
 
 @utility eyebrow {

@@ -1,106 +1,93 @@
 <script lang="ts">
-  import HomeSnapController from "$lib/components/HomeSnapController.svelte";
+  import { dev } from "$app/environment";
+  import { page } from "$app/state";
+  import { onMount } from "svelte";
   import PageHead from "$lib/components/PageHead.svelte";
-  import ThemeToggle from "$ui/components/ThemeToggle.svelte";
-  import { GlassProfileCard } from "$ui/patterns";
-  import { Icon, ScrollGlyph, tagIconName } from "$ui/icons";
-  import { MediaSlot } from "$ui/visuals";
-  import AmbientHero from "$ui/visuals/AmbientHero.svelte";
+  import { createWeatherContext, loadFixedLocationWeather } from "$lib/weather-context.ts";
+  import { ThemeToggle } from "$ui/components";
+  import { ForwardGlyph } from "$ui/icons";
   import { HomeOpening } from "$ui/motion";
+  import { IndexList, ProfileCard } from "$ui/patterns";
+  import EditorialLight from "$ui/visuals/EditorialLight.svelte";
+  import { parseWeatherVisualOverride } from "$ui/visuals/weather-visual.ts";
   import { siteConfig, visualAssets } from "@lunacea/config";
 
-  const authorLinks: Array<string | null> = [
-    siteConfig.author.github as string | null,
-    siteConfig.author.x as string | null,
-  ];
-  const sameAs = authorLinks.filter((value): value is string => value !== null);
+  let { data } = $props();
+  const weather = createWeatherContext();
+  const condition = $derived(
+    (dev ? parseWeatherVisualOverride(page.url.searchParams.get("weather")) : null) ?? $weather.visual,
+  );
+
+  onMount(() => {
+    const controller = new AbortController();
+    void loadFixedLocationWeather(weather, controller.signal);
+    return () => controller.abort();
+  });
+
   const structured = {
     "@context": "https://schema.org",
     "@graph": [
-      {
-        "@type": "WebSite",
-        name: siteConfig.name,
-        url: siteConfig.url,
-        description: siteConfig.description,
-      },
-      {
-        "@type": "Person",
-        name: siteConfig.author.name,
-        url: siteConfig.url,
-        ...(sameAs.length ? { sameAs } : {}),
-      },
+      { "@type": "WebSite", name: siteConfig.name, url: siteConfig.url, description: siteConfig.description },
+      { "@type": "Person", name: siteConfig.author.name, url: siteConfig.url, sameAs: [siteConfig.author.github, siteConfig.author.x] },
     ],
   };
 </script>
 
-<PageHead
-  title={siteConfig.title}
-  description={siteConfig.description}
-  path="/"
-/>
+<PageHead title={siteConfig.title} description={siteConfig.description} path="/" />
+<svelte:head><script type="application/ld+json">{JSON.stringify(structured)}</script></svelte:head>
 <HomeOpening />
-<HomeSnapController />
-<svelte:head
-  ><script type="application/ld+json">
-{JSON.stringify(structured)}
-  </script></svelte:head
->
+<EditorialLight {condition} />
 
-<div class="home-continuum">
-  <div class="visual-surface pointer-events-auto absolute inset-0 z-(--z-content) min-h-[200svh] home-opening:animate-home-visual-enter">
-    <AmbientHero />
-  </div>
-  {#if visualAssets.heroOrganic.src}
-    <div class="foliage pointer-events-none absolute -top-(--space-12) -right-(--space-8) z-[calc(var(--z-visual)+1)] w-[min(34vw,31rem)] origin-top-right motion-full:animate-foliage-grow max-md:-top-(--space-8) max-md:-right-(--space-10) max-md:w-[min(48vw,22rem)] [&_.media-slot]:overflow-visible [&_img]:origin-[86%_8%] motion-full:[&_img]:animate-foliage-breathe">
-      <MediaSlot asset={visualAssets.heroOrganic} showPlaceholder={false} />
-    </div>
-  {/if}
+<div class="relative">
+  <!-- Home carries no bar of any kind: the masthead is the whole identity. -->
+  <header class="relative flex justify-center overflow-x-clip pt-(--page-start-clearance)" aria-labelledby="home-title">
+    <h1
+      id="home-title"
+      aria-label={siteConfig.name.toUpperCase()}
+      class="my-0 flex w-max shrink-0 items-baseline whitespace-nowrap font-sans font-stretch-112% text-masthead leading-none font-strong tracking-masthead home-opening:animate-opening-resolve home-opening:[filter:url(#opening-ink)]"
+    >
+      <span aria-hidden="true">LUNA</span>
+      <span class="relative inline-block"><span class="invisible" aria-hidden="true">C</span>
+        <span class="absolute top-1/2 left-1/2 block size-(--masthead-disc-size) -translate-x-1/2 -translate-y-[calc(50%+var(--masthead-disc-rise))] home-opening:animate-disc-arrive">
+          <ThemeToggle placement="masthead" />
+        </span>
+      </span>
+      <span aria-hidden="true">EA</span>
+    </h1>
+  </header>
 
-  <section
-    class="home-section intro pointer-events-none relative z-(--z-visual) grid min-h-svh snap-start snap-always grid-rows-[1fr_auto_1fr] items-start p-(--layout-gutter) *:pointer-events-auto"
-    aria-labelledby="home-title"
-    data-home-intro
-  >
-    <div class="title-block row-start-2 place-self-center text-center home-opening:animate-home-title-enter">
-      <h1 class="m-0 font-serif text-display leading-display font-regular tracking-display" id="home-title" aria-label="Lunacea">
-        <span aria-hidden="true">Luna</span><span class="title-glyph ms-[-.02em] me-[-.04em] inline-flex size-[.792em] items-center justify-center align-[.03em] text-(length:--text-title-glyph) text-signal [&_.theme-glyph]:size-full"
-          ><ThemeToggle placement="title" /></span
-        ><span aria-hidden="true">ea</span>
-      </h1>
-      <p class="mt-(--space-4) mb-0 text-small tracking-ui text-quiet">Quiet structures, durable records.</p>
-    </div>
-    <a class="about-link group row-start-3 flex h-(--control-size) items-center gap-(--space-3) place-self-end font-serif text-body text-quiet no-underline home-opening:animate-home-other-enter" href="#about">
-      <ScrollGlyph /><span>View profile</span>
-    </a>
+  <section id="about" class="mx-auto flex w-full max-w-content scroll-mt-(--space-16) justify-center px-(--layout-gutter) pt-(--space-16) pb-(--home-section-space)" aria-label="プロフィール">
+    <ProfileCard
+      class="max-w-(--profile-card-print) max-sm:max-w-[74%]"
+      name={siteConfig.name}
+      role="UI / UX Design — Web Engineering"
+      portrait={visualAssets.profile}
+      github={siteConfig.author.github}
+      x={siteConfig.author.x}
+      email={siteConfig.author.email}
+    />
   </section>
 
-  <section
-    id="about"
-    class="home-section about pointer-events-none relative z-(--z-visual) grid min-h-svh snap-start snap-always scroll-mt-0 place-items-center px-(--layout-gutter) py-[max(var(--space-20),env(safe-area-inset-top),env(safe-area-inset-bottom))] *:pointer-events-auto"
-    aria-label="About Lunacea"
-    data-home-about
-    data-profile-boundary
-  >
-    <div class="about-content grid w-[min(100%,var(--content-width))] justify-items-center gap-(--space-12) max-md:gap-(--space-10) **:data-[cursor=drag]:pointer-events-auto">
-      <GlassProfileCard
-        asset={visualAssets.profile}
-        name={siteConfig.author.name}
-        field="Web Engineering / Graphic Design"
-        github={siteConfig.author.github}
-        x={siteConfig.author.x}
-        email={siteConfig.author.email}
-      />
-      <div class="grid justify-items-center gap-(--space-5)">
-        <p class="about-introduction m-0 max-w-(--prose-width) px-(--space-4) py-(--space-3) text-center leading-copy text-ink max-xs:bg-transparent max-xs:px-0 max-xs:text-small max-h-[42rem]:bg-transparent max-h-[42rem]:px-0 max-h-[42rem]:text-small">
-          UI・UX設計、Webエンジニアリング、<br />グラフィックデザイン。
-        </p>
-        <ul class="tech-stack m-0 flex list-none flex-wrap justify-center gap-x-(--space-5) gap-y-(--space-2) p-0 text-caption tracking-ui text-quiet" aria-label="主な技術スタック">
-          {#each siteConfig.techStack as item}
-            <li class="flex items-center gap-(--space-2) leading-none"><Icon name={tagIconName(item)} /><span>{item}</span></li>
-          {/each}
-        </ul>
-        <a class="font-serif text-body underline decoration-rule underline-offset-8 hover:decoration-ink" href="/articles">記事を読む</a>
-      </div>
+  <section class="pb-(--home-section-space)" aria-labelledby="latest-heading">
+    <h2 class="sr-only" id="latest-heading">最新の記事</h2>
+
+    <nav class="mx-auto mb-(--space-8) flex w-full max-w-content flex-wrap items-baseline gap-x-(--space-8) gap-y-(--space-2) px-(--layout-gutter) home-opening:animate-opening-rise" aria-label="カテゴリ">
+      {#each data.categories as category}
+        <a class="group/category inline-flex min-h-control items-center font-stretch-88% text-h3 leading-none font-strong tracking-heading uppercase no-underline hover:no-underline" href={`/articles?${new URLSearchParams({ category })}`}>
+          <span class="border-b-2 border-transparent pb-[.12em] transition-colors duration-(--motion-duration-fast) ease-standard group-hover/category:border-ink group-focus-visible/category:border-ink">{category}</span>
+        </a>
+      {/each}
+    </nav>
+
+    <!-- Rules run the full width of the window, the way the masthead does. -->
+    <IndexList entries={data.latest} label="最新の記事" bleed />
+
+    <div class="mx-auto mt-(--space-12) flex w-full max-w-content justify-center px-(--layout-gutter)">
+      <!-- The fill retracts rather than the button moving, so the row below never shifts. -->
+      <a class="group/all relative isolate inline-flex min-h-control items-center gap-x-(--space-4) overflow-hidden rounded-ui-card border border-ink px-(--space-8) py-(--space-4) font-stretch-88% text-small leading-none font-strong tracking-label text-canvas uppercase no-underline transition-colors duration-(--motion-duration-base) ease-standard before:absolute before:inset-0 before:-z-1 before:origin-bottom before:scale-y-100 before:bg-ink before:transition-[scale] before:duration-(--motion-duration-base) before:ease-spring hover:text-ink hover:no-underline hover:before:scale-y-0 focus-visible:text-ink focus-visible:before:scale-y-0 motion-off:transition-none motion-off:before:duration-(--motion-duration-immediate)" href="/articles">
+        <span>All articles</span>
+        <ForwardGlyph />
+      </a>
     </div>
   </section>
 </div>

@@ -19,7 +19,7 @@
   }: {
     label: string;
     options: ReadonlyArray<LinkSelectorOption>;
-    display?: "text" | "icon" | "strip";
+    display?: "text" | "icon" | "strip" | "tags";
     class?: string;
   } = $props();
 </script>
@@ -28,24 +28,25 @@
   <nav
     class={cn(
       "link-selector flex flex-wrap items-baseline",
-      display === "text" && "filter-selector",
-      display === "text" && "grid grid-cols-[minmax(4.5rem,.14fr)_minmax(0,1fr)] gap-x-3 gap-y-1 max-sm:grid-cols-1",
+      (display === "text" || display === "tags") && "filter-selector",
+      (display === "text" || display === "tags") && "grid grid-cols-[minmax(4.5rem,.14fr)_minmax(0,1fr)] gap-x-3 gap-y-1 max-sm:grid-cols-1",
       display === "icon" && "gap-1 text-(length:--text-small)",
-      display === "strip" && "category-strip scrollbar-hidden flex-nowrap overflow-x-auto",
+      display === "strip" && "category-strip",
       className,
     )}
     aria-label={label}
   >
-    {#if display === "text"}
+    {#if display === "text" || display === "tags"}
       <span class="text-quiet text-(length:--text-caption) leading-ui tracking-(--tracking-ui)">{label}</span>
     {/if}
-    <div class={cn("flex flex-wrap items-baseline gap-1", display === "strip" && "flex-nowrap items-stretch gap-2")}>
+    <div class={cn("flex flex-wrap items-baseline gap-1", display === "strip" && "flex-wrap items-stretch gap-2")}>
       {#each options as option}
         <a
           class={cn(
             "relative z-(--z-controls) inline-flex min-h-8 items-center gap-1 border border-rule bg-canvas px-2 text-(length:--text-caption) leading-ui text-quiet no-underline transition-colors duration-(--motion-duration-micro) ease-standard hover:border-ink hover:text-ink aria-current:border-ink aria-current:bg-ink aria-current:text-canvas",
             display === "icon" && "size-control justify-center border-transparent p-0 [&>svg]:text-(length:--text-body)",
-            display === "strip" && "min-h-9 shrink-0 border-rule bg-transparent px-3 text-(length:--text-small) tracking-(--tracking-ui) whitespace-nowrap hover:bg-paper aria-current:border-ink",
+            display === "strip" && "min-h-control shrink-0 border-transparent bg-transparent px-3 text-(length:--text-body) tracking-(--tracking-ui) whitespace-nowrap hover:bg-paper aria-current:border-ink",
+            display === "tags" && "border-transparent bg-transparent px-1 hover:border-transparent hover:underline aria-current:border-transparent aria-current:bg-transparent aria-current:text-ink aria-current:underline",
           )}
           href={option.href}
           aria-label={display === "icon" ? option.label : undefined}
@@ -55,7 +56,7 @@
           data-sveltekit-keepfocus={display === "icon" ? true : undefined}
         >
           {#if option.icon}<Icon name={option.icon} />{/if}
-          {#if display !== "icon"}<span>{option.label}</span>{/if}
+          {#if display !== "icon"}<span>{display === "tags" ? "#" : ""}{option.label}</span>{/if}
           {#if option.count !== undefined}<small class="text-inherit opacity-65 tabular-nums">{option.count}</small>{/if}
         </a>
       {/each}

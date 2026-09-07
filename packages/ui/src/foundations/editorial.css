@@ -3,7 +3,9 @@
 .prose {
   width: min(100%, var(--prose-width));
   min-width: 0;
+  /* Reading copy sits a step under the interface so the section titles carry the structure. */
   font-size: var(--text-body);
+  font-weight: var(--weight-quiet);
   line-height: var(--leading-copy);
   text-shadow: var(--shadow-text-mask);
 }
@@ -21,7 +23,7 @@
   padding-bottom: var(--space-3);
   font-family: var(--font-sans);
   font-size: var(--text-prose-h2);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-component);
   letter-spacing: var(--tracking-ui);
 }
 

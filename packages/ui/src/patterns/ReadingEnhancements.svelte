@@ -4,7 +4,7 @@
 </script>
 
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount, tick, type Snippet } from "svelte";
   import { announceHeaderDisclosure, listenForHeaderDisclosure } from "../components/header-disclosures.ts";
   import { IndexGlyph } from "../icons/index.ts";
   import * as Collapsible from "../primitives/collapsible";
@@ -21,10 +21,13 @@
   };
 
   let {
+    tools,
     root,
     headings: suppliedHeadings = [],
     composition,
   }: {
+    /** Rendered under the desktop table of contents, inside the same sticky rail. */
+    tools?: Snippet;
     root?: HTMLElement | null;
     headings?: Heading[];
     composition?: ArticleCompositionVisual;
@@ -37,7 +40,7 @@
   let measured = $state<ArticleCompositionVisual | undefined>(undefined);
   const shownComposition = $derived(measured ?? composition);
   const tocRows = $derived(
-    headings.map((heading) => `minmax(min-content, ${shownComposition?.sections.find((section) => section.id === heading.id)?.units ?? 1}fr)`).join(" "),
+    headings.map(() => "min-content").join(" "),
   );
   let active = $state("");
   let progress = $state(0);
@@ -46,6 +49,8 @@
   let enhancementsReady = $state(false);
   let desktopTocList = $state<HTMLOListElement | null>(null);
   let mobileTocList = $state<HTMLOListElement | null>(null);
+  /** Fraction of the list height each heading row occupies; the minimap is projected onto it. */
+  let tocSpans = $state<Array<{ id: string; start: number; end: number }>>([]);
   let tocMarkerY = $state(0);
   let tocMarkerHeight = $state(0);
   let mobileMarkerY = $state(0);
@@ -62,6 +67,21 @@
 
   async function updateTocMarker() {
     await tick();
+    const list = desktopTocList;
+    if (list) {
+      const total = list.offsetHeight || 1;
+      const rows = [...list.children] as HTMLElement[];
+      tocSpans = headings.flatMap((heading, index) => {
+        const row = rows[index];
+        return row
+          ? [{
+            id: heading.id,
+            start: row.offsetTop / total,
+            end: (row.offsetTop + row.offsetHeight) / total,
+          }]
+          : [];
+      });
+    }
     const desktopRow = activeRow(desktopTocList);
     if (desktopRow) {
       tocMarkerY = desktopRow.offsetTop;
@@ -186,6 +206,17 @@
     const proseResizeObserver = new ResizeObserver(scheduleMeasure);
     proseResizeObserver.observe(prose);
     scheduleMeasure();
+
+    // Anything that scrolls sideways at large text has to be reachable from the keyboard.
+    prose.querySelectorAll<HTMLElement>("pre").forEach((scroller) => {
+      scroller.tabIndex = 0;
+      scroller.setAttribute("role", "region");
+      scroller.setAttribute(
+        "aria-label",
+        scroller.closest<HTMLElement>(".code-block")?.dataset.title ??
+          (scroller.classList.contains("mermaid-source") ? "図の定義" : "コード"),
+      );
+    });
 
     const buttons: HTMLButtonElement[] = [];
     prose.querySelectorAll<HTMLElement>(".code-block").forEach((block) => {
@@ -339,9 +370,12 @@
         active = requestedHeading;
         return;
       }
+      // A quarter of the viewport below the anchor line, so a section reads as current while
+      // its opening paragraphs are still in view rather than only once it reaches the top.
+      const activation = offset + globalThis.innerHeight * 0.24;
       let current = headingElements[0]?.id ?? "";
       for (const heading of headingElements) {
-        if (heading.getBoundingClientRect().top <= offset + 1)
+        if (heading.getBoundingClientRect().top <= activation)
           current = heading.id;
         else break;
       }
@@ -423,25 +457,36 @@
 
 <p class="copy-status absolute size-px overflow-hidden whitespace-nowrap [clip:rect(0,0,0,0)]" aria-live="polite">{copyStatus}</p>
 
+{#if headings.length || tools}
+<div class="reading-rail sticky top-(--article-anchor-offset) grid gap-y-(--space-6) self-start max-lg:static max-lg:gap-y-0">
 {#if headings.length}
-  <aside class="desktop-toc sticky top-(--article-anchor-offset) max-h-[calc(100vh-var(--article-anchor-offset)-var(--space-4))] self-start overflow-auto pl-(--space-2) max-lg:hidden" aria-label="目次" data-ready={enhancementsReady}>
+  <aside class="desktop-toc max-h-[calc(100vh-var(--article-anchor-offset)-var(--space-16))] overflow-auto pl-(--space-2) max-lg:hidden" aria-label="目次" data-ready={enhancementsReady}>
     <p class="mb-(--space-4) border-b border-rule pb-(--space-2) font-sans text-caption tracking-label text-quiet">目次</p>
     <div class="toc-composition relative">
       {#if shownComposition}
-        <span class="pointer-events-none absolute top-0 bottom-0 left-0 z-(--z-base) w-12"><ArticleCompositionGraph composition={shownComposition} id="detail-toc" orientation="vertical" /></span>
+        <span class="pointer-events-none absolute top-0 bottom-0 left-0 z-(--z-base) w-12"><ArticleCompositionGraph composition={shownComposition} spans={tocSpans} id="detail-toc" orientation="vertical" /></span>
       {/if}
       <ol
-        class="toc-list relative m-0 grid min-h-[max(calc(var(--toc-count)*var(--space-10)),22vh)] grid-rows-(--toc-rows) list-none pl-(--space-16) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-reduced:after:duration-(--motion-duration-immediate) motion-off:after:duration-(--motion-duration-immediate)"
+        class="toc-list relative m-0 grid list-none grid-rows-(--toc-rows) pl-(--space-16) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-reduced:after:duration-(--motion-duration-immediate) motion-off:after:duration-(--motion-duration-immediate)"
         bind:this={desktopTocList}
-        style={`--toc-marker-y:${tocMarkerY}px;--toc-marker-height:${tocMarkerHeight}px;--toc-rows:${tocRows};--toc-count:${headings.length}`}
+        style={`--toc-marker-y:${tocMarkerY}px;--toc-marker-height:${tocMarkerHeight}px;--toc-rows:${tocRows}`}
       >
         {@render tocItems()}
       </ol>
     </div>
   </aside>
+{/if}
+
+  {#if tools}
+    <div class="reading-tools max-lg:hidden">{@render tools()}</div>
+  {/if}
+</div>
+{/if}
+
+{#if headings.length}
 
   <div
-    class="mobile-toc-region hidden max-lg:block data-[ready=true]:fixed data-[ready=true]:top-[calc(env(safe-area-inset-top)+var(--layout-gutter))] data-[ready=true]:left-[calc(env(safe-area-inset-left)+var(--layout-gutter))] data-[ready=true]:z-(--z-header) max-lg:row-start-1"
+    class="mobile-toc-region pointer-events-none relative z-(--z-overlay) hidden w-fit max-lg:row-start-1 max-lg:block max-lg:sticky max-lg:top-(--space-3) max-lg:pb-(--space-2) [&_*]:pointer-events-auto"
     data-ready={enhancementsReady}
   >
     <Collapsible.Root

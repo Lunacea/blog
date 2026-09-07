@@ -11,14 +11,14 @@
 
   type Connection = { saveData?: boolean };
 
-  let motion = $state<MotionPreference>("reduced");
+  let motion = $state<MotionPreference>("off");
   let ready = $state(false);
   let motionFeedback = $state(false);
-  const modes: MotionPreference[] = ["full", "reduced", "off"];
+  const modes: MotionPreference[] = ["full", "off"];
   const modeLabels: Record<MotionPreference, string> = {
-    full: "フル",
-    reduced: "控えめ",
-    off: "なし",
+    full: "ON",
+    reduced: "OFF",
+    off: "OFF",
   };
   const nextMotion = $derived(modes[(modes.indexOf(motion) + 1) % modes.length]);
 
@@ -55,7 +55,7 @@
     data-mode={motion}
     data-motion-feedback={motionFeedback}
     aria-describedby="display-tooltip"
-    aria-label={`モーション: ${modeLabels[motion]}。${modeLabels[nextMotion]}に切り替える`}
+    aria-label={`アニメーション: ${modeLabels[motion]}。${modeLabels[nextMotion]}に切り替える`}
     onclick={cycleMotion}
   >
     <MotionGlyph mode={motion} />
@@ -64,5 +64,5 @@
     class="display-tooltip pointer-events-none absolute top-[calc(100%+var(--space-1))] right-0 z-(--z-overlay) w-max border border-rule bg-paper px-(--space-2) py-(--space-1) text-caption leading-ui whitespace-nowrap text-ink opacity-0 shadow-paper transition-opacity duration-(--motion-duration-fast) ease-standard group-hover/display:opacity-100 group-focus-within/display:opacity-100 motion-reduced:transition-none motion-off:transition-none forced-colors:shadow-none"
     id="display-tooltip"
     role="tooltip"
-  >モーション: {modeLabels[motion]}</span>
+  >アニメーション: {modeLabels[motion]}</span>
 </div>
