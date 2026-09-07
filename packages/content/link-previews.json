@@ -1,0 +1,9 @@
+{
+  "https://docs.deno.com/deploy/reference/frameworks/": {
+    "href": "https://docs.deno.com/deploy/reference/frameworks/",
+    "site": "docs.deno.com",
+    "title": "Frameworks",
+    "description": "Detailed guide to supported JavaScript and TypeScript frameworks in Deno Deploy, including Next.js, Astro, Nuxt, SvelteKit, and more.",
+    "image": "/images/ogp/external/c108e6195fb88d88.webp"
+  }
+}

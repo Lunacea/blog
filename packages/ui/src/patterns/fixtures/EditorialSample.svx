@@ -1,0 +1,46 @@
+## 読書面の構造
+
+本文は日本語とtechnical termsが混在しても、一定の行長とリズムを保ちます。
+目次は`##`と`###`から生成され、見出しへの移動を補助します。
+
+> 引用は本文より静かなserifで示し、情報の出典や発言を区別します。
+
+<aside class="annotation" aria-label="実装上の注釈">
+  <strong>注釈</strong>
+  <p>このfixtureはStorybook専用で、公開content registryには含まれません。</p>
+</aside>
+
+### コードと状態
+
+~~~ts title="motion.ts" {2,5}
+type Motion = "full" | "reduced" | "off";
+const preference: Motion = "reduced";
+
+if (preference !== "full") {
+  document.documentElement.dataset.motion = preference;
+}
+~~~
+
+## 図と数式
+
+~~~mermaid title="公開パイプライン"
+flowchart LR
+  Source[SVX] --> Validate[Validate]
+  Validate --> Render[Render]
+  Render --> Storybook[Storybook]
+~~~
+
+inline mathでは、距離を $d$、時間を $t$ とすると速度は $v = d / t$ です。
+
+display mathは独立した行として表示します。
+
+$$
+E = mc^2
+$$
+
+| 表示要素 | 実装 |
+| --- | --- |
+| 数式 | KaTeX |
+| 図 | Mermaid |
+
+<p class="source-note"><sup>1</sup> Storybook fixture / rendering contract.</p>

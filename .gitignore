@@ -13,7 +13,10 @@ node_modules/
 dist/
 storybook-static/
 .svelte-kit/
+.deno-deploy/
 .vite/
+.generated/
+apps/web/static/images/generated/
 .npm/
 package-lock.json
 
@@ -36,3 +39,7 @@ coverage/
 .env.local
 .env.*.local
 !.env.example
+
+vite.config.ts.timestamp-*.mjs
+*.timestamp-*.mjs
+visual-baselines/

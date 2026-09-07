@@ -1,0 +1,17 @@
+body {
+  padding: var(--space-8);
+}
+
+#storybook-root {
+  min-height: calc(100vh - (2 * var(--space-8)));
+}
+
+@media (max-width: 44rem) {
+  body {
+    padding: var(--space-4);
+  }
+
+  #storybook-root {
+    min-height: calc(100vh - (2 * var(--space-4)));
+  }
+}

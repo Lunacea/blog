@@ -2,12 +2,19 @@ name: PR Governance
 
 on:
   pull_request:
-    types: [opened, edited, synchronize]
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+concurrency:
+  group: pr-governance-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   pr-management:
     name: タイトル検証およびラベル自動付与
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       pull-requests: write
     steps:
@@ -25,13 +32,20 @@ jobs:
             else if (title.startsWith('docs:')) labels.push('docs');
             else if (title.startsWith('style:')) labels.push('ui');
 
-            if (labels.length > 0) {
+            if (labels.length === 0) {
+              core.setFailed('PRのタイトルは指定の接頭辞（feat:, fix:, chore:, refactor:, docs:, style:）で始めてください。');
+              return;
+            }
+            // Fork PR tokens cannot write labels; title validation still runs.
+            if (context.payload.pull_request.head.repo?.full_name !== context.repo.owner + '/' + context.repo.repo) {
+              core.info('Skipping label update for a fork PR');
+              return;
+            }
+            if (!context.payload.pull_request.labels.some(label => label.name === labels[0])) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.pull_request.number,
                 labels: labels
               });
-            } else {
-              core.setFailed('PRのタイトルは指定の接頭辞（feat:, fix:, chore:, refactor:, docs:, style:）で始めてください。');
             }
