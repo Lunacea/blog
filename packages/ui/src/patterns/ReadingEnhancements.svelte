@@ -9,14 +9,18 @@
   import { IndexGlyph } from "../icons/index.ts";
   import * as Collapsible from "../primitives/collapsible";
   import ArticleCompositionGraph from "../visuals/ArticleCompositionGraph.svelte";
+  import { createBlockShell, type BlockShell } from "./block-tools.ts";
   import type { ArticleCompositionVisual } from "../visuals/article-composition-types.ts";
   import { cn } from "../utils.ts";
 
   type Heading = { id: string; text: string; level: number };
   type DiagramRecord = {
     source: HTMLElement;
+    /** The current graph: the authored one until the reader edits it. */
     graph: string;
     title: string;
+    /** Where the rendered diagram belongs — the shell's preview panel. */
+    host: HTMLElement;
     figure?: HTMLElement;
   };
 
@@ -218,43 +222,89 @@
       );
     });
 
-    const buttons: HTMLButtonElement[] = [];
-    prose.querySelectorAll<HTMLElement>(".code-block").forEach((block) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "code-copy";
-      button.dataset.cursor = "interactive";
-      button.dataset.cursorLabel = "Copy code";
-      button.setAttribute("aria-label", "コードをコピー");
-      button.addEventListener("click", async () => {
-        const code = block.querySelector("code")?.textContent ?? "";
-        try {
-          await navigator.clipboard.writeText(code);
-          button.dataset.copied = "true";
-          button.setAttribute("aria-label", "コードをコピーしました");
-          copyStatus = "コードをコピーしました";
-        } catch {
-          button.dataset.failed = "true";
-          button.setAttribute("aria-label", "コードをコピーできませんでした");
-          copyStatus = "コードをコピーできませんでした";
-        }
-        window.setTimeout(() => {
-          delete button.dataset.copied;
-          delete button.dataset.failed;
-          button.setAttribute("aria-label", "コードをコピー");
-        }, statusDuration());
+    /*
+     * Every code block becomes a pair of views: the highlighted rendering, and the source as text
+     * the reader can edit, copy and put back. An edited block shows its own text in the preview
+     * rather than the highlighted original, so the two views never contradict each other.
+     */
+    const shells: BlockShell[] = [];
+    /** One live region serves every block, and it clears itself on the design's own timing. */
+    let statusTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+    const report = (message: string) => {
+      copyStatus = message;
+      clearTimeout(statusTimer);
+      statusTimer = globalThis.setTimeout(
+        () => (copyStatus = ""),
+        Math.max(2400, statusDuration()),
+      );
+    };
+    prose.querySelectorAll<HTMLElement>(".code-block").forEach((block, index) => {
+      const source = block.querySelector("code")?.textContent ?? "";
+      const name = block.dataset.title ?? block.dataset.language ?? "コード";
+      const original = block.querySelector("pre");
+      let plain: HTMLPreElement | null = null;
+      const shell = createBlockShell({
+        block,
+        id: `code-${index}`,
+        name,
+        caption: block.dataset.title ?? block.dataset.language,
+        source,
+        onStatus: report,
+        onEdit: (value) => {
+          if (value === source) {
+            plain?.remove();
+            plain = null;
+            if (original) original.hidden = false;
+            return;
+          }
+          if (!plain) {
+            plain = document.createElement("pre");
+            plain.className =
+              "m-0 overflow-x-auto p-(--space-4) font-mono text-small leading-copy";
+            plain.tabIndex = 0;
+            plain.setAttribute("role", "region");
+            plain.setAttribute("aria-label", `${name}（編集中）`);
+            shell.preview.append(plain);
+          }
+          plain.textContent = value;
+          if (original) original.hidden = true;
+        },
       });
-      block.append(button);
-      buttons.push(button);
+      block.dataset.enhanced = "true";
+      shells.push(shell);
     });
 
     const diagrams: DiagramRecord[] = [
       ...prose.querySelectorAll<HTMLElement>(".mermaid-source"),
-    ].map((source) => ({
-      source,
-      graph: source.textContent ?? "",
-      title: source.dataset.title ?? "Mermaid diagram",
-    }));
+    ].map((source, index) => {
+      // The diagram gets the same frame and the same pair of views as a code block, on the page's
+      // own surface rather than the code palette.
+      const graph = source.textContent ?? "";
+      const title = source.dataset.title ?? "Mermaid diagram";
+      const block = document.createElement("div");
+      block.className = "diagram-block";
+      block.dataset.enhanced = "true";
+      source.replaceWith(block);
+      block.append(source);
+      source.hidden = true;
+      const record: DiagramRecord = { source, graph, title, host: block };
+      const shell = createBlockShell({
+        block,
+        id: `diagram-${index}`,
+        name: title,
+        caption: source.dataset.title,
+        previewName: "Diagram",
+        source: graph,
+        onStatus: report,
+        onEdit: (value) => {
+          record.graph = value;
+          scheduleDiagram();
+        },
+      });
+      record.host = shell.preview;
+      shells.push(shell);
+      return record;
+    });
     let mermaidGeneration = 0;
     const renderMermaid = async () => {
       if (!diagrams.length) return;
@@ -312,7 +362,7 @@
             const figure = rendered[index];
             if (figure) {
               if (record.figure) record.figure.replaceWith(figure);
-              else record.source.after(figure);
+              else record.host.append(figure);
               record.figure = figure;
               record.source.hidden = true;
               record.source.removeAttribute("aria-label");
@@ -341,6 +391,12 @@
           });
         });
       await sharedMermaidQueue;
+    };
+    /** Typing is not a render trigger; a pause in the typing is. */
+    let diagramTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+    const scheduleDiagram = () => {
+      clearTimeout(diagramTimer);
+      diagramTimer = globalThis.setTimeout(() => void renderMermaid(), 420);
     };
     void renderMermaid();
     const themeObserver = new MutationObserver((records) => {
@@ -399,8 +455,10 @@
       proseResizeObserver.disconnect();
       if (measureFrame) cancelAnimationFrame(measureFrame);
       if (frame) cancelAnimationFrame(frame);
-      buttons.forEach((button) => button.remove());
+      clearTimeout(diagramTimer);
+      clearTimeout(statusTimer);
       diagrams.forEach((record) => record.figure?.remove());
+      shells.forEach((shell) => shell.destroy());
       removeEventListener("scroll", scheduleReadingState);
       removeEventListener("resize", scheduleReadingState);
       if (requestedHeadingTimeout !== undefined)
@@ -409,7 +467,7 @@
   });
 
   const tocTriggerClass =
-    "mobile-toc-trigger inline-flex min-h-(--control-size) cursor-pointer list-none items-center justify-start gap-(--space-2) border-0 bg-ink px-(--space-3) font-sans text-small tracking-ui text-canvas [&::-webkit-details-marker]:hidden";
+    "mobile-toc-trigger inline-flex min-h-(--control-size) cursor-pointer list-none items-center justify-start gap-(--space-2) border-0 bg-ink px-(--space-3) font-sans text-small tracking-ui text-canvas pressable [--press-scale:0.96] [&::-webkit-details-marker]:hidden";
 
   function selectHeading(heading: Heading) {
     tocOpen = false;
@@ -433,7 +491,7 @@
       <a
         href={"#" + heading.id}
         aria-current={active === heading.id ? "location" : undefined}
-        class="block text-small leading-ui text-quiet no-underline aria-[current=location]:text-ink"
+        class="flex size-full min-w-0 items-center text-small leading-ui text-quiet no-underline pressable [--press-scale:0.98] aria-[current=location]:text-ink"
         onclick={() => selectHeading(heading)}
       >
         <span>{heading.text}</span>

@@ -157,9 +157,15 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     uniforms.dark.value = document.documentElement.dataset.theme === "dark" ? 1 : 0;
   };
 
-  /** Without a hovering pointer the light drifts on its own, so the field still breathes. */
+  /** Without a hovering pointer the reader's scroll carries the light instead. */
   const guided = () => matchMedia("(hover: hover) and (pointer: fine)").matches;
   let guidedUntil = 0;
+  let progress = 0;
+
+  const scrolled = () => {
+    const range = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    progress = Math.min(1, Math.max(0, scrollY / range));
+  };
 
   const move = (event: PointerEvent) => {
     if (event.pointerType === "touch" || !guided()) return;
@@ -183,14 +189,27 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     );
   };
 
+  /*
+   * On a touch screen the light answers the page rather than the finger: reading downwards walks
+   * the sun across and down the frame. A slow figure is added so it still breathes while the page
+   * is held still, and it is small enough that scrolling always reads as the cause.
+   */
+  const sweep = (seconds: number) => {
+    target.set(
+      0.5 + Math.sin(progress * 2.4 - 0.7) * 0.36 + Math.sin(seconds * 0.081) * 0.05,
+      0.9 - progress * 0.78 + Math.cos(seconds * 0.063) * 0.04,
+    );
+  };
+
   const render = (now: number) => {
     if (!active || destroyed) return;
     const delta = Math.min((now - last) / 1000, 0.05);
     last = now;
     elapsed += delta;
     uniforms.time.value = elapsed;
-    if (!guided() || now > guidedUntil) drift(elapsed);
-    uniforms.light.value.lerp(target, 1 - Math.exp(-delta * (guided() ? 3.4 : 1.1)));
+    if (!guided()) sweep(elapsed);
+    else if (now > guidedUntil) drift(elapsed);
+    uniforms.light.value.lerp(target, 1 - Math.exp(-delta * (guided() ? 3.4 : 2.2)));
     try {
       renderer.render(scene, camera);
     } catch {
@@ -208,11 +227,13 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
   const observer = new ResizeObserver(resize);
   observer.observe(host);
   addEventListener("pointermove", move, { passive: true });
+  addEventListener("scroll", scrolled, { passive: true });
   document.addEventListener("pointerleave", leave);
   globalThis.addEventListener("lunacea:theme", theme);
   renderer.domElement.addEventListener("webglcontextlost", lost);
   resize();
   theme();
+  scrolled();
 
   return {
     setCondition(condition: WeatherVisualCondition) {
@@ -252,6 +273,7 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
       cancelAnimationFrame(frame);
       observer.disconnect();
       removeEventListener("pointermove", move);
+      removeEventListener("scroll", scrolled);
       document.removeEventListener("pointerleave", leave);
       globalThis.removeEventListener("lunacea:theme", theme);
       renderer.domElement.removeEventListener("webglcontextlost", lost);

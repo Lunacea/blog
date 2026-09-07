@@ -19,7 +19,7 @@
 </script>
 
 {#if href}
-  <a class={cn(base, "inline-flex min-h-control items-center text-ink no-underline underline-offset-[.5em] hover:underline", className)} {href}>{category}</a>
+  <a class={cn(base, "inline-flex min-h-control items-center text-ink no-underline underline-offset-[.5em] pressable [--press-scale:0.97] hover:underline active:underline", className)} {href}>{category}</a>
 {:else}
   <span class={cn(base, "text-quiet", className)}>{category}</span>
 {/if}

@@ -99,12 +99,14 @@ export function createEditorialPreprocessor() {
         }
         const html = await codeToHtml(code, {
           lang: language || "text",
-          themes: { light: "github-light", dark: "github-dark" },
+          // A muted, low-chroma palette: code sits inside a monochrome page.
+          themes: { light: "github-light", dark: "vitesse-dark" },
           meta: { __raw: metadata },
           transformers: [transformerMetaHighlight()],
         });
         const wrapped = '<div class="code-block"' +
           (title ? ' data-title="' + escapeHtml(title) + '"' : "") +
+          ' data-language="' + escapeHtml(language || "text") + '"' +
           ">" + html + "</div>";
         return "{@html " + JSON.stringify(wrapped) + "}";
       },

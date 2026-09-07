@@ -70,7 +70,7 @@
     />
     <input type="hidden" name="view" value="list" />
     <button
-      class="grid size-control cursor-pointer place-items-center border border-rule bg-canvas p-0 text-small text-ink hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas focus-visible:shadow-none focus-visible:outline-1 focus-visible:outline-offset-0"
+      class="grid size-control cursor-pointer place-items-center border border-rule bg-canvas p-0 text-small text-ink pressable [--press-scale:0.94] hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas focus-visible:shadow-none focus-visible:outline-1 focus-visible:outline-offset-0"
       type="submit"
       aria-label="記事を検索"
     >
@@ -87,7 +87,7 @@
   <Collapsible.Root class="header-search group/search relative block" bind:open>
     <Collapsible.Trigger
       bind:ref={trigger}
-      class="grid size-control min-h-control cursor-pointer place-items-center border-0 bg-transparent p-0 text-quiet transition-colors duration-(--motion-duration-fast) ease-standard hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas data-[state=open]:bg-ink data-[state=open]:text-canvas"
+      class="grid size-control min-h-control cursor-pointer place-items-center border-0 bg-transparent p-0 text-quiet pressable [--press-scale:0.9] hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas data-[state=open]:bg-ink data-[state=open]:text-canvas"
       aria-controls="header-search-panel"
       aria-describedby="header-search-tooltip"
       aria-label={open ? "検索を閉じる" : "記事を検索"}

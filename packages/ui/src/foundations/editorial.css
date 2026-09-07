@@ -98,6 +98,7 @@
 }
 
 .code-block {
+  --block-ink: var(--color-code-foreground);
   position: relative;
   z-index: calc(var(--z-controls) + 1);
   overflow: hidden;
@@ -125,16 +126,46 @@
   text-decoration: none;
 }
 
-.code-block[data-title]::before {
+.code-block::before {
   display: flex;
-  min-height: var(--space-10);
+  min-height: var(--control-size);
   align-items: center;
-  border-bottom: var(--border-width-rule) solid var(--color-line);
-  padding: var(--space-2) var(--space-12) var(--space-2) var(--space-4);
-  color: color-mix(in srgb, var(--color-code-foreground) 68%, transparent);
+  border-bottom: var(--border-width-rule) solid
+    color-mix(in srgb, var(--color-code-foreground) 22%, transparent);
+  padding: var(--space-2) var(--space-16) var(--space-2) var(--space-4);
+  color: color-mix(in srgb, var(--color-code-foreground) 80%, transparent);
   content: attr(data-title);
   font-family: var(--font-mono);
   font-size: var(--text-caption);
+}
+
+/* Enhanced blocks name themselves inside their own bar, so the CSS title bar stands down. */
+.code-block[data-enhanced]::before {
+  content: none;
+}
+
+.diagram-block {
+  --block-ink: var(--color-foreground);
+  position: relative;
+  z-index: calc(var(--z-controls) + 1);
+  margin-block: var(--space-8);
+  border: var(--border-width-rule) solid var(--color-line);
+  background: var(--color-surface);
+}
+
+.diagram-block .mermaid-diagram {
+  z-index: auto;
+  margin: 0;
+  border: 0;
+}
+
+.code-block:not([data-title])::before {
+  content: attr(data-language);
+  font-family: var(--font-sans);
+  font-size: var(--text-folio);
+  font-stretch: 84%;
+  letter-spacing: var(--type-tracking-folio);
+  text-transform: uppercase;
 }
 
 .code-block .highlighted {

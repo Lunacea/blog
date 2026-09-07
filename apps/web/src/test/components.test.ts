@@ -172,9 +172,14 @@ describe("reading enhancements", () => {
     expect(view.container.querySelector(".toc-list")).toBeTruthy();
     expect(view.container.querySelector(".mobile-toc-region")).toBeTruthy();
     expect(view.container.querySelector(".mobile-toc-switch")).toBeNull();
-    const copy = view.getByRole("button", { name: "コードをコピー" });
+    const copy = view.getByRole("button", { name: "Copy" });
     await fireEvent.click(copy);
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith("const calm = true;");
+    // The same block offers its source for editing, and a way back to the authored text.
+    expect(view.getByRole("tab", { name: "Preview" })).toBeTruthy();
+    // The source panel starts hidden, so it is read from the block rather than by role.
+    const editor = prose.querySelector<HTMLTextAreaElement>("textarea");
+    expect(editor?.value).toBe("const calm = true;");
   });
 });
 

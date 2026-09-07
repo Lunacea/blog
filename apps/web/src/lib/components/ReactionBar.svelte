@@ -27,13 +27,15 @@
   async function toggle() {
     if (!summary || pending) return;
     const active = !summary.selected;
-    // The count answers the press immediately; the server response reconciles it.
+    // The count and the celebration both answer the press; the server response only reconciles
+    // the number. Waiting for the round trip made the glyph feel broken.
     const previous = summary;
     summary = {
       ...summary,
       selected: active,
       count: Math.max(0, summary.count + (active ? 1 : -1)),
     };
+    if (active) celebrate += 1;
     pending = true;
     try {
       const response = await fetch(endpoint, {
@@ -43,7 +45,6 @@
       });
       if (!response.ok) throw new Error("reaction failed");
       summary = reactionSummarySchema.parse(await response.json());
-      if (active) celebrate += 1;
       message = active ? "称賛しました" : "称賛を取り消しました";
     } catch {
       summary = previous;

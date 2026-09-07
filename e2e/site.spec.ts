@@ -328,8 +328,11 @@ test("article has reading tools but never creates a WebGL canvas", async ({ page
         const style = getComputedStyle(element!);
         return {
           background: style.backgroundColor,
+          // A diagram's stacking belongs to the block that frames it, not to the figure.
           z: Number.parseInt(
-            getComputedStyle(element!.closest(".search-row") ?? element!).zIndex,
+            getComputedStyle(
+              element!.closest(".search-row") ?? element!.closest(".diagram-block") ?? element!,
+            ).zIndex,
             10,
           ),
         };
@@ -369,22 +372,73 @@ test("article has reading tools but never creates a WebGL canvas", async ({ page
   await expect(page.locator("canvas")).toHaveCount(0);
 
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-  const copy = page.getByRole("button", { name: "コードをコピー" }).first();
+  const block = page.locator(".code-block").first();
+  const copy = block.getByRole("button", { name: /Copy|Copied/ });
   await expect(copy).not.toHaveAttribute("title");
-  const copyAlignment = await copy.evaluate((button) => {
-    const block = button.closest<HTMLElement>(".code-block");
+  // The action belongs to the block's bar, not to a square floating over the code.
+  const inBar = await copy.evaluate((button) => {
+    const owner = button.closest<HTMLElement>(".code-block")!;
     const buttonBox = button.getBoundingClientRect();
-    const blockBox = block!.getBoundingClientRect();
-    const blockBorder = Number.parseFloat(getComputedStyle(block!).borderTopWidth);
+    const blockBox = owner.getBoundingClientRect();
+    const border = Number.parseFloat(getComputedStyle(owner).borderTopWidth);
     return {
-      actual: buttonBox.top + buttonBox.height / 2 - blockBox.top,
-      expected: blockBorder + 20,
+      offset: buttonBox.top - blockBox.top - border,
+      height: buttonBox.height,
+      control: Number.parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--control-size"),
+      ) * 16,
     };
   });
-  expect(copyAlignment.actual).toBeCloseTo(copyAlignment.expected, 0);
+  expect(inBar.offset).toBeLessThan(1);
+  expect(inBar.height).toBeGreaterThanOrEqual(inBar.control - 1);
   await copy.click();
-  await expect(copy).toHaveAttribute("data-copied", "true");
-  await expect(copy).toHaveAttribute("aria-label", "コードをコピーしました");
+  await expect(copy).toHaveText("Copied");
+});
+
+test("code and diagram blocks pair a rendered view with an editable source", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop");
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/articles/resilient-content-pipeline");
+
+  const block = page.locator(".code-block").first();
+  await expect(block.getByRole("tab", { name: "Preview" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(block.getByRole("button", { name: "Reset" })).toBeHidden();
+  await block.getByRole("tab", { name: "Source" }).click();
+  const editor = block.locator("textarea");
+  await expect(editor).toBeVisible();
+  const authored = await editor.inputValue();
+  expect(authored.length).toBeGreaterThan(0);
+
+  await editor.fill(`${authored}\n// tried`);
+  const reset = block.getByRole("button", { name: "Reset" });
+  await expect(reset).toBeVisible();
+  await block.getByRole("button", { name: /Copy|Copied/ }).click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("// tried");
+  // An edited block shows what the reader typed, never the highlighted original.
+  await block.getByRole("tab", { name: "Preview" }).click();
+  await expect(block.locator("pre[aria-label$='（編集中）']")).toBeVisible();
+  await block.getByRole("tab", { name: "Source" }).click();
+  await reset.click();
+  await expect(reset).toBeHidden();
+  expect(await editor.inputValue()).toBe(authored);
+
+  const diagram = page.locator(".diagram-block").first();
+  await expect(diagram.locator(".mermaid-diagram")).toBeVisible({ timeout: 15_000 });
+  await diagram.getByRole("tab", { name: "Source" }).click();
+  await diagram.locator("textarea").fill("graph LR\n  A[Alpha] --> B[Beta]");
+  await diagram.getByRole("tab", { name: "Diagram" }).click();
+  await expect(diagram.locator(".mermaid-diagram")).toContainText("Alpha", { timeout: 15_000 });
+  await diagram.getByRole("tab", { name: "Source" }).click();
+  await diagram.getByRole("button", { name: "Reset" }).click();
+  await diagram.getByRole("tab", { name: "Diagram" }).click();
+  await expect(diagram.locator(".mermaid-diagram")).not.toContainText("Alpha", {
+    timeout: 15_000,
+  });
 });
 
 test("article TOC tracks clicked headings and mobile disclosure animates", async ({

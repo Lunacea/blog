@@ -31,6 +31,8 @@ import { linkPreviews } from "@lunacea/content/link-previews.ts";
   let ContentComponent = $derived(component);
 
   const canonical = $derived(`${siteConfig.url}/articles/${metadata.slug}`);
+  /** The handle out of the profile URL, which is what the post intent's `via` expects. */
+  const shareVia = siteConfig.author.x.split("/").pop();
   const structured = $derived({
     "@context": "https://schema.org",
     "@type": "Article",
@@ -66,7 +68,7 @@ import { linkPreviews } from "@lunacea/content/link-previews.ts";
   kind={metadata.type}
   class={cn(
     "[&_.article-header]:grid [&_.article-header]:min-h-0 [&_.article-header]:grid-cols-1 [&_.article-header]:content-start [&_.article-header]:gap-3 [&_.article-header]:pb-12 [&_.article-header>*]:w-[min(100%,var(--prose-width))] [&_h1]:m-0 [&_h1]:max-w-[24ch] [&_h1]:text-balance [&_h1]:font-interface [&_h1]:text-(length:--text-h1) [&_h1]:font-strong [&_h1]:leading-tight [&_h1]:tracking-(--tracking-heading) [&_.article-flags]:flex [&_.article-flags]:flex-wrap [&_.article-flags]:items-center [&_.article-flags]:gap-2 [&_.article-flags]:leading-none [&_.detail-flags]:flex [&_.detail-flags]:flex-wrap [&_.detail-flags]:items-center [&_.detail-flags]:justify-between [&_.detail-flags]:gap-2 [&_.lead]:m-0 [&_.lead]:max-w-prose [&_.lead]:leading-copy [&_.tag-list]:m-0 [&_.tag-list]:flex [&_.tag-list]:list-none [&_.tag-list]:flex-wrap [&_.tag-list]:items-center [&_.tag-list]:gap-1 [&_.tag-list]:p-0 [&_.tag-list]:leading-none",
-    "[&_.article-back]:inline-flex [&_.article-back]:w-fit [&_.article-back]:items-center [&_.article-back]:gap-(--space-2) [&_.article-back]:text-(length:--text-folio) [&_.article-back]:tracking-(--tracking-folio) [&_.article-back]:uppercase [&_.article-back]:text-quiet [&_.article-back]:no-underline [&_.article-back]:transition-colors [&_.article-back]:duration-(--motion-duration-fast) hover:[&_.article-back]:text-ink focus-visible:[&_.article-back]:text-ink",
+    "[&_.article-back]:inline-flex [&_.article-back]:min-h-control [&_.article-back]:w-fit [&_.article-back]:items-center [&_.article-back]:gap-(--space-2) [&_.article-back]:text-(length:--text-folio) [&_.article-back]:tracking-(--tracking-folio) [&_.article-back]:uppercase [&_.article-back]:text-quiet [&_.article-back]:no-underline [&_.article-back]:transition-colors [&_.article-back]:duration-(--motion-duration-fast) hover:[&_.article-back]:text-ink focus-visible:[&_.article-back]:text-ink",
     "[&_.article-byline]:mt-1 [&_.article-byline]:flex [&_.article-byline]:flex-wrap [&_.article-byline]:items-center [&_.article-byline]:justify-between [&_.article-byline]:gap-x-6 [&_.article-byline]:gap-y-3 [&_.article-byline]:border-t [&_.article-byline]:border-rule [&_.article-byline]:pt-3 [&_.article-byline]:leading-ui",
     "[&_.compact-dates]:m-0 [&_.compact-dates]:flex [&_.compact-dates]:flex-wrap [&_.compact-dates]:items-baseline [&_.compact-dates]:gap-x-5 [&_.compact-dates]:gap-y-1 [&_.compact-dates]:leading-ui [&_.compact-dates>div]:flex [&_.compact-dates>div]:items-baseline [&_.compact-dates>div]:gap-2 [&_.compact-dates_dt]:m-0 [&_.compact-dates_dt]:text-(length:--text-folio) [&_.compact-dates_dt]:tracking-(--tracking-folio) [&_.compact-dates_dt]:uppercase [&_.compact-dates_dt]:text-quiet [&_.compact-dates_dd]:m-0 [&_.compact-dates_dd]:text-(length:--text-folio) [&_.compact-dates_dd]:tracking-(--tracking-folio) [&_.compact-dates_dd]:text-quiet [&_.compact-dates_dd]:tabular-nums",
     "[&_.event-meta]:mt-3 [&_.event-meta]:grid [&_.event-meta]:gap-1 [&_.event-meta]:leading-ui [&_.event-meta>div]:grid [&_.event-meta>div]:grid-cols-[5rem_minmax(0,1fr)] [&_.event-meta>div]:gap-2 [&_.event-meta_dt]:m-0 [&_.event-meta_dt]:text-(length:--text-folio) [&_.event-meta_dt]:tracking-(--tracking-folio) [&_.event-meta_dt]:uppercase [&_.event-meta_dt]:text-quiet [&_.event-meta_dd]:m-0 [&_.event-meta_dd]:text-(length:--text-small)",
@@ -125,7 +127,7 @@ import { linkPreviews } from "@lunacea/content/link-previews.ts";
       class="article-reading"
     >
       {#snippet tools()}
-        <ShareActions title={metadata.title} url={canonical} class="border-t border-rule pt-(--space-4)" />
+        <ShareActions title={metadata.title} url={canonical} via={shareVia} hashtags={metadata.tags} class="border-t border-rule pt-(--space-4)" />
       {/snippet}
     </ReadingSurface>
   {/if}
@@ -133,7 +135,7 @@ import { linkPreviews } from "@lunacea/content/link-previews.ts";
   <div class="shell article-tail">
     <div class="engagement">
       <ReactionBar content={metadata} />
-      <ShareActions title={metadata.title} url={canonical} class="justify-center lg:hidden" />
+      <ShareActions title={metadata.title} url={canonical} via={shareVia} hashtags={metadata.tags} class="justify-center lg:hidden" />
     </div>
     {#if metadata.revisions.length}
       <section class="revisions" aria-labelledby="revision-title" data-reveal>

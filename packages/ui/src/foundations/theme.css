@@ -645,7 +645,7 @@
   --shadow-accent-rule: inset 3px 0 var(--color-accent);
   --shadow-text-mask: 0 0 0.18em var(--color-background);
   --glass-blur: 0.625rem;
-  --focus-ring: 0 0 0 0.1875rem light-dark(rgb(112 88 0 / 36%), rgb(226 198 84 / 38%));
+  --focus-ring: 0 0 0 0.125rem var(--color-canvas);
 
   --motion-duration-immediate: 1ms;
   --motion-duration-fast: 140ms;
@@ -786,6 +786,9 @@
   --index-rail-width: 11rem;
   /* The reach of the lens that warps the footer address under the pointer. */
   --footer-lens: 5.5rem;
+  /* How far a control sinks under a press, and how much it gives. Controls may tighten both. */
+  --press-shift: 1px;
+  --press-scale: 0.985;
 }
 
 @media (max-width: 34rem) {

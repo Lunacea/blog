@@ -10,7 +10,8 @@ export const siteConfig = {
     name: "Lunacea",
     github: "https://github.com/Lunacea",
     x: "https://x.com/_Lunacea",
-    email: "dev@lunacea.jp",
+    email: "hi@lunacea.jp",
+    bio: "UIとタイポグラフィを中心に、デザインから実装までを一人で手がけています。",
   },
   featuredArticleTags: [],
   catalogFilters: {

@@ -64,6 +64,25 @@
     touchY = 0.5;
   }
 
+  /*
+   * The address is a mailto link and nothing else: pressing it opens a mail client. Copying is a
+   * separate, labelled control next to it, because a machine with no mail handler registered would
+   * otherwise leave the press with nothing to show.
+   */
+  let copied = $state(false);
+  let copyTimer: ReturnType<typeof setTimeout> | undefined;
+
+  async function copyAddress() {
+    try {
+      await navigator.clipboard.writeText(email);
+    } catch {
+      return;
+    }
+    copied = true;
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(() => (copied = false), 2400);
+  }
+
   onMount(() => {
     const read = () => (allowed = document.documentElement.dataset.motion === "full");
     read();
@@ -148,7 +167,7 @@
     <div class="grid justify-items-center gap-y-(--space-4) py-(--space-10) text-center">
       <p class="m-0 font-stretch-74% text-folio leading-none tracking-folio text-quiet uppercase">Get in touch</p>
       <a
-        class="group/mail relative m-0 grid max-w-full text-index leading-tight font-strong tracking-heading wrap-anywhere no-underline hover:no-underline"
+        class="group/mail relative m-0 grid min-h-control max-w-full content-center text-index leading-tight font-strong tracking-heading wrap-anywhere no-underline pressable [--press-scale:0.99] hover:no-underline"
         href={`mailto:${email}`}
         style={lens}
         onpointermove={track}
@@ -158,11 +177,19 @@
         <span class="col-start-1 row-start-1 group-hover/mail:[mask-image:radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] group-focus-visible/mail:[mask-image:radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] motion-off:group-hover/mail:[mask-image:none] motion-off:group-focus-visible/mail:[mask-image:none] forced-colors:group-hover/mail:[mask-image:none] print:group-hover/mail:[mask-image:none]">{email}</span>
         <span class="col-start-1 row-start-1 opacity-0 [filter:url(#footer-ink)] [mask-image:radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),currentColor_0%,currentColor_52%,transparent_92%)] transition-opacity duration-(--motion-duration-fast) ease-standard group-hover/mail:opacity-100 group-focus-visible/mail:opacity-100 motion-off:hidden forced-colors:hidden print:hidden" aria-hidden="true">{email}</span>
       </a>
+      <div class="flex items-center gap-x-(--space-3)">
+        <button
+          class="inline-flex min-h-control items-center rounded-ui-card border border-rule px-(--space-4) font-stretch-84% text-folio leading-none tracking-folio text-ink uppercase pressable hover:border-ink focus-visible:border-ink active:border-ink active:bg-ink active:text-canvas"
+          type="button"
+          onclick={() => void copyAddress()}
+        >{copied ? "Copied" : "Copy"}</button>
+        <p class="sr-only" aria-live="polite">{copied ? "アドレスをコピーしました" : ""}</p>
+      </div>
       {#if links.length}
         <nav class="mt-(--space-2) flex items-center gap-x-(--space-5)" aria-label="ソーシャルリンク">
           {#each links as link}
             <a
-              class="inline-grid size-control place-items-center text-ink no-underline transition-[translate] duration-(--motion-duration-fast) ease-spring hover:-translate-y-0.5 hover:no-underline focus-visible:-translate-y-0.5 motion-off:transition-none [&_svg]:size-(--space-5)"
+              class="inline-grid size-control place-items-center text-ink no-underline transition-[translate,scale] duration-(--motion-duration-fast) ease-spring hover:-translate-y-0.5 hover:no-underline focus-visible:-translate-y-0.5 active:translate-y-px active:scale-90 motion-off:transition-none [&_svg]:size-(--space-5)"
               href={link.href}
               rel={link.rel}
               aria-label={link.label}

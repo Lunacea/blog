@@ -43,7 +43,7 @@
       {#each options as option}
         <a
           class={cn(
-            "relative z-(--z-controls) inline-flex min-h-8 items-center gap-1 border border-rule bg-canvas px-2 text-(length:--text-caption) leading-ui text-quiet no-underline transition-colors duration-(--motion-duration-micro) ease-standard hover:border-ink hover:text-ink aria-current:border-ink aria-current:bg-ink aria-current:text-canvas",
+            "relative z-(--z-controls) inline-flex min-h-8 items-center gap-1 border border-rule bg-canvas px-2 text-(length:--text-caption) leading-ui text-quiet no-underline pressable [--press-scale:0.97] hover:border-ink hover:text-ink aria-current:border-ink aria-current:bg-ink aria-current:text-canvas",
             display === "icon" && "size-control justify-center border-transparent p-0 [&>svg]:text-(length:--text-body)",
             display === "strip" && "min-h-control shrink-0 border-transparent bg-transparent px-3 text-(length:--text-body) tracking-(--tracking-ui) whitespace-nowrap hover:bg-paper aria-current:border-ink",
             display === "tags" && "border-transparent bg-transparent px-1 hover:border-transparent hover:underline aria-current:border-transparent aria-current:bg-transparent aria-current:text-ink aria-current:underline",

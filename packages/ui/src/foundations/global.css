@@ -91,10 +91,31 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
     min-height: var(--control-size);
   }
 
+  /*
+    One indicator everywhere: a solid ink ring just outside the control, with the small radius the
+    rest of the interface uses. It is declared in the base layer, so a control that carries its own
+    radius keeps it, and it is a single colour rather than a ring over a glow.
+  */
   :focus-visible {
     outline: 2px solid var(--color-accent);
-    outline-offset: var(--space-1);
-    box-shadow: var(--focus-ring);
+    outline-offset: 1px;
+    border-radius: var(--radius-small);
+    box-shadow: none;
+  }
+
+  /*
+    Inside anything that clips or scrolls, the ring is drawn just inside the control instead: an
+    outward ring on a row flush with the edge of a table of contents or a code block loses its
+    right and bottom sides.
+  */
+  .desktop-toc :focus-visible,
+  .mobile-toc-content :focus-visible,
+  .rail-disclosure :focus-visible,
+  .code-block :focus-visible,
+  .diagram-block :focus-visible,
+  pre:focus-visible,
+  .mermaid-diagram:focus-visible {
+    outline-offset: -2px;
   }
 
   img,
@@ -143,6 +164,25 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 }
 
+/*
+  Every control answers a press: it sinks a hair into the page and gives slightly under the finger.
+  The movement is immediate on the way down and eases on the way back, which is what makes a tap
+  feel received rather than merely registered. Tailwind 4 writes `translate` and `scale` as
+  independent properties, so both are named in the transition. Controls that already animate a
+  transform on hover declare their own `active:` step instead of relying on this one.
+*/
+@utility pressable {
+  transition-property: translate, scale, color, background-color, border-color, box-shadow, opacity;
+  transition-duration: var(--motion-duration-fast);
+  transition-timing-function: var(--motion-ease-standard);
+
+  &:active:not(:disabled):not([aria-disabled="true"]) {
+    translate: 0 var(--press-shift);
+    scale: var(--press-scale);
+    transition-duration: var(--motion-duration-immediate);
+  }
+}
+
 @utility shell {
   /* Matches the header and the catalog: the content box, not the container box. */
   width: min(
@@ -150,56 +190,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
     calc(var(--content-width) - (2 * var(--layout-gutter)))
   );
   margin-inline: auto;
-}
-
-@utility code-copy {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  display: grid;
-  width: var(--space-8);
-  min-height: var(--space-8);
-  place-items: center;
-  border: var(--border-width-rule) solid color-mix(in srgb, var(--color-code-foreground) 32%,
-    transparent);
-  padding: 0;
-  background: var(--color-code-background);
-  color: var(--color-code-foreground);
-  cursor: pointer;
-
-  .code-block[data-title] & {
-    top: calc((var(--space-10) - var(--space-8)) / 2);
-  }
-
-  &::before,
-  &::after {
-    position: absolute;
-    width: 0.55rem;
-    height: 0.65rem;
-    border: var(--border-width-rule) solid currentColor;
-    content: "";
-  }
-
-  &::before {
-    transform: translate(-2px, 2px);
-  }
-  &::after {
-    background: var(--color-code-background);
-    transform: translate(2px, -2px);
-  }
-  &[data-copied]::before {
-    width: 0.65rem;
-    height: 0.35rem;
-    border-width: 0 0 var(--border-width-rule) var(--border-width-rule);
-    transform: rotate(-45deg);
-  }
-  &[data-copied]::after,
-  &[data-failed]::after {
-    display: none;
-  }
-  &[data-failed] {
-    color: var(--color-negative);
-  }
 }
 
 @utility mermaid-diagram {

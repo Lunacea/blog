@@ -38,7 +38,7 @@
 <section class="reactions grid justify-items-center gap-(--space-3)" aria-label="称賛" data-reveal>
   <p class="m-0 font-stretch-84% text-folio leading-none tracking-folio text-quiet uppercase">Enjoyed this?</p>
   <button
-    class="praise group grid cursor-pointer place-items-center gap-(--space-2) border-0 bg-transparent p-(--space-2) text-quiet transition-colors duration-(--motion-duration-fast) ease-standard hover:not-disabled:text-ink focus-visible:not-disabled:text-ink aria-pressed:text-ink disabled:cursor-default disabled:opacity-60 motion-reduced:duration-(--motion-duration-immediate) motion-off:duration-(--motion-duration-immediate)"
+    class="praise group grid cursor-pointer place-items-center gap-(--space-2) border-0 bg-transparent p-(--space-2) text-quiet pressable [--press-scale:0.95] hover:not-disabled:text-ink focus-visible:not-disabled:text-ink aria-pressed:text-ink disabled:cursor-default disabled:opacity-60 motion-reduced:duration-(--motion-duration-immediate) motion-off:duration-(--motion-duration-immediate)"
     type="button"
     {disabled}
     aria-pressed={selected}
@@ -54,7 +54,7 @@
     >
       <HeartGlyph
         filled={selected}
-        class="size-(--space-10) origin-bottom transition-[scale] duration-(--motion-duration-base) ease-spring group-hover:not-disabled:scale-110 group-focus-visible:not-disabled:scale-110 motion-reduced:transition-none motion-off:transition-none"
+        class="size-(--space-10) origin-bottom transition-[scale] duration-(--motion-duration-base) ease-spring group-hover:not-disabled:scale-110 group-focus-visible:not-disabled:scale-110 group-active:not-disabled:scale-90 motion-reduced:transition-none motion-off:transition-none"
       />
     </span>
     <span class="count text-(length:--text-caption) leading-none tabular-nums">{count}</span>
