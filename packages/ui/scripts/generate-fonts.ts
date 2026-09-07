@@ -104,37 +104,12 @@ const fonts = [
     preload: true,
   },
   {
-    family: "Instrument Serif",
-    key: "instrument-serif",
-    weight: 400,
-    file: "instrument-serif/InstrumentSerif-Regular.ttf",
-    role: "latin",
-    preload: false,
-  },
-  {
-    family: "Instrument Serif",
-    key: "instrument-serif-italic",
-    weight: 400,
-    style: "italic",
-    file: "instrument-serif/InstrumentSerif-Italic.ttf",
-    role: "latin",
-    preload: false,
-  },
-  {
-    family: "Zen Kaku Gothic New",
-    key: "zen-400",
-    weight: 400,
-    file: "zen-kaku-gothic-new/ZenKakuGothicNew-Regular.ttf",
-    role: "all",
-    preload: false,
-  },
-  {
     family: "Zen Kaku Gothic New",
     key: "zen-500",
     weight: 500,
     file: "zen-kaku-gothic-new/ZenKakuGothicNew-Medium.ttf",
     role: "all",
-    preload: true,
+    preload: false,
   },
   {
     family: "Zen Kaku Gothic New",
@@ -142,7 +117,10 @@ const fonts = [
     weight: 700,
     file: "zen-kaku-gothic-new/ZenKakuGothicNew-Bold.ttf",
     role: "all",
-    preload: false,
+    // Body copy asks for weight 550, and 700 is the nearest face at or above it, so this is the
+    // Japanese face every page actually paints. Preloading the 500 instead fetched a file no
+    // token can ever select.
+    preload: true,
   },
   {
     family: "Fira Code",
@@ -205,15 +183,6 @@ export async function generateFontSubsets(): Promise<void> {
   size-adjust: 100%;
   ascent-override: 93%;
   descent-override: 24%;
-  line-gap-override: 0%;
-}
-
-@font-face {
-  font-family: "Instrument Serif Fallback";
-  src: local("Georgia"), local("Times New Roman");
-  size-adjust: 94%;
-  ascent-override: 92%;
-  descent-override: 22%;
   line-gap-override: 0%;
 }`;
   await Deno.writeTextFile(new URL("fonts.css", output), `${faces}\n\n${fallbacks}\n`);

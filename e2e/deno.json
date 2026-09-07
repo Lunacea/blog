@@ -1,0 +1,12 @@
+{
+  "name": "@lunacea/e2e",
+  "version": "0.1.0",
+  "exports": "./support.ts",
+  "compilerOptions": {
+    "lib": ["esnext", "dom", "dom.iterable", "dom.asynciterable"]
+  },
+  "imports": {
+    "@axe-core/playwright": "npm:@axe-core/playwright@4.12.1",
+    "@playwright/test": "npm:@playwright/test@1.61.1"
+  }
+}

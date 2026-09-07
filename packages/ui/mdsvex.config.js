@@ -104,10 +104,14 @@ export function createEditorialPreprocessor() {
           meta: { __raw: metadata },
           transformers: [transformerMetaHighlight()],
         });
+        // The dark theme states some tokens — comments above all — as 8-digit hex with alpha.
+        // Composited over the block's own dark surface those land near 3.8:1, under the 4.5:1
+        // AA floor, so the same hue is kept and only the transparency is dropped.
+        const opaque = html.replace(/(#[0-9a-fA-F]{6})[0-9a-fA-F]{2}\b/gu, "$1");
         const wrapped = '<div class="code-block"' +
           (title ? ' data-title="' + escapeHtml(title) + '"' : "") +
           ' data-language="' + escapeHtml(language || "text") + '"' +
-          ">" + html + "</div>";
+          ">" + opaque + "</div>";
         return "{@html " + JSON.stringify(wrapped) + "}";
       },
     },

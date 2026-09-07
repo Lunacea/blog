@@ -5,7 +5,7 @@ export const siteConfig = {
     "Lunaceaの技術ブログです。UI・UX設計、Webエンジニアリング、グラフィックデザインについて書いています。",
   url: "https://blog.lunacea.jp",
   language: "ja",
-  sampleMode: true,
+  sampleMode: false,
   author: {
     name: "Lunacea",
     github: "https://github.com/Lunacea",

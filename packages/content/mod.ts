@@ -27,9 +27,17 @@ function parseMetadata(path: string, metadata: unknown): Content {
   return result.data;
 }
 
+/**
+ * The bundled `sample: true` entries are development fixtures: they exercise every editorial
+ * block while authoring, and a production build leaves them out of the registry entirely rather
+ * than publishing them. Everything downstream — Home, the catalog, detail routes, OG images,
+ * feeds and the sitemap — reads this one list, so nothing has to filter samples again.
+ */
+const publishSamples = import.meta.env.DEV;
+
 export const allContent: Content[] = Object.entries(metadataModules)
   .map(([path, metadata]) => parseMetadata(path, metadata))
-  .filter((entry) => !entry.draft)
+  .filter((entry) => !entry.draft && (publishSamples || !entry.sample))
   .sort((left, right) => right.publishedAt.localeCompare(left.publishedAt));
 
 export function listContent<T extends ContentType>(type: T): Extract<Content, { type: T }>[] {

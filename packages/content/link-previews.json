@@ -5,5 +5,11 @@
     "title": "Frameworks",
     "description": "Detailed guide to supported JavaScript and TypeScript frameworks in Deno Deploy, including Next.js, Astro, Nuxt, SvelteKit, and more.",
     "image": "/images/ogp/external/c108e6195fb88d88.webp"
+  },
+  "https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-visible": {
+    "href": "https://developer.mozilla.org/en-US/docs/Web/CSS/:focus-visible",
+    "site": "developer.mozilla.org",
+    "title": ":focus-visible CSS pseudo-class - CSS | MDN",
+    "description": "The :focus-visible pseudo-class applies while an element matches the :focus pseudo-class and the UA (User Agent) determines via heuristics that the focus should be made evident on the element. (Many browsers show a &quot;focus ring&quot; by default in this case.)"
   }
 }

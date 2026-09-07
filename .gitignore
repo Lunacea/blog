@@ -17,6 +17,8 @@ storybook-static/
 .vite/
 .generated/
 apps/web/static/images/generated/
+apps/web/static/icons/
+apps/web/static/favicon.ico
 .npm/
 package-lock.json
 
