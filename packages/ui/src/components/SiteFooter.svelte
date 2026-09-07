@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import type { Snippet } from "svelte";
+  import { onMount } from "svelte";
   import { Icon, socialIcons } from "../icons/index.ts";
   import { subscribeMotionCapabilities } from "../motion/preferences.ts";
 
@@ -174,15 +174,15 @@
         onpointerleave={release}
         onblur={release}
       >
-        <span class="col-start-1 row-start-1 group-hover/mail:[mask-image:radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] group-focus-visible/mail:[mask-image:radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] motion-off:group-hover/mail:[mask-image:none] motion-off:group-focus-visible/mail:[mask-image:none] forced-colors:group-hover/mail:[mask-image:none] print:group-hover/mail:[mask-image:none]">{email}</span>
-        <span class="col-start-1 row-start-1 opacity-0 [filter:url(#footer-ink)] [mask-image:radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),currentColor_0%,currentColor_52%,transparent_92%)] transition-opacity duration-(--motion-duration-fast) ease-standard group-hover/mail:opacity-100 group-focus-visible/mail:opacity-100 motion-off:hidden forced-colors:hidden print:hidden" aria-hidden="true">{email}</span>
+        <span class="col-start-1 row-start-1 group-hover/mail:mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] group-focus-visible/mail:mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] motion-off:group-hover/mail:mask-none motion-off:group-focus-visible/mail:mask-none forced-colors:group-hover/mail:mask-none print:group-hover/mail:mask-none">{email}</span>
+        <span class="col-start-1 row-start-1 opacity-0 filter-[url(#footer-ink)] mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),currentColor_0%,currentColor_52%,transparent_92%)] transition-opacity duration-(--motion-duration-fast) ease-standard group-hover/mail:opacity-100 group-focus-visible/mail:opacity-100 motion-off:hidden forced-colors:hidden print:hidden" aria-hidden="true">{email}</span>
       </a>
       <div class="flex items-center gap-x-(--space-3)">
         <button
           class="inline-flex min-h-control items-center rounded-ui-card border border-rule px-(--space-4) font-stretch-84% text-folio leading-none tracking-folio text-ink uppercase pressable hover:border-ink focus-visible:border-ink active:border-ink active:bg-ink active:text-canvas"
           type="button"
           onclick={() => void copyAddress()}
-        >{copied ? "Copied" : "Copy"}</button>
+        >{copied ? "Copied" : "Copy email"}</button>
         <p class="sr-only" aria-live="polite">{copied ? "アドレスをコピーしました" : ""}</p>
       </div>
       {#if links.length}

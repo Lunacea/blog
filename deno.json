@@ -1,6 +1,7 @@
 {
   "workspace": [
     "./apps/*",
+    "./e2e",
     "./packages/*"
   ],
   "nodeModulesDir": "auto",
@@ -24,6 +25,7 @@
     "fonts:generate": "deno run -A packages/ui/scripts/generate-fonts.ts",
     "fonts:check": "deno run -A packages/ui/scripts/check-fonts.ts",
     "images:generate": "deno run -A apps/web/scripts/generate-images.ts",
+    "icons:generate": "deno run -A apps/web/scripts/generate-icons.ts",
     "links:refresh": "deno run -A apps/web/scripts/refresh-link-previews.ts",
     "content:generate": "deno run --allow-read --allow-write packages/content/generate.ts",
     "budget:check": "deno run --allow-read apps/web/scripts/check-budget.ts",
@@ -40,7 +42,7 @@
     "lint": "deno lint apps packages e2e",
     "fmt": "deno fmt apps packages e2e docs README.md deno.json",
     "fmt:check": "deno fmt --check apps packages e2e docs README.md deno.json",
-    "prepare": "deno task fonts:generate && deno task images:generate && deno task content:generate && deno task content:validate"
+    "prepare": "deno task fonts:generate && deno task images:generate && deno task icons:generate && deno task content:generate && deno task content:validate"
   },
   "fmt": {
     "useTabs": false,

@@ -9,6 +9,21 @@ export function createDenoKvReactionRepository(
   limit = 30,
   windowMs = 10 * 60_000,
 ): ReactionRepository {
+  /**
+   * One handle for the process. Opening the store per operation gives each call its own
+   * connection to the same database file, and concurrent writes then fail with
+   * "database is locked"; a shared handle lets Deno KV serialise them internally.
+   */
+  let opened: Promise<Deno.Kv> | undefined;
+  const openStore = () => {
+    opened ??= getKv().catch((error) => {
+      // A failed open must not be cached, or the process never recovers.
+      opened = undefined;
+      throw error;
+    });
+    return opened;
+  };
+
   const actorKey = (contentId: string, actorId: string): Deno.KvKey => [
     "praise",
     "actor",
@@ -18,7 +33,7 @@ export function createDenoKvReactionRepository(
   const countKey = (contentId: string): Deno.KvKey => ["praise", "count", contentId];
 
   async function get(contentId: string, actorId: string): Promise<ReactionSummary> {
-    const kv = await getKv();
+    const kv = await openStore();
     const [selected, count] = await kv.getMany([
       actorKey(contentId, actorId),
       countKey(contentId),
@@ -32,7 +47,7 @@ export function createDenoKvReactionRepository(
   return {
     get,
     async set(contentId, actorId, active) {
-      const kv = await getKv();
+      const kv = await openStore();
       for (let attempt = 0; attempt < 5; attempt += 1) {
         const selected = await kv.get<boolean>(actorKey(contentId, actorId));
         const count = await kv.get<number>(countKey(contentId));
@@ -49,7 +64,7 @@ export function createDenoKvReactionRepository(
       throw new Error("Could not update reaction after concurrent writes");
     },
     async consume(actorId, now = new Date()) {
-      const kv = await getKv();
+      const kv = await openStore();
       const bucket = Math.floor(now.getTime() / windowMs);
       const key: Deno.KvKey = ["rate", "reaction", actorId, bucket];
       for (let attempt = 0; attempt < 5; attempt += 1) {

@@ -42,12 +42,6 @@
   initial-value: #626262;
 }
 
-@property --paper-dogear {
-  syntax: "<length>";
-  inherits: true;
-  initial-value: 0.375rem;
-}
-
 @theme inline {
   --color-weather-water-shadow: #152c3b;
   --color-weather-snow: #f4f7f8;
@@ -484,7 +478,7 @@
 
   /* Sans carries the whole system; serif is a Latin-only decorative accent. */
   --font-sans: "Archivo", "Archivo Fallback", "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
-  --font-serif: "Instrument Serif", "Instrument Serif Fallback", "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", Georgia, serif;
+  --font-serif: "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", Georgia, serif;
   --font-mono: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   /* Masthead is sized to bleed past both gutters; the wrapper clips, never scrolls. */
   --type-size-masthead: clamp(3.5rem, 20.4vw, 21rem);

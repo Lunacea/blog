@@ -1,5 +1,6 @@
 export { default as RevealManager } from "./RevealManager.svelte";
 export { default as HomeOpening } from "./HomeOpening.svelte";
+export { default as LiquidDistortion } from "./LiquidDistortion.svelte";
 export {
   canUsePageTransition,
   installAnchorNavigation,

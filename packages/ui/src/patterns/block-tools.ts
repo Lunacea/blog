@@ -64,7 +64,7 @@ export function createBlockShell({
 
   // The block's identity stays in the bar next to the views it belongs to.
   const left = document.createElement("div");
-  left.className = "flex min-w-0 items-stretch";
+  left.className = "flex flex-wrap min-w-0 items-stretch";
   if (caption) {
     const title = document.createElement("span");
     title.className = "flex min-w-0 items-center truncate pl-(--space-4) pr-(--space-2) " +
@@ -75,13 +75,13 @@ export function createBlockShell({
   }
 
   const tabs = document.createElement("div");
-  tabs.className = "flex items-stretch";
+  tabs.className = "flex flex-wrap items-stretch";
   tabs.setAttribute("role", "tablist");
   tabs.setAttribute("aria-label", `${name}の表示`);
   left.append(tabs);
 
   const actions = document.createElement("div");
-  actions.className = "flex items-stretch";
+  actions.className = "flex flex-wrap items-stretch";
 
   const preview = document.createElement("div");
   preview.className = "block-preview";
@@ -97,6 +97,7 @@ export function createBlockShell({
   editorPanel.hidden = true;
 
   const editor = document.createElement("textarea");
+  editor.id = `${id}-editor`;
   editor.className = "block w-full min-h-[10lh] resize-y border-0 bg-transparent p-(--space-4) " +
     "font-mono text-small leading-copy text-(--block-ink) field-sizing-content " +
     "focus-visible:outline-offset-[-0.25rem]";

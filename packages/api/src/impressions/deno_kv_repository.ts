@@ -6,6 +6,21 @@ export function createDenoKvImpressionRepository(
   getKv: KvProvider = () => Deno.openKv(),
   windowMs = 12 * 60 * 60_000,
 ): ImpressionRepository {
+  /**
+   * One handle for the process. Opening the store per operation gives each call its own
+   * connection to the same database file, and concurrent writes then fail with
+   * "database is locked"; a shared handle lets Deno KV serialise them internally.
+   */
+  let opened: Promise<Deno.Kv> | undefined;
+  const openStore = () => {
+    opened ??= getKv().catch((error) => {
+      // A failed open must not be cached, or the process never recovers.
+      opened = undefined;
+      throw error;
+    });
+    return opened;
+  };
+
   const countKey = (contentId: string): Deno.KvKey => ["impression", "count", contentId];
   // The actor is the existing anonymous signed cookie value, and the mark expires with the window.
   const seenKey = (contentId: string, actorId: string): Deno.KvKey => [
@@ -17,7 +32,7 @@ export function createDenoKvImpressionRepository(
 
   return {
     async record(contentId, actorId) {
-      const kv = await getKv();
+      const kv = await openStore();
       const seen = await kv.get<boolean>(seenKey(contentId, actorId));
       const current = await kv.get<number>(countKey(contentId));
       if (seen.value) return current.value ?? 0;
@@ -32,7 +47,7 @@ export function createDenoKvImpressionRepository(
     },
     async counts(contentIds) {
       if (!contentIds.length) return {};
-      const kv = await getKv();
+      const kv = await openStore();
       const entries = await kv.getMany(contentIds.map(countKey));
       return Object.fromEntries(
         contentIds.map((id, index) => {

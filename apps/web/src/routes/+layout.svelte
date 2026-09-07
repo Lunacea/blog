@@ -1,11 +1,11 @@
 <script lang="ts">
-  import "$ui/foundations/global.css";
   import { page } from "$app/state";
-  import { primaryNavigation, siteConfig } from "@lunacea/config";
-  import { FontPreloads, SettingsPanel, SiteFooter, SiteHeader, ThemeToggle } from "$ui/components";
-  import { installAnchorNavigation, installPageTransitions } from "$ui/motion";
   import { ambientWeather } from "$lib/weather.ts";
+  import { FontPreloads, SettingsPanel, SiteFooter, SiteHeader, ThemeToggle } from "$ui/components";
+  import "$ui/foundations/global.css";
+  import { installAnchorNavigation, installPageTransitions } from "$ui/motion";
   import StaticLight from "$ui/visuals/StaticLight.svelte";
+  import { primaryNavigation, siteConfig } from "@lunacea/config";
   import { onMount } from "svelte";
 
   let { children } = $props();
@@ -26,7 +26,7 @@
   {/if}
 </svelte:head>
 
-<a class="fixed top-(--space-2) left-(--space-2) z-(--z-skip-link) min-h-(--control-size) translate-y-[-150%] bg-panel px-(--space-4) py-(--space-3) transition-transform duration-(--motion-duration-fast) ease-enter focus:translate-y-0" href="#main-content">本文へ移動</a>
+<a class="fixed top-(--space-2) left-(--space-2) z-(--z-skip-link) min-h-control-size translate-y-[-150%] bg-panel px-(--space-4) py-(--space-3) transition-transform duration-(--motion-duration-fast) ease-enter focus:translate-y-0" href="#main-content">本文へ移動</a>
 <FontPreloads />
 {#if !masthead}
   <SiteHeader navigation={primaryNavigation} pathname={page.url.pathname}>

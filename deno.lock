@@ -4073,6 +4073,12 @@
           "npm:vitest@4.1.9"
         ]
       },
+      "e2e": {
+        "dependencies": [
+          "npm:@axe-core/playwright@4.12.1",
+          "npm:@playwright/test@1.61.1"
+        ]
+      },
       "packages/ui": {
         "dependencies": [
           "npm:@axe-core/playwright@4.12.1",
