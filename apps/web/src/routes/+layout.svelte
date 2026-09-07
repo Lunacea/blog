@@ -4,7 +4,7 @@
   import { primaryNavigation, siteConfig } from "@lunacea/config";
   import { FontPreloads, SettingsPanel, SiteFooter, SiteHeader, ThemeToggle } from "$ui/components";
   import { installAnchorNavigation, installPageTransitions } from "$ui/motion";
-  import { ambientWeather } from "$lib/weather-context.ts";
+  import { ambientWeather } from "$lib/weather.ts";
   import StaticLight from "$ui/visuals/StaticLight.svelte";
   import { onMount } from "svelte";
 

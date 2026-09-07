@@ -1,4 +1,4 @@
-import { getContext, setContext } from "svelte";
+import { onMount } from "svelte";
 import { type Writable, writable } from "svelte/store";
 import { siteConfig } from "@lunacea/config";
 import { weatherStateSchema } from "@lunacea/schemas";
@@ -11,8 +11,6 @@ export type WeatherContextState = {
   visual: WeatherVisualCondition;
   loaded: boolean;
 };
-
-const WEATHER_CONTEXT = Symbol("lunacea-weather");
 
 /**
  * The condition the shared static field renders. Home drives its own animated field; the catalog
@@ -34,14 +32,15 @@ function weatherUrl(): string {
   });
 }
 
-export function createWeatherContext(): Writable<WeatherContextState> {
+/** Route-local state and cancellation; no network or Svelte context enters the UI package. */
+export function useFixedLocationWeather(): Writable<WeatherContextState> {
   const state = writable<WeatherContextState>({ visual: "neutral", loaded: false });
-  setContext(WEATHER_CONTEXT, state);
+  onMount(() => {
+    const controller = new AbortController();
+    void loadFixedLocationWeather(state, controller.signal);
+    return () => controller.abort();
+  });
   return state;
-}
-
-export function getWeatherContext(): Writable<WeatherContextState> {
-  return getContext<Writable<WeatherContextState>>(WEATHER_CONTEXT);
 }
 
 export async function loadFixedLocationWeather(

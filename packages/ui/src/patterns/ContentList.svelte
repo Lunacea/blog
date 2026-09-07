@@ -49,8 +49,6 @@
     href={entry.href ?? contentHref(entry)}
     class:has-composition={Boolean(entry.composition)}
     data-content-list-record
-    data-cursor="interactive"
-    data-cursor-label={entry.type === "article" ? "Read more" : "View more"}
   >
     <div class="copy relative z-(--z-content) text-shadow-ui-mask">
       <div class="grid justify-items-start gap-2 text-(length:--text-caption) text-quiet tabular-nums group-hover:text-current group-focus-visible:text-current">

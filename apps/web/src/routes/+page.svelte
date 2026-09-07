@@ -1,10 +1,9 @@
 <script lang="ts">
   import { dev } from "$app/environment";
   import { page } from "$app/state";
-  import { onMount } from "svelte";
   import PageHead from "$lib/components/PageHead.svelte";
   import { responsiveImages } from "$lib/.generated/images.ts";
-  import { createWeatherContext, loadFixedLocationWeather } from "$lib/weather-context.ts";
+  import { useFixedLocationWeather } from "$lib/weather.ts";
   import { ThemeToggle } from "$ui/components";
   import { ForwardGlyph } from "$ui/icons";
   import { HomeOpening } from "$ui/motion";
@@ -14,16 +13,10 @@
   import { siteConfig, visualAssets } from "@lunacea/config";
 
   let { data } = $props();
-  const weather = createWeatherContext();
+  const weather = useFixedLocationWeather();
   const condition = $derived(
     (dev ? parseWeatherVisualOverride(page.url.searchParams.get("weather")) : null) ?? $weather.visual,
   );
-
-  onMount(() => {
-    const controller = new AbortController();
-    void loadFixedLocationWeather(weather, controller.signal);
-    return () => controller.abort();
-  });
 
   /*
    * The mark is only ever drawn at the card's portrait size, so its variants are density steps

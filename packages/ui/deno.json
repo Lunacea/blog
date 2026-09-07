@@ -65,7 +65,8 @@
   },
   "tasks": {
     "storybook": "deno task --cwd ../.. fonts:generate && deno run -A npm:storybook@10.4.6 dev -p 6006 --no-open",
-    "build": "deno task --cwd ../.. fonts:generate && deno run -A npm:storybook@10.4.6 build --quiet",
-    "test:storybook": "deno task build && deno run -A scripts/check-storybook.ts"
+    "build": "deno task --cwd ../.. fonts:generate && deno task build:prepared",
+    "test:storybook": "deno task build && deno run -A scripts/check-storybook.ts",
+    "build:prepared": "deno run -A npm:storybook@10.4.6 build --quiet"
   }
 }

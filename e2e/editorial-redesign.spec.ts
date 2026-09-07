@@ -68,7 +68,7 @@ test(
   },
 );
 
-test("the catalog filters by category and by tag using GET", async ({ page }) => {
+test("the catalog filters by category and by tag using GET", async ({ page }, info) => {
   await page.goto("/articles");
   const index = page.getByRole("list", { name: "記事一覧" });
   const all = await index.locator("> li").count();
@@ -76,6 +76,11 @@ test("the catalog filters by category and by tag using GET", async ({ page }) =>
 
   // Category is the primary axis and lives in its own rail.
   const categories = page.getByRole("navigation", { name: "カテゴリ", exact: true });
+  if (info.project.name === "mobile") {
+    // Hydration folds the rail on phones; open it as a reader would before choosing a category.
+    await expect(categories.locator("details")).not.toHaveAttribute("open");
+    await categories.locator("summary").click();
+  }
   await categories.getByRole("link").nth(1).click();
   await expect(page).toHaveURL(/category=/);
   await expect(index.locator("> li").first()).toBeVisible();
@@ -117,6 +122,68 @@ test("Home light is optional and is disposed when motion turns off", async ({ pa
   await expect(page.locator("#home-title")).toBeVisible();
   await expect(page.locator(HOME_INDEX)).toHaveCount(6);
 });
+
+test(
+  "mobile light keeps its drawing buffer through scroll and recovers to static on context loss",
+  async ({ page }, info) => {
+    test.skip(info.project.name !== "mobile");
+    const gpuErrors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error" && /WebGL|THREE|shader/i.test(message.text())) {
+        gpuErrors.push(message.text());
+      }
+    });
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 8 });
+      Object.defineProperty(navigator, "deviceMemory", { get: () => 8 });
+      localStorage.setItem("lunacea-motion", "full");
+    });
+    await page.goto("/");
+    const light = page.locator("[data-editorial-light]");
+    await expect(light).toHaveAttribute("data-webgl", "true", { timeout: 30_000 });
+    const canvas = light.locator("canvas");
+    await expect.poll(() => canvas.evaluate((node) => (node as HTMLCanvasElement).width))
+      .toBeGreaterThan(300);
+    const result = await canvas.evaluate(async (node) => {
+      const canvas = node as HTMLCanvasElement;
+      let reallocations = 0;
+      const observer = new MutationObserver((entries) => {
+        reallocations += entries.length;
+      });
+      observer.observe(canvas, { attributes: true, attributeFilter: ["width", "height"] });
+      for (let step = 0; step < 12; step++) {
+        globalThis.scrollBy(0, step < 6 ? 120 : -120);
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        );
+      }
+      observer.disconnect();
+      return {
+        reallocations,
+        connected: canvas.isConnected,
+        width: canvas.width,
+        cssWidth: canvas.clientWidth,
+      };
+    });
+    expect(result.reallocations).toBe(0);
+    expect(result.connected).toBe(true);
+    expect(result.width).toBeLessThanOrEqual(result.cssWidth);
+    await expect(light.locator("[data-rendering]")).toHaveAttribute("data-rendering", "active");
+
+    // Real viewport changes must still resize and redraw, unlike scroll-only updates.
+    await page.setViewportSize({ width: 480, height: 760 });
+    await expect.poll(() => canvas.evaluate((node) => (node as HTMLCanvasElement).width)).toBe(480);
+    await page.screenshot({ path: info.outputPath("mobile-light-scroll.png") });
+    expect(gpuErrors).toEqual([]);
+    await canvas.evaluate((node) => {
+      (node as HTMLCanvasElement).getContext("webgl2")!.getExtension("WEBGL_lose_context")!
+        .loseContext();
+    });
+    await expect(canvas).toHaveCount(0);
+    await expect(page.locator("#home-title")).toBeVisible();
+    await expect(light).toBeAttached();
+  },
+);
 
 test("OS restrictions and WebGL failure preserve all home content", async ({ page }, info) => {
   test.skip(info.project.name === "no-javascript");

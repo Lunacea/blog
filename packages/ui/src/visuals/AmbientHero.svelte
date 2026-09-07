@@ -236,7 +236,6 @@
   data-repel-active={repelActive}
   data-repel-x={repelX}
   data-repel-y={repelY}
-  data-cursor={dragging ? "drag" : "webgl"}
   onpointerdown={startDrag}
   onpointermove={moveDrag}
   onpointerup={stopDrag}

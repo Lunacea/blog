@@ -68,15 +68,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
     text-decoration-color: var(--color-accent);
   }
 
-  html[data-custom-cursor] body,
-  html[data-custom-cursor] a,
-  html[data-custom-cursor] button,
-  html[data-custom-cursor] summary,
-  html[data-custom-cursor] label,
-  html[data-custom-cursor] .article-record .prose {
-    cursor: none;
-  }
-
   button,
   select,
   input,

@@ -39,7 +39,7 @@
       const ticket = ++generation;
       try {
         const { mountEditorialLight } = await import("./editorial-light.ts");
-        if (disposed || ticket !== generation || !eligible()) return;
+        if (disposed || failed || ticket !== generation || !eligible() || !visible || document.hidden) return;
         const scene = mountEditorialLight(host, () => { failed = true; stop(); });
         destroy = scene.destroy;
         resume = scene.resume;
@@ -47,7 +47,9 @@
         scene.setCondition(condition);
         scene.resume(visible && !document.hidden);
         enabled = true;
-      } catch { failed = true; stop(); }
+      } catch {
+        if (!disposed && ticket === generation) { failed = true; stop(); }
+      }
     };
     const observer = new IntersectionObserver(([entry]) => {
       visible = Boolean(entry?.isIntersecting);

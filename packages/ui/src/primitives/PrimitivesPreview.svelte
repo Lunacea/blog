@@ -40,7 +40,7 @@
   <section class="grid gap-4 border-t border-rule pt-4" aria-labelledby="toggle-heading">
     <h2 class="m-0 font-editorial text-(length:--text-h3) font-regular" id="toggle-heading">Toggle group</h2>
     <ToggleGroup.Root
-      class="flex flex-wrap gap-2 **:data-[slot=toggle-group-item]:min-h-control **:data-[slot=toggle-group-item]:cursor-pointer **:data-[slot=toggle-group-item]:border **:data-[slot=toggle-group-item]:border-rule **:data-[slot=toggle-group-item]:bg-panel **:data-[slot=toggle-group-item]:px-3 **:data-[slot=toggle-group-item]:text-ink [&_[data-slot=toggle-group-item][data-state=on]]:border-signal [&_[data-slot=toggle-group-item][data-state=on]]:bg-[color-mix(in_srgb,var(--color-accent)_10%,var(--color-surface))]"
+      class="flex flex-wrap gap-2 **:data-[slot=toggle-group-item]:min-h-control **:data-[slot=toggle-group-item]:cursor-pointer **:data-[slot=toggle-group-item]:border **:data-[slot=toggle-group-item]:border-rule **:data-[slot=toggle-group-item]:bg-panel **:data-[slot=toggle-group-item]:px-3 **:data-[slot=toggle-group-item]:text-ink **:data-[slot=toggle-group-item]:data-[state=on]:border-signal **:data-[slot=toggle-group-item]:data-[state=on]:bg-[color-mix(in_srgb,var(--color-accent)_10%,var(--color-surface))]"
       type="multiple"
       value={selected}
       onValueChange={(value) => selected = value}

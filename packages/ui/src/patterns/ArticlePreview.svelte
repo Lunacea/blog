@@ -61,8 +61,6 @@
       "grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start",
   )}
   {href}
-  data-cursor="interactive"
-  data-cursor-label="Read more"
   data-article-preview={variant}
 >
   {#if hasMedia && media && variant !== "compact"}

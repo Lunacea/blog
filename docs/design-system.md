@@ -233,3 +233,18 @@ remain available.
 Reactions remain a centered post-reading heart, count and share link. Optimistic counts reconcile
 with the existing server contract; the one-shot thank-you celebration only runs with full motion.
 The X share action is a plain intent link. Public status labels and stored enums remain unchanged.
+
+## Background rendering on mobile
+
+The fixed background uses `h-lvh` so browser toolbar motion does not continually resize its surface.
+ResizeObserver and scroll events only mark pending work; the renderer reads dimensions once and
+resizes a changed drawing buffer immediately before rendering. Touch devices use at most DPR 1 and
+three noise octaves; fine-pointer devices retain the existing DPR and five octaves. Grain is
+spatially stable instead of being reseeded every frame. Theme, motion Off and failure behavior
+remain unchanged. Route-owned weather loading/cancellation lives in `apps/web/src/lib/weather.ts`,
+while `editorial-light.ts` owns GPU lifecycle/input and `editorial-light-material.ts` owns the
+shader and weather palette. Both GPU modules stay behind the same dynamic import.
+
+References: [Tailwind transforms](https://tailwindcss.com/docs/transform),
+[viewport lengths](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/length),
+[WebGL rendering budgets](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices).

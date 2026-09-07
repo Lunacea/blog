@@ -69,7 +69,7 @@
         {#each flakes.slice(0, 100) as flake}
           <g transform={`translate(${flake.x} 0)`} opacity={.28 + flake.depth * .6}>
             <g
-              class="[transform:translateY(var(--snow-rest))] motion-full:animate-weather-snowfall motion-reduce:animate-none"
+              class="transform-[translateY(var(--snow-rest))] motion-full:animate-weather-snowfall motion-reduce:animate-none"
               style={`--snow-duration:${flake.fallDuration}s;--snow-delay:${flake.fallDelay}s;--snow-rest:${flake.y}px;--snow-drift:${flake.drift * 14}px`}
             >
               <g

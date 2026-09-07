@@ -43,8 +43,6 @@
   {href}
   rel="noreferrer"
   target="_blank"
-  data-cursor="interactive"
-  data-cursor-label="Open external"
 >
   {#if resolved.image}
     <span class="preview-media grid size-full place-items-center bg-canvas p-2 max-xs:p-1">

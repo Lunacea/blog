@@ -7,6 +7,7 @@ DeployとCloudflareの画面に表示されたものを正として転記しま�
 ## 1. 事前ゲート
 
 ```bash
+deno task content:generate
 deno install --frozen --allow-scripts=npm:sharp
 deno task fmt:check
 deno task lint
@@ -14,7 +15,7 @@ deno task check
 deno task test
 deno task build
 deno task budget:check
-deno task test:e2e
+E2E_PREVIEW=true deno task test:e2e
 ```
 
 実コンテンツへの置換が終わるまでは`packages/config/mod.ts`の`sampleMode: true`を維持します。実績、著者、canonical
@@ -25,11 +26,17 @@ URLを確認し、サンプルが0件になってから`false`へ切り替えま
 1. Deno Deployで新規Appを作り、対象GitHub repositoryを接続する。
 2. App directoryを`apps/web`にする。これはsource code内からは指定できないモノレポ設定である。
 3. Framework
-   presetが`sveltekit`、installが`deno install --frozen --allow-scripts=npm:sharp`、buildが`deno task build`になっていることを確認する。`apps/web/deno.json`がダッシュボード値より優先される。
+   presetが`sveltekit`、installが`apps/web/deno.json`の`deploy.install`、buildが`deno task build`になっていることを確認する。`apps/web/deno.json`がダッシュボード値より優先される。
 4. Preview TimelineはPR/branch、Production Timelineは保護された公開branchへ接続する。
 
-SvelteKitはDeno Deployでネイティブ対応されており、追加adapterや独自entrypointは不要です。参考:
-https://docs.deno.com/deploy/reference/frameworks/ と https://docs.deno.com/deploy/reference/builds/
+GitHub連携の`deno_deploy.build.routed`通知を受けると、CDが通知されたSHAと `*.deno.net`のPreview
+originを検証し、そのcommitのE2Eを実行します。 PRコメントは送信せず、Actions
+summaryと失敗時のartifactを確認します。
+イベント形式は[Deno DeployのGitHub連携](https://docs.deno.com/deploy/reference/apps/#github-events-integration)を参照してください。
+
+このリポジトリでは`apps/web/svelte.config.js`で`@deno/svelte-adapter`を設定しています。
+独自サーバーやentrypointは追加しません。参考: https://docs.deno.com/deploy/reference/frameworks/ と
+https://docs.deno.com/deploy/reference/builds/
 
 ## 3. ランタイム設定
 
@@ -74,12 +81,13 @@ curl -fsSI https://<preview-host>/og/article/<slug>.png
 
 ## 6. 公開後と復旧
 
-- `/`、Articles、Works、Talks、Archive、About、タグ、検索をPC/モバイルで確認する。
+- `/`、Articles、記事詳細、カテゴリ・タグ・検索をPC/モバイルで確認する。旧Search/Aboutの308、廃止したWorks/Archiveの404も確認する。
 - canonical、JSON-LD、OGP、RSS、Atom、Sitemap、robotsを確認する。
-- Light/Dark/Auto、Full/Reduced/Off、JS無効、WebGL fallbackを確認する。
+- Light/Dark/Auto、motion ON/OFF、JS無効、WebGL fallbackを確認する。
 - health、config固定地点の天候fallback、リアクションのKV書込みを確認する。
 - Deno Deployのbuild/runtime logsとtracesに継続エラーがないことを確認する。
 - TLS chainと証明書対象hostを確認する。
+- 実機iOS/Androidとscreen readerで、本文・主要導線・フォーカス移動を確認する。
 
 異常時はProduction Timelineのroutingを直前の正常Revisionへ戻します。データ破壊を伴わないためKV
 assignmentとdomainは維持します。原因修正は新しいPreview

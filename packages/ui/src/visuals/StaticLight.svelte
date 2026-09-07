@@ -22,7 +22,7 @@
   } = $props();
 </script>
 
-<div class="pointer-events-none fixed inset-0 -z-1 overflow-hidden print:hidden forced-colors:hidden" aria-hidden="true" data-editorial-light data-webgl={webgl} data-weather={condition}>
+<div class="pointer-events-none fixed inset-x-0 top-0 h-lvh -z-1 overflow-hidden print:hidden forced-colors:hidden" aria-hidden="true" data-editorial-light data-webgl={webgl} data-weather={condition}>
   <!--
     Grain only. Any gradient here is visible before the animated field has loaded, and a light
     that nothing is animating is just a smudge; the field fades in on its own once it is ready.

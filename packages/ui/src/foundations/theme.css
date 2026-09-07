@@ -156,12 +156,6 @@
   --animate-toc-open: toc-open var(--motion-duration-base) var(--motion-ease-enter);
   --animate-toc-close: toc-close var(--motion-duration-fast) var(--motion-ease-exit);
   --animate-profile-card-arrive: profile-card-arrive var(--motion-duration-opening) var(--motion-ease-enter) 1;
-  --animate-cursor-square-spin: cursor-square-spin calc(var(--motion-duration-opening) * 1.4) linear infinite;
-  --animate-cursor-settle-diamond: cursor-settle-diamond var(--motion-duration-fast) var(--motion-ease-enter) both;
-  --animate-cursor-settle-square: cursor-settle-square var(--motion-duration-fast) var(--motion-ease-enter) both;
-  --animate-cursor-settle-text: cursor-settle-text var(--motion-duration-fast) var(--motion-ease-enter) both;
-  --animate-cursor-message-enter: cursor-message-enter var(--motion-duration-fast) var(--motion-ease-enter) var(--motion-duration-base) both;
-  --animate-cursor-view-more-fill: cursor-view-more-fill 2400ms linear var(--motion-duration-base) infinite;
   --animate-home-visual-enter: home-visual-enter 500ms var(--motion-ease-enter) 400ms both;
   --animate-home-title-enter: home-title-enter 400ms var(--motion-ease-enter) 900ms both;
   --animate-home-other-enter: home-other-enter 500ms var(--motion-ease-enter) 1300ms both;
@@ -404,57 +398,6 @@
         rotateZ(var(--card-rotate-z));
     }
   }
-  @keyframes cursor-square-spin {
-    to {
-      rotate: 360deg;
-    }
-  }
-  @keyframes cursor-settle-diamond {
-    from {
-      rotate: 0deg;
-    }
-    to {
-      rotate: 45deg;
-    }
-  }
-  @keyframes cursor-settle-square {
-    from {
-      rotate: 45deg;
-    }
-    to {
-      rotate: 0deg;
-    }
-  }
-  @keyframes cursor-settle-text {
-    0% {
-      width: var(--space-5);
-      height: var(--space-5);
-      border-width: var(--cursor-stroke-width);
-      rotate: 45deg;
-    }
-    55% {
-      width: var(--space-5);
-      height: var(--space-5);
-      border-width: var(--cursor-stroke-width);
-      rotate: 0deg;
-    }
-    100% {
-      width: 0;
-      height: var(--space-6);
-      border-width: 0 var(--cursor-stroke-width) 0 0;
-      rotate: 0deg;
-    }
-  }
-  @keyframes cursor-message-enter {
-    to {
-      opacity: 1;
-    }
-  }
-  @keyframes cursor-view-more-fill {
-    to {
-      background-position: calc(var(--space-32) + var(--space-16) + var(--space-4)) 0;
-    }
-  }
   @keyframes home-visual-enter {
     from {
       opacity: 0;
@@ -627,7 +570,6 @@
   --paper-dogear-rest: 0.375rem;
   --paper-dogear-open: 0.6875rem;
   --border-width-rule: 1px;
-  --cursor-stroke-width: 3px;
   --control-size: 2.75rem;
   --header-menu-width: var(--space-28);
   --site-header-block: 4.3125rem;

@@ -1,62 +1,15 @@
 # ブランチの保護ルール
 
-バグや命名ルール違反のコードが `main` に直接プッシュ、
-またはCI未通過のままマージされるのを防ぐガードレールを設定します。
+`main`と`develop`のbranch protectionまたはrulesetで、次のstatus checksを必須にします。
+名前はworkflowのjob名と一致させてください。
 
-## 設定コマンド
+- `Format, lint, test, build, E2E`（Quality gate）
+- `タイトル検証およびラベル自動付与`（PR Governance）
 
-以下を実行することで、GitHub API経由で `main` ブランチに保護ルールが適用されます。
+PR経由の変更と最新base branchでのチェック成功を要求し、force pushとbranch削除を禁止します。
+管理者への適用とレビュー人数はリポジトリの運用に合わせて設定してください。
 
-```bash
-# 1. 設定内容を一時JSONファイルとして出力
-cat << 'EOF' > protection.json
-{
-  "required_status_checks": {
-    "strict": true,
-    "checks": [
-      { "context": "🧪 静的解析とテストの実行" },
-      { "context": "タイトル検証およびラベル自動付与" }
-    ]
-  },
-  "enforce_admins": false,
-  "required_pull_request_reviews": null,
-  "restrictions": null,
-  "allow_force_pushes": false,
-  "allow_deletions": false
-}
-EOF
+旧チェック名`🧪 静的解析とテストの実行`が残っている場合は、現在のQuality gate名へ変更します。
+この文書やworkflowの編集だけでは、GitHub上の保護設定は変更されません。
 
-# 2. GitHub APIを実行してmainブランチにルールを適用
-gh api repos/:owner/:repo/branches/main/protection --method PUT --input protection.json
-
-# 3. 一時ファイルの削除
-rm -f protection.json
-```
-
-以下を実行し `develop` ブランチも同様に保護ルールを適用します。
-
-```bash
-# 1. 設定内容を一時JSONファイルとして出力
-cat << 'EOF' > protection_develop.json
-{
-  "required_status_checks": {
-    "strict": true,
-    "checks": [
-      { "context": "🧪 静的解析とテストの実行" },
-      { "context": "タイトル検証およびラベル自動付与" }
-    ]
-  },
-  "enforce_admins": false,
-  "required_pull_request_reviews": null,
-  "restrictions": null,
-  "allow_force_pushes": false,
-  "allow_deletions": false
-}
-EOF
-
-# 2. GitHub APIを実行してdevelopブランチにルールを適用
-gh api repos/:owner/:repo/branches/develop/protection --method PUT --input protection_develop.json
-
-# 3. 一時ファイルの削除
-rm -f protection_develop.json
-```
+CDは`repository_dispatch`で後から実行されるため、PRの必須チェックにはしません。

@@ -8,7 +8,7 @@ import { MediaSlot } from "$ui/visuals/index.ts";
 import ReadingEnhancements from "$ui/patterns/ReadingEnhancements.svelte";
 import GlassProfileCard from "$ui/patterns/GlassProfileCard.svelte";
 import ReactionBar from "$lib/components/ReactionBar.svelte";
-import { loadFixedLocationWeather } from "$lib/weather-context.ts";
+import { loadFixedLocationWeather } from "$lib/weather.ts";
 import { get, writable } from "svelte/store";
 import ArticlesPage from "../routes/articles/+page.svelte";
 import LinkPreviewFixture from "./LinkPreviewFixture.svelte";

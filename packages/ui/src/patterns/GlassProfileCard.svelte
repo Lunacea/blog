@@ -382,21 +382,19 @@
 </script>
 
 <article
-  class="profile-card group/profile relative w-[min(var(--profile-card-width),calc(100vw-(var(--layout-gutter)*2)))] max-w-(--layout-grid-wide) touch-pan-y [--card-x:0px] [--card-y:0px] [transform:translate3d(var(--card-x),var(--card-y),0)] max-xs:w-[min(var(--profile-card-width),calc(100vw-(var(--profile-card-boundary)*2)))]"
+  class="profile-card group/profile relative w-[min(var(--profile-card-width),calc(100vw-(var(--layout-gutter)*2)))] max-w-(--layout-grid-wide) touch-pan-y [--card-x:0px] [--card-y:0px] transform-[translate3d(var(--card-x),var(--card-y),0)] max-xs:w-[min(var(--profile-card-width),calc(100vw-(var(--profile-card-boundary)*2)))]"
   data-dragging={dragging}
   data-inertial={inertial}
   data-introduced={introduced}
-  data-cursor="drag"
-  data-cursor-label="Drag it!"
   bind:this={card}
 >
   <div
-    class="card-surface relative isolate grid origin-[48%_52%] transform-3d gap-(--profile-card-gap) overflow-hidden rounded-sharp border border-rule bg-paper p-(--profile-card-padding) shadow-paper before:pointer-events-none before:absolute before:inset-0 before:bg-[url('/textures/editorial-noise.svg')] before:bg-size-[192px_192px] before:bg-repeat before:opacity-30 before:mix-blend-multiply before:content-[''] theme-dark:before:opacity-20 theme-dark:before:invert theme-dark:before:mix-blend-screen forced-colors:before:hidden print:before:hidden *:relative [--card-rotate-x:0deg] [--card-rotate-y:0deg] [--card-rotate-z:var(--profile-card-resting-tilt)] [transform:perspective(60rem)_rotateX(var(--card-rotate-x))_rotateY(var(--card-rotate-y))_rotateZ(var(--card-rotate-z))] transition-transform duration-(--motion-duration-fast) ease-enter group-data-[introduced=true]/profile:animate-profile-card-arrive group-data-[dragging=true]/profile:animate-none group-data-[dragging=true]/profile:[transform:perspective(60rem)_rotateX(var(--card-rotate-x))_rotateY(var(--card-rotate-y))_rotateZ(var(--card-rotate-z))_scale(1.012)] group-data-[dragging=true]/profile:transition-none group-data-[inertial=true]/profile:animate-none group-data-[inertial=true]/profile:[transform:perspective(60rem)_rotateX(var(--card-rotate-x))_rotateY(var(--card-rotate-y))_rotateZ(var(--card-rotate-z))_scale(1.006)] motion-reduced:[--card-rotate-z:0deg] motion-reduced:transform-none motion-reduced:duration-(--motion-duration-immediate) motion-off:[--card-rotate-z:0deg] forced-colors:border forced-colors:border-[CanvasText] forced-colors:bg-[Canvas] forced-colors:shadow-none forced-colors:backdrop-blur-none forced-colors:transform-none"
+    class="card-surface relative isolate grid origin-[48%_52%] transform-3d gap-(--profile-card-gap) overflow-hidden rounded-sharp border border-rule bg-paper p-(--profile-card-padding) shadow-paper before:pointer-events-none before:absolute before:inset-0 before:bg-[url('/textures/editorial-noise.svg')] before:bg-size-[192px_192px] before:bg-repeat before:opacity-30 before:mix-blend-multiply before:content-[''] theme-dark:before:opacity-20 theme-dark:before:invert theme-dark:before:mix-blend-screen forced-colors:before:hidden print:before:hidden *:relative [--card-rotate-x:0deg] [--card-rotate-y:0deg] [--card-rotate-z:var(--profile-card-resting-tilt)] transform-[perspective(60rem)_rotateX(var(--card-rotate-x))_rotateY(var(--card-rotate-y))_rotateZ(var(--card-rotate-z))] transition-transform duration-(--motion-duration-fast) ease-enter group-data-[introduced=true]/profile:animate-profile-card-arrive group-data-[dragging=true]/profile:animate-none group-data-[dragging=true]/profile:transform-[perspective(60rem)_rotateX(var(--card-rotate-x))_rotateY(var(--card-rotate-y))_rotateZ(var(--card-rotate-z))_scale(1.012)] group-data-[dragging=true]/profile:transition-none group-data-[inertial=true]/profile:animate-none group-data-[inertial=true]/profile:transform-[perspective(60rem)_rotateX(var(--card-rotate-x))_rotateY(var(--card-rotate-y))_rotateZ(var(--card-rotate-z))_scale(1.006)] motion-reduced:[--card-rotate-z:0deg] motion-reduced:transform-none motion-reduced:duration-(--motion-duration-immediate) motion-off:[--card-rotate-z:0deg] forced-colors:border forced-colors:border-[CanvasText] forced-colors:bg-[Canvas] forced-colors:shadow-none forced-colors:backdrop-blur-none forced-colors:transform-none"
     bind:this={surface}
     onanimationend={finishIntroduction}
   >
     <header class="identity grid grid-cols-[var(--profile-card-media)_minmax(0,1fr)] items-center gap-(--space-3)">
-      <div class="profile-media w-(--profile-card-media) cursor-grab select-none group-data-[dragging=true]/profile:cursor-grabbing [&_.media-slot]:aspect-square [&_.media-slot]:rounded-none [&_[data-asset-placeholder]]:aspect-square [&_[data-asset-placeholder]]:rounded-none [&_img]:object-contain [&_img]:filter-none">
+      <div class="profile-media w-(--profile-card-media) cursor-grab select-none group-data-[dragging=true]/profile:cursor-grabbing [&_.media-slot]:aspect-square [&_.media-slot]:rounded-none **:data-asset-placeholder:aspect-square **:data-asset-placeholder:rounded-none [&_img]:object-contain [&_img]:filter-none">
         <MediaSlot {asset} showPlaceholder={!asset.src} label="Profile character / replace" />
       </div>
       <div class="identity-copy min-w-0">
@@ -411,7 +409,7 @@
 
     <nav class="contact-list grid gap-(--space-2) text-small [&_a]:grid [&_a]:min-h-(--space-6) [&_a]:w-fit [&_a]:grid-cols-[var(--space-5)_minmax(0,1fr)] [&_a]:items-center [&_a]:gap-(--space-2) [&_a]:leading-ui [&_a]:text-inherit [&_a]:no-underline [&_a]:transition-[color,transform] [&_a]:duration-(--motion-duration-fast) [&_a]:ease-standard [&_a]:hover:translate-x-(--space-1) [&_a]:hover:text-action [&_a]:focus-visible:text-action [&_a]:focus-visible:outline-none [&_a]:focus-visible:shadow-(--focus-ring) motion-reduce:[&_a]:transform-none motion-reduce:[&_a]:duration-(--motion-duration-immediate) [&_.contact-row]:grid [&_.contact-row]:min-h-(--space-6) [&_.contact-row]:grid-cols-[var(--space-5)_minmax(0,1fr)] [&_.contact-row]:items-center [&_.contact-row]:gap-(--space-2) [&_.contact-row]:leading-ui [&_.contact-icon]:grid [&_.contact-icon]:w-(--space-4) [&_.contact-icon]:place-items-center [&_.contact-icon]:justify-self-center [&_.contact-icon_svg]:size-[1em] [&_.email-icon_svg]:scale-[1.12] [&_.unavailable]:text-quiet" aria-label="連絡先">
       {#if github}
-        <a href={github} rel="me" data-cursor="interactive">
+        <a href={github} rel="me">
           <span class="contact-icon"><Icon name={socialIcons.github} /></span>
           <span>GitHub</span>
         </a>
@@ -422,7 +420,7 @@
         </span>
       {/if}
       {#if x}
-        <a href={x} rel="me" data-cursor="interactive">
+        <a href={x} rel="me">
           <span class="contact-icon"><Icon name={socialIcons.x} /></span>
           <span>X</span>
         </a>
@@ -433,7 +431,7 @@
         </span>
       {/if}
       {#if emailHref}
-        <a href={emailHref} data-cursor="interactive">
+        <a href={emailHref}>
           <span class="contact-icon email-icon"><Icon name={socialIcons.email} /></span>
           <span>Email</span>
         </a>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import PageHead from "$lib/components/PageHead.svelte";
-  import { createWeatherContext, loadFixedLocationWeather } from "$lib/weather-context.ts";
+  import { useFixedLocationWeather } from "$lib/weather.ts";
   import EditorialLight from "$ui/visuals/EditorialLight.svelte";
   import { HeaderSearch } from "$ui/components";
   import { IndexList } from "$ui/patterns";
@@ -20,16 +20,11 @@
     { label: "関連度", value: "relevance" },
   ];
 
+  const weather = useFixedLocationWeather();
+  const condition = $derived($weather.visual);
+
   // The rail is open in the markup so it works without JavaScript; narrow screens fold it once
   // the enhancement runs, because there it sits between the reader and the records.
-  const weather = createWeatherContext();
-  const condition = $derived($weather.visual);
-  onMount(() => {
-    const controller = new AbortController();
-    void loadFixedLocationWeather(weather, controller.signal);
-    return () => controller.abort();
-  });
-
   let categoryOpen = $state(true);
   let sortOpen = $state(true);
   onMount(() => {

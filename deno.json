@@ -20,7 +20,7 @@
   },
   "tasks": {
     "dev": "deno task --cwd apps/web dev",
-    "build": "deno task content:generate && deno task content:validate && deno task --cwd apps/web build",
+    "build": "deno task --cwd apps/web build",
     "fonts:generate": "deno run -A packages/ui/scripts/generate-fonts.ts",
     "fonts:check": "deno run -A packages/ui/scripts/check-fonts.ts",
     "images:generate": "deno run -A apps/web/scripts/generate-images.ts",
@@ -30,7 +30,7 @@
     "design:check": "deno run --allow-read scripts/check-design-system.ts",
     "preview": "deno task --cwd apps/web preview",
     "preview:audit": "deno task --cwd apps/web preview:audit",
-    "check": "deno task fonts:generate && deno task images:generate && deno task content:generate && deno task content:validate && deno task --cwd apps/web check",
+    "check": "deno task prepare && deno task --cwd apps/web check",
     "content:validate": "deno run --allow-read packages/content/validate.ts",
     "test": "deno test --allow-env --allow-read --unstable-kv packages/core packages/schemas packages/api packages/ui/src/visuals/hero-geometry.test.ts packages/ui/src/visuals/weather-visual.test.ts && deno task test:unit",
     "test:unit": "deno task --cwd apps/web test:unit",
@@ -39,7 +39,8 @@
     "storybook:check": "deno task --cwd packages/ui test:storybook",
     "lint": "deno lint apps packages e2e",
     "fmt": "deno fmt apps packages e2e docs README.md deno.json",
-    "fmt:check": "deno fmt --check apps packages e2e docs README.md deno.json"
+    "fmt:check": "deno fmt --check apps packages e2e docs README.md deno.json",
+    "prepare": "deno task fonts:generate && deno task images:generate && deno task content:generate && deno task content:validate"
   },
   "fmt": {
     "useTabs": false,
