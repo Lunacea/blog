@@ -7,6 +7,7 @@
     ["Secondary", "--color-secondary"],
     ["Accent", "--color-accent"],
     ["Muted", "--color-muted"],
+    ["Praise", "--color-praise"],
     ["Positive", "--color-positive"],
     ["Negative", "--color-negative"],
   ] as const;

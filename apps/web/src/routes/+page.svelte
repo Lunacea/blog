@@ -54,7 +54,9 @@
 <HomeOpening />
 <EditorialLight {condition} />
 
-<div class="relative">
+<!-- Horizontal travel stops at the page edge, while vertical overflow stays visible so the card
+     can pass over the masthead and article catalog without being cut at its home section. -->
+<div class="relative overflow-x-clip">
   <!-- Home carries no bar of any kind: the masthead is the whole identity. -->
   <header class="relative flex justify-center overflow-x-clip pt-(--page-start-clearance)" aria-labelledby="home-title">
     <!--
@@ -77,12 +79,7 @@
     </h1>
   </header>
 
-  <!--
-    The card can be carried well past this section and past the window with it, so the section
-    clips instead of scrolling: none of that travel is allowed to change how wide or how far the
-    page itself goes.
-  -->
-  <section id="about" class="carry-area scroll-mt-(--space-16) pt-(--space-16) pb-(--home-section-space)" aria-label="プロフィール">
+  <section id="about" class="scroll-mt-(--space-16) pt-(--space-16) pb-(--home-section-space)" aria-label="プロフィール">
     <div class="mx-auto flex w-full max-w-content justify-center px-(--layout-gutter)">
       <ProfileCard
         class="max-w-(--profile-card-print) max-sm:max-w-[88%]"
