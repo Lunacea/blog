@@ -6,6 +6,7 @@
   },
   "tasks": {
     "dev": "deno task --cwd ../.. fonts:generate && deno task --cwd ../.. images:generate && deno task --cwd ../.. content:generate && deno run --unstable-kv -A npm:vite@8.1.3 dev",
+    "d": "deno run --unstable-kv -A npm:vite@8.1.3 dev --host 0.0.0.0",
     "build": "deno task --cwd ../.. prepare && deno task build:prepared",
     "preview": "deno run --unstable-kv -A npm:vite@8.1.3 preview",
     "check": "deno run -A npm:@sveltejs/kit@2.69.2 sync && deno run -A npm:svelte-check@4.4.6 --tsconfig ./tsconfig.json",
