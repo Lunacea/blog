@@ -43,7 +43,6 @@
    * rather than declared as attributes: moving the card is decoration on a non-interactive
    * object, it always returns to its mark, and no ARIA role describes the gesture honestly.
    */
-  const reach = 160;
   const step = 12;
   let card = $state<HTMLElement | null>(null);
   /** Only the hydrated card can be moved, so only it announces itself as movable. */
@@ -58,8 +57,39 @@
   let originX = 0;
   let originY = 0;
 
-  function clamp(value: number) {
-    return Math.max(-reach, Math.min(reach, value));
+  /*
+   * How far the card may be carried, measured from the window rather than fixed: a third of it has
+   * to stay on screen, so two thirds of it may hang off any edge. Anything short of that is a wall
+   * met in the middle of a gesture, which is the one thing a physical object must never do. The
+   * travel is taken from the card's resting box, so it is the same reach at every width, and the
+   * section it sits in clips rather than scrolls, so none of this reaches the page's own size.
+   */
+  let reachLeft = 0;
+  let reachRight = 0;
+  let reachUp = 0;
+  let reachDown = 0;
+
+  function measure() {
+    const node = card;
+    if (!node) return;
+    const box = node.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    // The box is read while the card is being carried, so its own travel comes back out of it.
+    const left = box.left - offsetX;
+    const top = box.top - offsetY;
+    const stay = { x: box.width / 3, y: box.height / 3 };
+    reachRight = Math.max(0, innerWidth - left - stay.x);
+    reachLeft = Math.max(0, left + box.width - stay.x);
+    reachDown = Math.max(0, innerHeight - top - stay.y);
+    reachUp = Math.max(0, top + box.height - stay.y);
+  }
+
+  function clampX(value: number) {
+    return Math.max(-reachLeft, Math.min(reachRight, value));
+  }
+
+  function clampY(value: number) {
+    return Math.max(-reachUp, Math.min(reachDown, value));
   }
 
   function grab(event: PointerEvent) {
@@ -67,6 +97,7 @@
     // A press that starts on a contact is a press on that contact, not on the card.
     if (event.target instanceof Element && event.target.closest("a")) return;
     nudged = false;
+    measure();
     pointer = event.pointerId;
     card?.setPointerCapture(event.pointerId);
     fromX = event.clientX;
@@ -79,8 +110,8 @@
   function move(event: PointerEvent) {
     if (!held || event.pointerId !== pointer) return;
     event.preventDefault();
-    offsetX = clamp(originX + event.clientX - fromX);
-    offsetY = clamp(originY + event.clientY - fromY);
+    offsetX = clampX(originX + event.clientX - fromX);
+    offsetY = clampY(originY + event.clientY - fromY);
   }
 
   function release(event: PointerEvent) {
@@ -113,8 +144,9 @@
     // Otherwise the page would scroll out from under the card being moved.
     event.preventDefault();
     nudged = true;
-    offsetX = clamp(offsetX + move[0]);
-    offsetY = clamp(offsetY + move[1]);
+    measure();
+    offsetX = clampX(offsetX + move[0]);
+    offsetY = clampY(offsetY + move[1]);
   }
 
   /** Leaving the card puts the composition back the way the drag does. */
@@ -154,11 +186,13 @@
   class={cn(
     // The card names its own ink; a registered custom property change does not reliably
     // invalidate a long `color: inherit` chain.
-    "profile-card group/card grid w-full grid-cols-1 grid-rows-[1fr_auto] gap-y-(--space-3) rounded-ui-card border border-rule bg-paper p-(--space-5) text-ink shadow-ui-profile max-sm:gap-y-(--space-2)",
+    "profile-card group/card relative isolate grid w-full grid-cols-1 grid-rows-[1fr_auto] gap-y-(--space-3) rounded-ui-card border border-rule bg-card p-(--space-5) text-ink shadow-ui-profile max-sm:gap-y-(--space-2)",
+    // Carried, it passes over everything it is carried across.
+    "data-[held=true]:z-(--z-controls)",
     "translate-x-(--card-x) translate-y-(--card-y) rotate-(--card-tilt) transition-[rotate,translate,border-color,box-shadow] duration-(--motion-duration-slow) ease-spring",
-    "hover:-translate-y-(--space-2) hover:rotate-0 hover:border-ink hover:shadow-ui-overlay focus-within:rotate-0 focus-within:border-ink",
+    "hover:-translate-y-(--space-2) hover:rotate-0 hover:border-ink hover:shadow-ui-profile-lifted focus-within:rotate-0 focus-within:border-ink",
     // While it is being carried it must follow the finger exactly, with nothing easing it.
-    "cursor-grab touch-pan-y select-none data-[held=true]:cursor-grabbing data-[held=true]:touch-none data-[held=true]:rotate-0 data-[held=true]:shadow-ui-overlay data-[held=true]:transition-none data-[held=true]:hover:translate-y-(--card-y)",
+    "cursor-grab touch-pan-y select-none data-[held=true]:cursor-grabbing data-[held=true]:touch-none data-[held=true]:rotate-0 data-[held=true]:shadow-ui-profile-lifted data-[held=true]:transition-none data-[held=true]:hover:translate-y-(--card-y)",
     // Arrow keys answer at once; the slow spring belongs to the tilt, not to a repeated key.
     "data-[nudged=true]:duration-(--motion-duration-fast) focus-visible:rotate-0 focus-visible:border-ink",
     "motion-off:cursor-auto motion-off:transition-none home-opening:animate-card-arrive max-sm:p-(--space-4)",

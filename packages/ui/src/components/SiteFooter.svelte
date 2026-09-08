@@ -2,6 +2,7 @@
   import type { Snippet } from "svelte";
   import { onMount } from "svelte";
   import { Icon, socialIcons } from "../icons/index.ts";
+  import { createLiquidSpring } from "../motion/liquid.ts";
   import { subscribeMotionCapabilities } from "../motion/preferences.ts";
 
   let {
@@ -39,29 +40,74 @@
    * Where the pointer sits on the address, as a fraction of it. A lens of that position is the
    * only part of the word that warps, and the noise pattern is offset by it as well, so the ink
    * moves differently depending on which letters you are over.
+   *
+   * The lens stays where the pointer left it and the ink rings down out of it on the same spring
+   * the masthead and the error numerals use: taking the pointer away lets the address settle like
+   * something with weight, rather than snapping back the instant hover ends.
    */
   let touchX = $state(0.5);
   let touchY = $state(0.5);
-  let held = $state(false);
+  let wet = $state(0);
+  let disturbed = $state(false);
+  const spring = createLiquidSpring();
+  let intent = 0;
+  let frame = 0;
+  let last = 0;
   const warpX = $derived(Math.round((touchX - 0.5) * 260));
   const warpY = $derived(Math.round((touchY - 0.5) * 90));
-  const warpScale = $derived(held ? 11 + Math.round(Math.abs(touchX - 0.5) * 12) : 7);
-  const lens = $derived(`--touch-x:${(touchX * 100).toFixed(2)}%;--touch-y:${(touchY * 100).toFixed(2)}%`);
+  const warpScale = $derived(7 + Math.round(wet * (4 + Math.abs(touchX - 0.5) * 12)));
+  /*
+   * The lens is either there or it is not. Fading it by how much movement is left made the ink
+   * change colour and weight all the way down the settling — the warped copy showing through the
+   * cut-away base at every depth in between — and a reader reads that as the word flickering.
+   * Only the shape carries the inertia; how much of the word is warped does not move at all.
+   */
+  const lens = $derived(
+    `--touch-x:${(touchX * 100).toFixed(2)}%;--touch-y:${(touchY * 100).toFixed(2)}%;` +
+      `--footer-wet:${disturbed ? 1 : 0}`,
+  );
+
+  function step(now: number) {
+    const delta = Math.min(last ? (now - last) / 1000 : 0, 0.05);
+    last = now;
+    // The signed position of the spring displaces the ink, so releasing it pulls the letters
+    // through the other way and back. That is the whole of the inertia: the lens itself is not
+    // on a spring, and nothing about how the address is drawn changes while the ink settles.
+    wet = spring.advance(intent, delta);
+    if (intent === 0 && !spring.moving) {
+      frame = 0;
+      spring.settle();
+      wet = 0;
+      disturbed = false;
+      return;
+    }
+    frame = requestAnimationFrame(step);
+  }
+
+  function run() {
+    if (frame || document.documentElement.dataset.motion !== "full") return;
+    disturbed = true;
+    last = 0;
+    frame = requestAnimationFrame(step);
+  }
+
+  let address = $state<HTMLElement | null>(null);
 
   function track(event: PointerEvent) {
     // With motion off the address is never distorted, so there is nothing to follow.
-    if (document.documentElement.dataset.motion !== "full") return;
-    const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    if (!address || document.documentElement.dataset.motion !== "full") return;
+    const box = address.getBoundingClientRect();
     if (!box.width || !box.height) return;
     touchX = (event.clientX - box.left) / box.width;
     touchY = (event.clientY - box.top) / box.height;
-    held = true;
+    intent = 1;
+    run();
   }
 
+  /** The lens is left where it was: the ink rings down in place rather than sliding home. */
   function release() {
-    held = false;
-    touchX = 0.5;
-    touchY = 0.5;
+    intent = 0;
+    run();
   }
 
   /*
@@ -86,6 +132,12 @@
   onMount(() => {
     const read = () => (allowed = document.documentElement.dataset.motion === "full");
     read();
+    // Bound to the node rather than declared, the way every other liquid surface here is: the
+    // warp is decoration over a mailto link, and it must not depend on event delegation reaching
+    // past the warped copy of the address that sits on top of it.
+    address?.addEventListener("pointermove", track, { passive: true });
+    address?.addEventListener("pointerleave", release);
+    address?.addEventListener("blur", release);
     const stopCapabilities = subscribeMotionCapabilities(read);
     addEventListener("lunacea:motion", read);
     const observer = new IntersectionObserver(([entry]) => {
@@ -93,6 +145,11 @@
     });
     if (field) observer.observe(field);
     return () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      address?.removeEventListener("pointermove", track);
+      address?.removeEventListener("pointerleave", release);
+      address?.removeEventListener("blur", release);
       stopCapabilities();
       removeEventListener("lunacea:motion", read);
       observer.disconnect();
@@ -167,15 +224,16 @@
     <div class="grid justify-items-center gap-y-(--space-4) py-(--space-10) text-center">
       <p class="m-0 font-stretch-74% text-folio leading-none tracking-folio text-quiet uppercase">Get in touch</p>
       <a
-        class="group/mail relative m-0 grid min-h-control max-w-full content-center text-index leading-tight font-strong tracking-heading wrap-anywhere no-underline pressable [--press-scale:0.99] hover:no-underline"
+        class="group/mail relative m-0 grid min-h-control max-w-full content-center text-index leading-tight font-strong tracking-heading wrap-anywhere no-underline pressable [--footer-wet:0] [--press-scale:0.99] hover:no-underline"
         href={`mailto:${email}`}
         style={lens}
-        onpointermove={track}
-        onpointerleave={release}
-        onblur={release}
+        data-liquid={disturbed ? "wet" : "dry"}
+        bind:this={address}
       >
-        <span class="col-start-1 row-start-1 group-hover/mail:mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] group-focus-visible/mail:mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] motion-off:group-hover/mail:mask-none motion-off:group-focus-visible/mail:mask-none forced-colors:group-hover/mail:mask-none print:group-hover/mail:mask-none">{email}</span>
-        <span class="col-start-1 row-start-1 opacity-0 filter-[url(#footer-ink)] mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),currentColor_0%,currentColor_52%,transparent_92%)] transition-opacity duration-(--motion-duration-fast) ease-standard group-hover/mail:opacity-100 group-focus-visible/mail:opacity-100 motion-off:hidden forced-colors:hidden print:hidden" aria-hidden="true">{email}</span>
+        <span class="col-start-1 row-start-1 group-data-[liquid=wet]/mail:mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] group-focus-visible/mail:mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),transparent_0%,transparent_44%,currentColor_86%)] motion-off:group-data-[liquid=wet]/mail:mask-none motion-off:group-focus-visible/mail:mask-none forced-colors:group-data-[liquid=wet]/mail:mask-none print:group-data-[liquid=wet]/mail:mask-none">{email}</span>
+        <!-- The warped copy is simply present or not, and leaves on a transition of its own once
+             the ink has stopped moving: the settling is a change of shape, never of colour. -->
+        <span class="col-start-1 row-start-1 opacity-(--footer-wet) filter-[url(#footer-ink)] transition-opacity duration-(--motion-duration-base) ease-standard motion-off:transition-none mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),currentColor_0%,currentColor_52%,transparent_92%)] group-focus-visible/mail:[--footer-wet:1] motion-off:hidden forced-colors:hidden print:hidden" aria-hidden="true">{email}</span>
       </a>
       <div class="flex items-center gap-x-(--space-3)">
         <button

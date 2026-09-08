@@ -115,6 +115,7 @@
   --radius-ui-card: var(--radius-card);
   --shadow-ui-overlay: var(--shadow-overlay);
   --shadow-ui-profile: var(--shadow-profile);
+  --shadow-ui-profile-lifted: var(--shadow-profile-lifted);
   --text-shadow-ui-mask: var(--shadow-text-mask);
   --blur-glass: var(--glass-blur);
   --ease-standard: var(--motion-ease-standard);
@@ -451,6 +452,12 @@
   /* Semantic values use light-dark() so each role is declared exactly once. */
   --color-background: light-dark(#f7f7f5, #111111);
   --color-surface: light-dark(#ffffff, #1b1b1b);
+  /*
+    The business card is printed on its own stock rather than on a panel: on a dark page it is
+    black card, laid down darker than the page it rests on, so the object still reads as an object
+    and not as a lifted surface. Its rule and its shadow are what give it an edge.
+  */
+  --color-card-stock: light-dark(#ffffff, #080808);
   --color-foreground: light-dark(#171717, #eeeeec);
   --color-primary: light-dark(#222222, #dddddd);
   --color-secondary: light-dark(#3f3f3f, #cccccc);
@@ -577,7 +584,32 @@
   --radius-round: 999px;
   --radius-card: 0.625rem;
   --shadow-overlay: 0 0.75rem 2.5rem light-dark(rgb(16 47 35 / 14%), rgb(0 0 0 / 34%));
-  --shadow-profile: 0 0.5rem 1.5rem light-dark(rgb(16 47 35 / 10%), rgb(0 0 0 / 24%));
+  /*
+    A card set down on the page, in three layers, because that is how many a real shadow has: a
+    tight dark line where the stock actually touches the paper, the short soft one that gives it
+    thickness, and a wide faint one for the light it blocks from the room. A single wide blur —
+    which is what this was — has no contact at all, so the card read as a panel floating above the
+    page rather than as something lying on it. The contact layer is in pixels: how thickly a card
+    meets a table does not change with the reader's text size. On a dark page a cast shadow is
+    black on nearly black and says almost nothing, so the top edge also catches a hair of the room
+    light — that inset line is what carries the card's thickness where the shadow cannot.
+  */
+  --shadow-profile:
+    inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 6%)),
+    0 1px 1.5px light-dark(rgb(16 47 35 / 18%), rgb(0 0 0 / 55%)),
+    0 3px 6px light-dark(rgb(16 47 35 / 11%), rgb(0 0 0 / 32%)),
+    0 10px 22px light-dark(rgb(16 47 35 / 9%), rgb(0 0 0 / 24%));
+  /*
+    The same card picked up. Lifting it takes the contact away and lets the other two layers fall
+    further and spread, which is the whole of why a hover reads as height rather than as a colour
+    change. It is the card's own shadow rather than the shared overlay one, which belongs to
+    panels that never touch the page at all.
+  */
+  --shadow-profile-lifted:
+    inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 8%)),
+    0 2px 3px light-dark(rgb(16 47 35 / 9%), rgb(0 0 0 / 30%)),
+    0 8px 14px light-dark(rgb(16 47 35 / 13%), rgb(0 0 0 / 36%)),
+    0 24px 48px light-dark(rgb(16 47 35 / 13%), rgb(0 0 0 / 38%));
   --shadow-accent-rule: inset 3px 0 var(--color-accent);
   --shadow-text-mask: 0 0 0.18em var(--color-background);
   --glass-blur: 0.625rem;
@@ -651,6 +683,7 @@
 
 @theme {
   --color-paper: var(--color-surface);
+  --color-card: var(--color-card-stock);
   --shadow-paper: 0 1px 0 var(--color-rule), 0 4px 12px light-dark(rgb(16 47 35 / 12%), rgb(0 0 0 / 46%));
 }
 
@@ -717,6 +750,11 @@
   --masthead-disc-rise: 0.07em;
   --masthead-disc-stroke: 0.012em;
   --grain-opacity: 0.05;
+  /*
+    The tooth and the coarser unevenness of the card's stock. Enough to read as paper under the
+    ink, never as noise over it, and the unevenness stays the quieter of the two so the surface
+    reads as one sheet rather than as two textures.
+  */
   --index-row-space: clamp(1.25rem, 2.2vw, 2.25rem);
   --card-tilt: 10deg;
   --index-rail-width: 11rem;

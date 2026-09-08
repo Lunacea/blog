@@ -21,7 +21,9 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
   renderer.domElement.className = "absolute inset-0 size-full pointer-events-none";
   host.appendChild(renderer.domElement);
 
-  const { material, uniforms, setCondition } = createEditorialLightMaterial(!pointer.matches);
+  const { material, uniforms, setCondition, setTheme } = createEditorialLightMaterial(
+    !pointer.matches,
+  );
 
   const geometry = new PlaneGeometry(2, 2);
   const scene = new Scene();
@@ -55,9 +57,8 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     scrollPending = true;
   };
 
-  const theme = () => {
-    uniforms.dark.value = document.documentElement.dataset.theme === "dark" ? 1 : 0;
-  };
+  // The weather palette is read from the theme, so the whole of it is refreshed together.
+  const theme = () => setTheme(document.documentElement.dataset.theme === "dark");
 
   /** Without a hovering pointer the reader's scroll carries the light instead. */
   let guidedUntil = 0;
@@ -70,7 +71,9 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
   const move = (event: PointerEvent) => {
     if (event.pointerType === "touch" || !pointer.matches) return;
     target.set(event.clientX / width, 1 - event.clientY / height);
-    guidedUntil = performance.now() + 4000;
+    // The cursor is the light, so it stays where the reader parked it rather than wandering off
+    // again a moment later. The drift is for a page nobody is pointing at.
+    guidedUntil = performance.now() + 9000;
   };
 
   const leave = () => {

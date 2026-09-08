@@ -6,7 +6,7 @@
   import { useFixedLocationWeather } from "$lib/weather.ts";
   import { ThemeToggle } from "$ui/components";
   import { ForwardGlyph } from "$ui/icons";
-  import { HomeOpening } from "$ui/motion";
+  import { HomeOpening, LiquidTitle } from "$ui/motion";
   import { IndexList, ProfileCard } from "$ui/patterns";
   import EditorialLight from "$ui/visuals/EditorialLight.svelte";
   import { parseWeatherVisualOverride } from "$ui/visuals/weather-visual.ts";
@@ -57,32 +57,44 @@
 <div class="relative">
   <!-- Home carries no bar of any kind: the masthead is the whole identity. -->
   <header class="relative flex justify-center overflow-x-clip pt-(--page-start-clearance)" aria-labelledby="home-title">
+    <!--
+      The wordmark settles out of wet ink at the opening and stays liquid afterwards: the pointer
+      raises a wave in it that travels out from the letter under the cursor. The disc keeps still,
+      because it is both the mark the wordmark lands on and the theme control.
+    -->
     <h1
       id="home-title"
       aria-label={siteConfig.name.toUpperCase()}
       class="my-0 flex w-max shrink-0 items-baseline whitespace-nowrap font-sans font-stretch-112% text-masthead leading-none font-strong tracking-masthead home-opening:animate-opening-resolve home-opening:[filter:url(#opening-ink)]"
     >
-      <span aria-hidden="true">LUNA</span>
-      <span class="relative inline-block"><span class="invisible" aria-hidden="true">C</span>
-        <span class="absolute top-1/2 left-1/2 block size-(--masthead-disc-size) -translate-x-1/2 -translate-y-[calc(50%+var(--masthead-disc-rise))] home-opening:animate-disc-arrive">
-          <ThemeToggle placement="masthead" />
-        </span>
-      </span>
-      <span aria-hidden="true">EA</span>
+      <LiquidTitle text="LUNACEA" slotIndex={4}>
+        {#snippet slot()}
+          <span class="absolute top-1/2 left-1/2 block size-(--masthead-disc-size) -translate-x-1/2 -translate-y-[calc(50%+var(--masthead-disc-rise))] home-opening:animate-disc-arrive">
+            <ThemeToggle placement="masthead" />
+          </span>
+        {/snippet}
+      </LiquidTitle>
     </h1>
   </header>
 
-  <section id="about" class="mx-auto flex w-full max-w-content scroll-mt-(--space-16) justify-center px-(--layout-gutter) pt-(--space-16) pb-(--home-section-space)" aria-label="プロフィール">
-    <ProfileCard
-      class="max-w-(--profile-card-print) max-sm:max-w-[88%]"
-      name={siteConfig.name}
-      role="UI / UX Design — Web Engineering"
-      bio={siteConfig.author.bio}
-      {portrait}
-      github={siteConfig.author.github}
-      x={siteConfig.author.x}
-      email={siteConfig.author.email}
-    />
+  <!--
+    The card can be carried well past this section and past the window with it, so the section
+    clips instead of scrolling: none of that travel is allowed to change how wide or how far the
+    page itself goes.
+  -->
+  <section id="about" class="carry-area scroll-mt-(--space-16) pt-(--space-16) pb-(--home-section-space)" aria-label="プロフィール">
+    <div class="mx-auto flex w-full max-w-content justify-center px-(--layout-gutter)">
+      <ProfileCard
+        class="max-w-(--profile-card-print) max-sm:max-w-[88%]"
+        name={siteConfig.name}
+        role="UI / UX Design — Web Engineering"
+        bio={siteConfig.author.bio}
+        {portrait}
+        github={siteConfig.author.github}
+        x={siteConfig.author.x}
+        email={siteConfig.author.email}
+      />
+    </div>
   </section>
 
   <section class="pb-(--home-section-space)" aria-labelledby="latest-heading">
