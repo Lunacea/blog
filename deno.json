@@ -21,6 +21,7 @@
   },
   "tasks": {
     "dev": "deno task --cwd apps/web dev",
+    "d": "deno task --cwd apps/web d",
     "build": "deno task --cwd apps/web build",
     "fonts:generate": "deno run -A packages/ui/scripts/generate-fonts.ts",
     "fonts:check": "deno run -A packages/ui/scripts/check-fonts.ts",
