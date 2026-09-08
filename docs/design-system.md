@@ -82,12 +82,13 @@ and transparency need.
 
 ## Motion and resilience
 
-Cold Logic, Warm UX uses near-white paper, near-black ink and grayscale interaction states. Shared
-semantic tokens retain their roles in both themes. Archivo sets the oversized masthead and every
-label; Instrument Serif provides Latin-only decorative contrast. Japanese prose stays in Zen Kaku
-Gothic New, 17–18px equivalent (16px on a phone, at the same weight as everywhere else), line-height
-1.9 and a maximum width of 42em. Code highlighting may retain semantic syntax colors. Text colour is
-never animated; state is carried by rules, position, width axis and reveal instead.
+Cold Logic, Warm UX uses near-white paper, near-black ink and grayscale interaction states, with a
+muted vintage red reserved for the praise control. Shared semantic tokens retain their roles in both
+themes. Archivo sets the oversized masthead and every label; Instrument Serif provides Latin-only
+decorative contrast. Japanese prose stays in Zen Kaku Gothic New, 17–18px equivalent (16px on a
+phone, at the same weight as everywhere else), line-height 1.9 and a maximum width of 42em. Code
+highlighting may retain semantic syntax colors. Text colour is never animated; state is carried by
+rules, position, width axis and reveal instead.
 
 Home carries no header. The masthead is the identity: LUNACEA is set at 20.4vw so it bleeds past
 both gutters, centred by a flex container inside `overflow-x-clip` so the overflow is symmetric and

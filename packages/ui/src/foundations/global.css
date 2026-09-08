@@ -174,18 +174,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 }
 
-/*
-  An area whose contents may be carried past its own edges — the business card being moved — without
-  ever lending that travel to the document. `clip` keeps the overflow out of the page's scrollable
-  area, so picking the object up can never change how far the page scrolls, and the wide clip margin
-  means the object is only cut by the window it has already left, never by the section it started
-  in: a wall met halfway through a gesture is the one thing a physical object must not have.
-*/
-@utility carry-area {
-  overflow: clip;
-  overflow-clip-margin: 100vmax;
-}
-
 @utility shell {
   /* Matches the header and the catalog: the content box, not the container box. */
   width: min(

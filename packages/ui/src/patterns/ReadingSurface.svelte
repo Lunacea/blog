@@ -28,8 +28,10 @@
 
 <div class={["reading-surface relative border-y border-rule bg-transparent py-section [&.media-led-reading]:border-t-0", className]}>
   <span class="reading-start absolute top-0" data-reading-start aria-hidden="true"></span>
-  <div class="article-grid shell grid grid-cols-[minmax(0,var(--prose-width))_minmax(var(--layout-grid-compact),1fr)] justify-between gap-[clamp(var(--space-8),8vw,var(--space-32))] max-lg:grid-cols-1 max-lg:gap-8">
-    <div class="prose" bind:this={prose}><ContentComponent /></div>
-    <ReadingEnhancements root={prose} {headings} {composition} {tools} />
-  </div>
+  {#key component}
+    <div class="article-grid shell grid grid-cols-[minmax(0,var(--prose-width))_minmax(var(--layout-grid-compact),1fr)] justify-between gap-[clamp(var(--space-8),8vw,var(--space-32))] max-lg:grid-cols-1 max-lg:gap-8">
+      <div class="prose" bind:this={prose}><ContentComponent /></div>
+      <ReadingEnhancements root={prose} {headings} {composition} {tools} />
+    </div>
+  {/key}
 </div>

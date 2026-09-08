@@ -6,12 +6,16 @@ import { SettingsPanel, ThemeToggle } from "$ui/components/index.ts";
 import { ThemeGlyph } from "$ui/icons/index.ts";
 import { MediaSlot } from "$ui/visuals/index.ts";
 import ReadingEnhancements from "$ui/patterns/ReadingEnhancements.svelte";
+import ReadingSurface from "$ui/patterns/ReadingSurface.svelte";
 import GlassProfileCard from "$ui/patterns/GlassProfileCard.svelte";
+import ProfileCard from "$ui/patterns/ProfileCard.svelte";
 import ReactionBar from "$lib/components/ReactionBar.svelte";
 import { loadFixedLocationWeather } from "$lib/weather.ts";
 import { get, writable } from "svelte/store";
 import ArticlesPage from "../routes/articles/+page.svelte";
 import LinkPreviewFixture from "./LinkPreviewFixture.svelte";
+import ReadingSurfaceFirstFixture from "./ReadingSurfaceFirstFixture.svelte";
+import ReadingSurfaceSecondFixture from "./ReadingSurfaceSecondFixture.svelte";
 
 const article = {
   type: "article",
@@ -113,6 +117,17 @@ describe("authored media slots", () => {
 });
 
 describe("Home profile card", () => {
+  it("claims touch movement before Safari can begin scrolling the page", () => {
+    const view = render(ProfileCard, {
+      name: "Lunacea",
+      role: "UI / UX Design — Web Engineering",
+    });
+
+    const card = view.getByRole("group", { name: "Lunaceaの名刺" });
+    expect(card.classList.contains("touch-none")).toBe(true);
+    expect(card.classList.contains("touch-pan-y")).toBe(false);
+  });
+
   it("keeps the compact identity and contact links separate from drag handling", () => {
     const asset: AuthoredMedia = {
       src: "/images/profile.webp",
@@ -180,6 +195,42 @@ describe("reading enhancements", () => {
     // The source panel starts hidden, so it is read from the block rather than by role.
     const editor = prose.querySelector<HTMLTextAreaElement>("textarea");
     expect(editor?.value).toBe("const calm = true;");
+  });
+
+  it("reinitializes the current TOC marker when the article component changes", async () => {
+    const firstHeadings = [
+      { id: "first-start", text: "最初の記事の冒頭", level: 2 },
+      { id: "first-end", text: "最初の記事の末尾", level: 2 },
+    ];
+    const secondHeadings = [
+      { id: "second-start", text: "次の記事の冒頭", level: 2 },
+      { id: "second-end", text: "次の記事の末尾", level: 2 },
+    ];
+    const view = render(ReadingSurface, {
+      component: ReadingSurfaceFirstFixture,
+      headings: firstHeadings,
+    });
+
+    await waitFor(() => {
+      expect(
+        view.getAllByRole("link", { name: "最初の記事の末尾" })[0]?.getAttribute(
+          "aria-current",
+        ),
+      ).toBe("location");
+    });
+
+    await view.rerender({
+      component: ReadingSurfaceSecondFixture,
+      headings: secondHeadings,
+    });
+
+    await waitFor(() => {
+      expect(
+        view.getAllByRole("link", { name: "次の記事の末尾" })[0]?.getAttribute(
+          "aria-current",
+        ),
+      ).toBe("location");
+    });
   });
 });
 

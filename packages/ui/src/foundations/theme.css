@@ -42,6 +42,12 @@
   initial-value: #626262;
 }
 
+@property --color-praise {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #9b3a34;
+}
+
 @theme inline {
   --color-weather-water-shadow: #152c3b;
   --color-weather-snow: #f4f7f8;
@@ -463,6 +469,7 @@
   --color-secondary: light-dark(#3f3f3f, #cccccc);
   --color-accent: light-dark(#171717, #eeeeec);
   --color-muted: light-dark(#4a4a4a, #c0c0c0);
+  --color-praise: light-dark(#9b3a34, #c96a61);
   --color-line: light-dark(rgb(23 23 23 / 24%), rgb(238 238 236 / 20%));
   --color-glass: light-dark(rgb(247 247 245 / 72%), rgb(27 27 27 / 76%));
   --color-glass-solid: light-dark(rgb(247 247 245), rgb(27 27 27));
@@ -650,7 +657,8 @@
     --color-primary var(--motion-duration-slow) var(--motion-ease-standard),
     --color-secondary var(--motion-duration-slow) var(--motion-ease-standard),
     --color-accent var(--motion-duration-slow) var(--motion-ease-standard),
-    --color-muted var(--motion-duration-base) var(--motion-ease-standard);
+    --color-muted var(--motion-duration-base) var(--motion-ease-standard),
+    --color-praise var(--motion-duration-base) var(--motion-ease-standard);
 }
 
 :root[data-theme="light"] {
