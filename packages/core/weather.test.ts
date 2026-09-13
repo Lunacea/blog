@@ -3,6 +3,8 @@ import { dayPhaseFromTime, weatherConditionFromCode } from "./weather.ts";
 
 Deno.test("Open-Meteo codes map to deterministic interface conditions", () => {
   assertEquals(weatherConditionFromCode(0), "clear");
+  assertEquals(weatherConditionFromCode(1), "clear");
+  assertEquals(weatherConditionFromCode(2), "cloudy");
   assertEquals(weatherConditionFromCode(48), "fog");
   assertEquals(weatherConditionFromCode(63), "rain");
   assertEquals(weatherConditionFromCode(75), "snow");

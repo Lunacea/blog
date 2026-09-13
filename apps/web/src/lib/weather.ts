@@ -3,19 +3,21 @@ import { type Writable, writable } from "svelte/store";
 import { siteConfig } from "@lunacea/config";
 import { weatherStateSchema } from "@lunacea/schemas";
 import {
+  applyPassingWeather,
   normalizeWeatherVisualCondition,
   type WeatherVisualCondition,
+  type WeatherVisualIntensity,
 } from "$ui/visuals/weather-visual.ts";
 
 export type WeatherContextState = {
   visual: WeatherVisualCondition;
+  intensity: WeatherVisualIntensity;
   loaded: boolean;
 };
 
 /**
- * The condition the shared static field renders. Home drives its own animated field; the catalog
- * publishes here so the shell is lit, and reading routes simply inherit whatever was last read
- * without making a request of their own.
+ * 共通の静的背景が描く天候。ホームは自前の背景を持ち、一覧がここへ公開し、
+ * 記事ルートは最後に読まれた値をそのまま引き継ぐ（自前のリクエストはしない）。
  */
 export const ambientWeather = writable<WeatherVisualCondition>("neutral");
 
@@ -32,9 +34,13 @@ function weatherUrl(): string {
   });
 }
 
-/** Route-local state and cancellation; no network or Svelte context enters the UI package. */
+/** 状態と中断はルート側に置き、通信も Svelte コンテキストも UI パッケージに入れない。 */
 export function useFixedLocationWeather(): Writable<WeatherContextState> {
-  const state = writable<WeatherContextState>({ visual: "neutral", loaded: false });
+  const state = writable<WeatherContextState>({
+    visual: "neutral",
+    intensity: "steady",
+    loaded: false,
+  });
   onMount(() => {
     const controller = new AbortController();
     void loadFixedLocationWeather(state, controller.signal);
@@ -51,11 +57,11 @@ export async function loadFixedLocationWeather(
     const response = await fetch(weatherUrl(), { signal });
     if (!response.ok) throw new Error("weather request failed");
     const weather = weatherStateSchema.parse(await response.json());
-    const visual = normalizeWeatherVisualCondition(weather);
-    state.set({ visual, loaded: true });
-    ambientWeather.set(visual);
+    const { condition, intensity } = applyPassingWeather(normalizeWeatherVisualCondition(weather));
+    state.set({ visual: condition, intensity, loaded: true });
+    ambientWeather.set(condition);
   } catch {
     if (signal?.aborted) return;
-    state.set({ visual: "neutral", loaded: true });
+    state.set({ visual: "neutral", intensity: "steady", loaded: true });
   }
 }

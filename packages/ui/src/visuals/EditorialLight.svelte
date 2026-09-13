@@ -2,13 +2,18 @@
   import { onMount } from "svelte";
   import { subscribeMotionCapabilities } from "../motion/preferences.ts";
   import StaticLight from "./StaticLight.svelte";
-  import type { WeatherVisualCondition } from "./weather-visual.ts";
+  import type { WeatherVisualCondition, WeatherVisualIntensity } from "./weather-visual.ts";
 
-  let { condition = "neutral" }: { condition?: WeatherVisualCondition } = $props();
+  let { condition = "neutral", intensity = "steady" }: {
+    condition?: WeatherVisualCondition;
+    intensity?: WeatherVisualIntensity;
+  } = $props();
   let host: HTMLDivElement;
   let enabled = $state(false);
-  let updateCondition: ((condition: WeatherVisualCondition) => void) | undefined;
-  $effect(() => { updateCondition?.(condition); });
+  let apply = $state<
+    ((condition: WeatherVisualCondition, intensity: WeatherVisualIntensity) => void) | undefined
+  >(undefined);
+  $effect(() => { apply?.(condition, intensity); });
 
   onMount(() => {
     let disposed = false;
@@ -28,7 +33,7 @@
       destroy?.();
       destroy = undefined;
       resume = undefined;
-      updateCondition = undefined;
+      apply = undefined;
       enabled = false;
     };
     const evaluate = async () => {
@@ -43,8 +48,7 @@
         const scene = mountEditorialLight(host, () => { failed = true; stop(); });
         destroy = scene.destroy;
         resume = scene.resume;
-        updateCondition = scene.setCondition;
-        scene.setCondition(condition);
+        apply = scene.setCondition;
         scene.resume(visible && !document.hidden);
         enabled = true;
       } catch {
@@ -73,10 +77,7 @@
   });
 </script>
 
-<!--
-  Home's field: the shared static light and grain, with an animated WebGL layer slotted
-  between them once the device, the motion preference and the viewport all allow it.
--->
+<!-- 共通の静的な光とグレインの間に、条件を満たしたときだけ WebGL 層を差し込む。 -->
 <StaticLight {condition} id="home" webgl={enabled}>
   {#snippet overlay()}
     <div
