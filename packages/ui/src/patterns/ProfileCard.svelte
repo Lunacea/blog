@@ -5,10 +5,8 @@
   import { cn } from "../utils.ts";
 
   /**
-   * The introduction is a business card: the proportions are the Japanese 91×55mm standard, and it
-   * rests at a slight clockwise tilt as though it were set down on the page. Hover and focus
-   * straighten and lift it, and it can be picked up and moved, so the object reads as physical
-   * rather than decorative.
+   * 自己紹介は名刺。比率は 91×55mm で、置かれたように少し右へ傾いている。
+   * ホバーとフォーカスで起き上がり、掴んで動かせる。
    */
   let {
     name,
@@ -39,14 +37,12 @@
   ].filter((entry) => entry !== null));
 
   /**
-   * Picking the card up is a pointer gesture, so mouse, pen and touch all share one path, and the
-   * keyboard gets the same object through the arrow keys. The listeners are bound to the node
-   * rather than declared as attributes: moving the card is decoration on a non-interactive
-   * object, it always returns to its mark, and no ARIA role describes the gesture honestly.
+   * 持ち上げはポインタ操作なのでマウス・ペン・タッチが同じ経路を通り、キーボードは矢印キーで扱う。
+   * この動きを正しく表す ARIA ロールが存在しないため、宣言ではなくノードに直接束ねる。
    */
   const step = 12;
   let card = $state<HTMLElement | null>(null);
-  /** Only the hydrated card can be moved, so only it announces itself as movable. */
+  /** ハイドレーション済みのカードだけが動かせるので、そのときだけ可動であると示す。 */
   let movable = $state(false);
   let held = $state(false);
   let nudged = $state(false);
@@ -59,11 +55,9 @@
   let originY = 0;
 
   /*
-   * How far the card may be carried, measured from the window rather than fixed: a third of it has
-   * to stay on screen, so two thirds of it may hang off any edge. Anything short of that is a wall
-   * met in the middle of a gesture, which is the one thing a physical object must never do. The
-   * travel is taken from the card's resting box, so it is the same reach at every width, and the
-   * section it sits in clips rather than scrolls, so none of this reaches the page's own size.
+   * 運べる距離は固定値ではなく窓から測る。3分の1が画面に残ればよく、3分の2まではみ出せる。
+   * これより狭いとジェスチャの途中で壁に当たる。移動量は静止時の矩形基準なので、
+   * どの幅でも同じ届き方になる。
    */
   let reachLeft = 0;
   let reachRight = 0;
@@ -75,7 +69,7 @@
     if (!node) return;
     const box = node.getBoundingClientRect();
     if (!box.width || !box.height) return;
-    // The box is read while the card is being carried, so its own travel comes back out of it.
+    // 運搬中に矩形を読むため、カード自身の移動分を差し引く。
     const left = box.left - offsetX;
     const top = box.top - offsetY;
     const stay = { x: box.width / 3, y: box.height / 3 };
@@ -95,7 +89,7 @@
 
   function grab(event: PointerEvent) {
     if (!event.isPrimary || (event.pointerType === "mouse" && event.button !== 0)) return;
-    // A press that starts on a contact is a press on that contact, not on the card.
+    // 連絡先の上で始まった押下はカードではなくその連絡先への押下。
     if (event.target instanceof Element && event.target.closest("a")) return;
     nudged = false;
     measure();
@@ -119,7 +113,6 @@
     if (event.pointerId !== pointer) return;
     pointer = null;
     held = false;
-    // It springs back to where it was set down: the composition is never left broken.
     offsetX = 0;
     offsetY = 0;
   }
@@ -132,7 +125,7 @@
   };
 
   function nudge(event: KeyboardEvent) {
-    // A focused contact is being used, not the card, so its keys are left alone.
+    // 連絡先にフォーカスがあるときはそのキー操作を奪わない。
     if (event.target !== card) return;
     if (event.key === "Escape" || event.key === "Home") {
       if (!offsetX && !offsetY) return;
@@ -142,7 +135,7 @@
     }
     const move = steps[event.key];
     if (!move) return;
-    // Otherwise the page would scroll out from under the card being moved.
+    // 運搬中にページがスクロールしないようにする。
     event.preventDefault();
     nudged = true;
     measure();
@@ -150,7 +143,6 @@
     offsetY = clampY(offsetY + move[1]);
   }
 
-  /** Leaving the card puts the composition back the way the drag does. */
   function settle() {
     nudged = true;
     offsetX = 0;
@@ -160,8 +152,7 @@
   $effect(() => {
     const node = card;
     if (!node) return;
-    // The group really is operable once these listeners exist, and it is not focusable before
-    // then: without them there would be nothing for a keyboard to do here.
+    // リスナーが付いて初めて操作可能になるため、それまではフォーカス対象にしない。
     node.tabIndex = 0;
     movable = true;
     node.addEventListener("pointerdown", grab);
@@ -185,20 +176,15 @@
 
 <div
   class={cn(
-    // The card names its own ink; a registered custom property change does not reliably
-    // invalidate a long `color: inherit` chain.
-    "profile-card group/card relative isolate grid aspect-91/55 w-full grid-cols-1 grid-rows-[auto_1fr_auto] rounded-ui-card border border-rule bg-card p-(--space-5) text-ink shadow-ui-profile",
-    // Carried, it passes over everything it is carried across.
+    // 登録済みカスタムプロパティの変更は長い color: inherit 連鎖を確実に無効化しないため明示する。
+    "profile-card group/card relative isolate grid aspect-91/55 w-full grid-cols-1 grid-rows-[auto_1fr_auto] rounded-ui-card border border-rule bg-card p-[clamp(var(--space-3),calc(15vw_-_var(--space-8)_-_var(--space-1)),var(--space-6))] text-ink shadow-ui-profile",
     "data-[held=true]:z-(--z-controls)",
     "translate-x-(--card-x) translate-y-(--card-y) rotate-(--card-tilt) transition-[rotate,translate,border-color,box-shadow] duration-(--motion-duration-slow) ease-spring",
     "hover:-translate-y-(--space-2) hover:rotate-0 hover:border-ink hover:shadow-ui-profile-lifted focus-within:rotate-0 focus-within:border-ink",
-    // While it is being carried it must follow the finger exactly, with nothing easing it.
-    // Touch action is decided when the gesture starts; changing it only after pickup is too late
-    // for Safari, which would already have handed the same movement to page scrolling.
+    // touch-action はジェスチャ開始時に決まる。持ち上げ後の変更では Safari に間に合わない。
     "cursor-grab touch-none select-none data-[held=true]:cursor-grabbing data-[held=true]:rotate-0 data-[held=true]:shadow-ui-profile-lifted data-[held=true]:transition-none data-[held=true]:hover:translate-y-(--card-y)",
-    // Arrow keys answer at once; the slow spring belongs to the tilt, not to a repeated key.
     "data-[nudged=true]:duration-(--motion-duration-fast) focus-visible:rotate-0 focus-visible:border-ink",
-    "motion-off:cursor-auto motion-off:transition-none home-opening:animate-card-arrive max-sm:p-(--space-4)",
+    "motion-off:cursor-auto motion-off:transition-none home-opening:animate-card-arrive",
     className,
   )}
   style={`--card-x:${offsetX}px;--card-y:${offsetY}px`}
@@ -211,17 +197,15 @@
 >
   <div
     class={cn(
-      "col-start-1 row-start-1 grid min-w-0 items-center gap-y-(--space-3) self-start max-sm:gap-y-(--space-2)",
-      portrait?.src && "grid-cols-[var(--profile-card-media)_minmax(0,1fr)] gap-x-(--space-4)",
+      "col-start-1 row-start-1 grid min-w-0 items-center gap-y-(--space-3) self-start max-sm:gap-y-(--space-2) max-[26.25rem]:gap-y-(--space-1)",
+      portrait?.src && "grid-cols-[var(--profile-card-media)_minmax(0,1fr)] gap-x-(--space-4) max-[26.25rem]:grid-cols-[var(--space-12)_minmax(0,1fr)] max-[26.25rem]:gap-x-(--space-3) max-[25.5rem]:grid-cols-[var(--space-10)_minmax(0,1fr)] max-[25.5rem]:gap-x-(--space-2)",
     )}
   >
     {#if portrait?.src}
-      <picture class="col-start-1 row-start-1 block size-(--profile-card-media)">
+      <picture class="col-start-1 row-start-1 block size-(--profile-card-media) max-[26.25rem]:size-(--space-12) max-[25.5rem]:size-(--space-10)">
         {#each portrait.sources ?? [] as source}
           <source srcset={source.srcset} type={source.type} media={source.media} />
         {/each}
-        <!-- The mark is above the fold and part of the opening, so it is fetched with the
-             document rather than waiting for the card to animate in. -->
         <img
           class="size-full object-contain"
           src={portrait.src}
@@ -237,7 +221,7 @@
     {/if}
     <div class={cn("row-start-1 min-w-0", portrait?.src && "col-start-2")}>
       <p class="m-0 font-stretch-104% text-h3 leading-tight font-strong tracking-heading wrap-anywhere uppercase">{name}</p>
-      <p class="mt-(--space-2) mb-0 font-stretch-84% text-folio leading-snug tracking-folio text-quiet uppercase">{role}</p>
+      <p class="mt-(--space-2) mb-0 font-stretch-84% text-folio leading-snug tracking-folio text-quiet uppercase max-[25.5rem]:mt-(--space-1) max-[25.5rem]:font-stretch-75% max-[25.5rem]:tracking-normal">{role}</p>
     </div>
     {#if bio}
       <p class={cn("row-start-2 m-0 max-w-[38ch] text-caption leading-copy text-quiet", portrait?.src && "col-start-2")}>{bio}</p>
@@ -250,10 +234,11 @@
 
   <Separator class="col-start-1 row-start-2 self-center" />
 
-  <nav class="col-start-1 row-start-3 flex flex-wrap items-center justify-center gap-x-(--space-4) gap-y-(--space-2)" aria-label="連絡先">
+  <!-- リンクは行から均等にはみ出して 44px のタップ領域を確保する。 -->
+  <nav class="col-start-1 row-start-3 flex h-(--space-5) flex-wrap items-center justify-center gap-x-(--space-4) gap-y-(--space-2)" aria-label="連絡先">
     {#each contacts as contact}
       <a
-        class="inline-grid size-control place-items-center text-ink no-underline transition-[translate,scale] duration-(--motion-duration-fast) ease-spring hover:-translate-y-0.5 hover:no-underline focus-visible:-translate-y-0.5 active:translate-y-px active:scale-90 motion-off:transition-none [&_svg]:size-(--space-5)"
+        class="relative -top-(--space-3) inline-grid size-control place-items-center text-ink no-underline transition-[translate,scale] duration-(--motion-duration-fast) ease-spring hover:-translate-y-0.5 hover:no-underline focus-visible:-translate-y-0.5 active:translate-y-px active:scale-90 motion-off:transition-none [&_svg]:size-(--space-5)"
         href={contact.href}
         rel={contact.rel}
         aria-label={contact.label}

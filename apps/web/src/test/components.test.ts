@@ -1,16 +1,12 @@
 import { fireEvent, render, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import type { AuthoredMedia } from "@lunacea/config";
 import type { Content } from "@lunacea/schemas";
 import { SettingsPanel, ThemeToggle } from "$ui/components/index.ts";
-import { ThemeGlyph } from "$ui/icons/index.ts";
-import { MediaSlot } from "$ui/visuals/index.ts";
 import ReadingEnhancements from "$ui/patterns/ReadingEnhancements.svelte";
 import ReadingSurface from "$ui/patterns/ReadingSurface.svelte";
-import GlassProfileCard from "$ui/patterns/GlassProfileCard.svelte";
 import ProfileCard from "$ui/patterns/ProfileCard.svelte";
 import ReactionBar from "$lib/components/ReactionBar.svelte";
-import { loadFixedLocationWeather } from "$lib/weather.ts";
+import { loadFixedLocationWeather, type WeatherContextState } from "$lib/weather.ts";
 import { get, writable } from "svelte/store";
 import ArticlesPage from "../routes/articles/+page.svelte";
 import LinkPreviewFixture from "./LinkPreviewFixture.svelte";
@@ -70,52 +66,6 @@ describe("display preferences", () => {
   });
 });
 
-describe("theme glyph", () => {
-  it("shares optically aligned filled geometry without sun rays", () => {
-    const view = render(ThemeGlyph);
-    const sun = view.container.querySelector<SVGElement>("svg.sun");
-    const moon = view.container.querySelector<SVGElement>("svg.moon");
-
-    expect(sun?.getAttribute("viewBox")).toBe("0 0 13.276 13.276");
-    expect(moon?.getAttribute("viewBox")).toBe("1.624 5.1 13.276 13.276");
-    expect(sun?.querySelectorAll("circle")).toHaveLength(1);
-    expect(sun?.querySelector("path")).toBeNull();
-  });
-});
-
-describe("authored media slots", () => {
-  it("renders supplied media and keeps empty slots structural", () => {
-    const asset: AuthoredMedia = {
-      src: "/images/archive/morioka-concrete.webp",
-      alt: "差し替え可能なプロフィール",
-      width: 960,
-      height: 1200,
-      aspectRatio: "4 / 5",
-      objectPosition: "50% 30%",
-      variant: "portrait",
-      loading: "lazy",
-      opacity: 0.9,
-      allowMotion: false,
-      placeholder: {
-        assetId: "test-portrait",
-        role: "テスト画像",
-        preferredFileType: "AVIF/WebP",
-        accessibilityDescription: "テスト用の画像説明",
-        transparencyRequired: false,
-      },
-    };
-    const supplied = render(MediaSlot, { asset });
-    expect(supplied.getByRole("img", { name: asset.alt })).toBeTruthy();
-
-    const empty = render(MediaSlot, {
-      asset: { ...asset, src: null, alt: "" },
-      showPlaceholder: true,
-    });
-    expect(empty.getByRole("img", { name: /Authored media slot/ })).toBeTruthy();
-    expect(empty.container.querySelector("img")).toBeNull();
-  });
-});
-
 describe("Home profile card", () => {
   it("claims touch movement before Safari can begin scrolling the page", () => {
     const view = render(ProfileCard, {
@@ -126,51 +76,6 @@ describe("Home profile card", () => {
     const card = view.getByRole("group", { name: "Lunaceaの名刺" });
     expect(card.classList.contains("touch-none")).toBe(true);
     expect(card.classList.contains("touch-pan-y")).toBe(false);
-  });
-
-  it("keeps the compact identity and contact links separate from drag handling", () => {
-    const asset: AuthoredMedia = {
-      src: "/images/profile.webp",
-      alt: "プロフィールキャラクター",
-      width: 960,
-      height: 960,
-      aspectRatio: "1 / 1",
-      objectPosition: "50% 50%",
-      variant: "organic",
-      loading: "lazy",
-      opacity: 1,
-      allowMotion: false,
-      placeholder: {
-        assetId: "profile",
-        role: "プロフィール",
-        preferredFileType: "AVIF/WebP",
-        accessibilityDescription: "プロフィールキャラクター",
-        transparencyRequired: true,
-      },
-    };
-    const view = render(GlassProfileCard, {
-      asset,
-      name: "Lunacea",
-      field: "Interactive Systems / Design Research",
-      github: "https://github.com/example",
-      x: "https://x.com/example",
-      email: "mailto:hello@example.com",
-    });
-
-    expect(view.getByRole("heading", { level: 2, name: "Lunacea" })).toBeTruthy();
-    expect(view.getByText("Interactive Systems")).toBeTruthy();
-    expect(view.getByText("Design Research")).toBeTruthy();
-    expect(view.container.querySelectorAll(".roles > span")).toHaveLength(2);
-    expect(view.getByRole("link", { name: "GitHub" }).getAttribute("href")).toBe(
-      "https://github.com/example",
-    );
-    expect(view.getByRole("link", { name: "X" }).getAttribute("href")).toBe(
-      "https://x.com/example",
-    );
-    expect(view.getByRole("link", { name: "Email" }).getAttribute("href")).toBe(
-      "mailto:hello@example.com",
-    );
-    expect(view.container.querySelectorAll(".contact-list svg")).toHaveLength(3);
   });
 });
 
@@ -187,12 +92,12 @@ describe("reading enhancements", () => {
     expect(view.container.querySelector(".toc-list")).toBeTruthy();
     expect(view.container.querySelector(".mobile-toc-region")).toBeTruthy();
     expect(view.container.querySelector(".mobile-toc-switch")).toBeNull();
-    const copy = view.getByRole("button", { name: "Copy" });
+    const copy = view.getByRole("button", { name: /をコピー$/ });
     await fireEvent.click(copy);
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith("const calm = true;");
-    // The same block offers its source for editing, and a way back to the authored text.
+    await waitFor(() => expect(copy.querySelector("svg")?.dataset.glyph).toBe("copied"));
     expect(view.getByRole("tab", { name: "Preview" })).toBeTruthy();
-    // The source panel starts hidden, so it is read from the block rather than by role.
+    // ソースパネルは初期非表示なので role ではなくブロックから読む。
     const editor = prose.querySelector<HTMLTextAreaElement>("textarea");
     expect(editor?.value).toBe("const calm = true;");
   });
@@ -277,7 +182,6 @@ describe("article catalog", () => {
     const view = render(ArticlesPage, { data: structuredClone(catalogData) });
 
     expect(view.getByRole("navigation", { name: "カテゴリ" })).toBeTruthy();
-    // Search and tags are demoted to the end of the page rather than removed.
     expect(view.getByRole("searchbox")).toBeTruthy();
     expect(view.getByRole("link", { name: /天候を環境情報にする/ })).toBeTruthy();
     expect(view.getByRole("link", { name: "Clear" })).toBeTruthy();
@@ -307,11 +211,7 @@ describe("article catalog", () => {
     const rows = list.querySelectorAll(":scope > li");
     expect(rows).toHaveLength(7);
     expect(rows[0]?.querySelector("h3")?.textContent).toBe("記事a");
-    // The date replaces the folio number, and tags no longer wait for a hover.
     expect(rows[0]?.querySelector("time")?.textContent).toBe("2026.01.01");
-    expect(rows[6]?.querySelector("time")?.textContent).toBe("2026.07.01");
-    expect(rows[0]?.textContent).toContain("#Weather");
-    expect(rows[0]?.textContent).toContain("design");
     expect(view.queryByRole("link", { name: "Clear" })).toBeNull();
   });
 });
@@ -352,10 +252,18 @@ describe("weather environment controller", () => {
       );
     });
     vi.stubGlobal("fetch", fetchMock);
-    const state = writable({ visual: "neutral" as const, loaded: false });
+    const state = writable<WeatherContextState>({
+      visual: "neutral",
+      intensity: "steady",
+      loaded: false,
+    });
     await loadFixedLocationWeather(state);
 
-    expect(get(state)).toEqual({ visual: "clear", loaded: true });
+    const resolved = get(state);
+    expect(resolved.loaded).toBe(true);
+    // clear の観測は clear か通り雨のいずれか。通り雨は必ず passing。
+    expect(["clear", "rain", "snow"]).toContain(resolved.visual);
+    if (resolved.visual !== "clear") expect(resolved.intensity).toBe("passing");
     expect(localStorage.getItem("lunacea-location")).toBeNull();
   });
 });

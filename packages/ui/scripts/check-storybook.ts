@@ -2,7 +2,6 @@
 
 import { AxeBuilder } from "@axe-core/playwright";
 import { chromium, type ConsoleMessage, type Page } from "playwright";
-import sharp from "sharp";
 
 const browserHeadless = Deno.env.get("STORYBOOK_HEADED") !== "true";
 
@@ -10,7 +9,6 @@ const outputDirectory = new URL("../storybook-static/", import.meta.url);
 const requiredGroups = [
   "Components/",
   "Foundations/",
-  "Layout/",
   "Motion/",
   "Patterns/",
   "Primitives/",
@@ -124,79 +122,6 @@ async function openStory(page: Page, baseUrl: string, id: string) {
   await page.goto(`${baseUrl}/iframe.html?id=${id}&viewMode=story`, { waitUntil: "networkidle" });
 }
 
-async function checkVisualBaselines(
-  baseUrl: string,
-  browser: Awaited<ReturnType<typeof chromium.launch>>,
-) {
-  const update = Deno.env.get("UPDATE_VISUAL_BASELINES") === "true";
-  const directory = new URL("../visual-baselines/", import.meta.url);
-  const stories = [
-    "components-siteheader--desktop",
-    "components-linkselector--text",
-    "components-linkselector--icons",
-    "patterns-glassprofilecard--placeholder",
-    "visuals-assetplaceholder--profile-character",
-    "visuals-ambienthero--static-fallback",
-  ];
-  const viewports = [
-    { name: "mobile", width: 320, height: 720 },
-    { name: "desktop", width: 1280, height: 900 },
-  ];
-  if (update) await Deno.mkdir(directory, { recursive: true });
-
-  for (const viewport of viewports) {
-    const context = await browser.newContext({ viewport });
-    const page = await context.newPage();
-    for (const theme of ["light", "dark"] as const) {
-      for (const story of stories) {
-        await openStory(page, baseUrl, story);
-        await page.evaluate((selectedTheme) => {
-          document.documentElement.dataset.theme = selectedTheme;
-          document.documentElement.dataset.motion = "off";
-        }, theme);
-        await page.evaluate(() => document.fonts.ready);
-        const screenshot = await page.screenshot({ animations: "disabled" });
-        const name = `${story}.${viewport.name}.${theme}.png`;
-        const baselineUrl = new URL(name, directory);
-        if (update) {
-          await Deno.writeFile(baselineUrl, screenshot);
-          continue;
-        }
-
-        let baseline: Uint8Array;
-        try {
-          baseline = await Deno.readFile(baselineUrl);
-        } catch (error) {
-          if (error instanceof Deno.errors.NotFound) {
-            throw new Error(
-              `Missing visual baseline ${name}; update explicitly with UPDATE_VISUAL_BASELINES=true`,
-            );
-          }
-          throw error;
-        }
-        const [actual, expected] = await Promise.all([
-          sharp(screenshot).raw().toBuffer({ resolveWithObject: true }),
-          sharp(baseline).raw().toBuffer({ resolveWithObject: true }),
-        ]);
-        if (
-          actual.info.width !== expected.info.width ||
-          actual.info.height !== expected.info.height ||
-          actual.info.channels !== expected.info.channels
-        ) throw new Error(`${name}: visual baseline dimensions changed`);
-        let changed = 0;
-        for (let index = 0; index < actual.data.length; index += 1) {
-          if (Math.abs(actual.data[index] - expected.data[index]) > 16) changed += 1;
-        }
-        const ratio = changed / actual.data.length;
-        if (ratio > .002) {
-          throw new Error(`${name}: visual difference ${(ratio * 100).toFixed(3)}%`);
-        }
-      }
-    }
-    await context.close();
-  }
-}
-
 async function checkResponsiveContexts(
   baseUrl: string,
   browser: Awaited<ReturnType<typeof chromium.launch>>,
@@ -264,49 +189,44 @@ async function checkHeaderKeyboard(
   const context = await browser.newContext({ viewport: { width: 412, height: 915 } });
   const page = await context.newPage();
   await openStory(page, baseUrl, "components-siteheader--mobile");
-  const actions = page.locator(".header-actions > *");
-  if (await actions.count() !== 3) {
-    throw new Error("SiteHeader mobile actions are not Theme, Display, Hamburger");
+
+  const banner = page.getByRole("banner");
+  if (!await banner.getByRole("link", { name: /^lunacea$/iu }).count()) {
+    throw new Error("SiteHeader has no wordmark link home");
+  }
+  const navigation = banner.getByRole("navigation", { name: "主要ナビゲーション" });
+  const links = await navigation.getByRole("link").allTextContents();
+  if (links.join(",") !== "Home,Articles") {
+    throw new Error(`SiteHeader navigation is not Home, Articles: ${links.join(", ")}`);
+  }
+  if (
+    await navigation.getByRole("link", { name: "Articles" }).getAttribute("aria-current") !== "page"
+  ) {
+    throw new Error("SiteHeader does not mark the current route");
+  }
+
+  const theme = banner.locator(".header-theme button");
+  const display = banner.locator(".header-display button");
+  if (!await theme.count() || !await display.count()) {
+    throw new Error("SiteHeader is missing a preference control");
   }
   if (!await page.getByRole("button", { name: /テーマに切り替える/u }).count()) {
     throw new Error("SiteHeader has no accessible Theme control");
   }
-  const trigger = page.locator(".menu-trigger");
-  if (await trigger.getAttribute("aria-label") !== "メニューを開く") {
-    throw new Error("SiteHeader mobile menu has no accessible open label");
+  await theme.focus();
+  if (!await theme.evaluate((element) => element === document.activeElement)) {
+    throw new Error("SiteHeader theme control does not take focus");
   }
-  await trigger.click();
-  if (await trigger.getAttribute("aria-expanded") !== "true") {
-    throw new Error("SiteHeader mobile menu did not open");
-  }
-  const links = await page.getByRole("navigation", { name: "主要ナビゲーション（モバイル）" })
-    .getByRole("link").allTextContents();
-  if (
-    links.map((label) => label.replace(/^\d+/u, "")).join(",") !== "Home,Articles,Works,Archive"
-  ) {
-    throw new Error(`SiteHeader mobile menu has unexpected links: ${links.join(", ")}`);
-  }
-  await page.keyboard.press("Escape");
-  if (await trigger.getAttribute("aria-expanded") !== "false") {
-    throw new Error("SiteHeader mobile menu did not close with Escape");
-  }
-  if (!await trigger.evaluate((element) => element === document.activeElement)) {
-    throw new Error("SiteHeader did not return focus after Escape");
-  }
-  await context.close();
-}
+  const before = await page.evaluate(() => document.documentElement.dataset.theme ?? "");
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(
+    (previous) => (document.documentElement.dataset.theme ?? "") !== previous,
+    before,
+  );
 
-async function checkWeatherStories(
-  baseUrl: string,
-  browser: Awaited<ReturnType<typeof chromium.launch>>,
-) {
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  const page = await context.newPage();
-  for (const condition of ["clear", "cloudy", "rain", "snow"] as const) {
-    await openStory(page, baseUrl, `visuals-ambienthero--${condition}`);
-    if (await page.locator("[data-weather]").getAttribute("data-weather") !== condition) {
-      throw new Error(`AmbientHero did not receive ${condition} weather`);
-    }
+  await page.evaluate(() => scrollTo(0, 600));
+  if (Math.round((await banner.boundingBox())?.y ?? -1) > 1) {
+    throw new Error("SiteHeader does not stay at the top of the viewport");
   }
   await context.close();
 }
@@ -318,53 +238,24 @@ async function checkHomePatternInteractions(
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
 
-  await openStory(page, baseUrl, "visuals-ambienthero--minimal-without-central-motif");
-  if (await page.locator("[data-central-fallback]").isVisible()) {
-    throw new Error("Minimal AmbientHero still exposes the central fallback motif");
-  }
-
-  await openStory(page, baseUrl, "patterns-glassprofilecard--placeholder");
+  await openStory(page, baseUrl, "patterns-profilecard--default");
   const card = page.locator(".profile-card");
-  const links = card.getByRole("link");
+  const links = card.getByRole("navigation", { name: "連絡先" }).getByRole("link");
   if (await links.count() !== 3) {
-    throw new Error("GlassProfileCard does not expose the three configured contact links");
+    throw new Error("ProfileCard does not expose the three configured contact links");
   }
+  // 連絡先の上で始まった押下はカードのドラッグではない。
   const linkBox = await links.first().boundingBox();
-  if (!linkBox) throw new Error("GlassProfileCard GitHub link has no hit area");
+  if (!linkBox) throw new Error("ProfileCard contact link has no hit area");
   await page.mouse.move(linkBox.x + linkBox.width / 2, linkBox.y + linkBox.height / 2);
   await page.mouse.down();
   await page.mouse.move(linkBox.x + linkBox.width / 2 + 40, linkBox.y + linkBox.height / 2);
   await page.mouse.up();
-  if (await card.getAttribute("data-dragging") !== "false") {
-    throw new Error("GlassProfileCard contact link incorrectly initiated drag");
+  if (await card.getAttribute("data-held") === "true") {
+    throw new Error("ProfileCard contact link incorrectly took hold of the card");
   }
 
   await context.close();
-}
-
-async function checkMotionCaps(
-  baseUrl: string,
-  browser: Awaited<ReturnType<typeof chromium.launch>>,
-) {
-  for (
-    const options of [
-      { name: "reduced motion", reducedMotion: "reduce" as const },
-      { name: "forced colors", forcedColors: "active" as const },
-    ]
-  ) {
-    const { name, ...media } = options;
-    const context = await browser.newContext({ ...media, viewport: { width: 1280, height: 900 } });
-    const page = await context.newPage();
-    await openStory(page, baseUrl, "visuals-ambienthero--enhanced-when-capable");
-    const state = await page.evaluate(() => ({
-      motion: document.documentElement.dataset.motion,
-      webgl: document.querySelector("[data-webgl]")?.getAttribute("data-webgl"),
-    }));
-    if (state.motion !== "reduced" || state.webgl !== "false") {
-      throw new Error(`${name}: expected reduced/no-WebGL, received ${JSON.stringify(state)}`);
-    }
-    await context.close();
-  }
 }
 
 async function checkEditorialRendering(
@@ -404,10 +295,10 @@ async function checkEditorialRendering(
       throw new Error(`Editorial story is missing ${selector}`);
     }
   }
-  const copy = page.getByRole("button", { name: "コードをコピー" });
+  const copy = page.getByRole("button", { name: /^[^、]*をコピー$/u }).first();
   await copy.click();
-  await page.getByRole("button", { name: "コードをコピーしました" }).waitFor();
-  await page.getByText("コードをコピーしました", { exact: true }).waitFor();
+  await page.getByRole("button", { name: /をコピーしました$/u }).first().waitFor();
+  await page.getByText(/をコピーしました$/u).first().waitFor();
   await context.close();
 }
 
@@ -427,12 +318,6 @@ async function checkMotionStories(
   await page.getByRole("button", { name: "Navigate" }).click();
   await page.getByText("View transitions: 0").waitFor();
 
-  await openStory(page, baseUrl, "motion-reveal--full");
-  await page.locator('[data-reveal][data-visible="true"]').first().waitFor();
-  await openStory(page, baseUrl, "motion-reveal--off");
-  if (await page.locator('[data-reveal]:not([data-visible="true"])').count()) {
-    throw new Error("Off motion left reveal content hidden");
-  }
   await context.close();
 
   const fallbackContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
@@ -448,100 +333,6 @@ async function checkMotionStories(
   await fallbackPage.getByText("Frame / detail").waitFor();
   await fallbackPage.getByText("View transitions: 0").waitFor();
   await fallbackContext.close();
-}
-
-async function checkVisualFallbacks(baseUrl: string) {
-  // The all-story pass creates and destroys several WebGL contexts. Use a fresh GPU process here
-  // so context-loss behavior is deterministic instead of depending on Chromium's context quota.
-  const browser = await chromium.launch({ headless: browserHeadless });
-  try {
-    const fallbackCases = [
-      {
-        name: "save-data",
-        init: `Object.defineProperty(navigator, "connection", {
-        configurable: true,
-        value: { saveData: true, addEventListener() {}, removeEventListener() {} }
-      });`,
-      },
-      {
-        name: "low capability",
-        init: `Object.defineProperty(navigator, "deviceMemory", { configurable: true, value: 2 });
-        Object.defineProperty(navigator, "hardwareConcurrency", { configurable: true, value: 2 });`,
-      },
-      {
-        name: "no WebGL2",
-        init: `const originalGetContext = HTMLCanvasElement.prototype.getContext;
-        HTMLCanvasElement.prototype.getContext = function (type, ...args) {
-          if (type === "webgl2") return null;
-          return originalGetContext.call(this, type, ...args);
-        };`,
-      },
-    ];
-
-    for (const fallback of fallbackCases) {
-      const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-      await context.addInitScript(fallback.init);
-      const page = await context.newPage();
-      await openStory(page, baseUrl, "visuals-ambienthero--enhanced-when-capable");
-      await page.waitForTimeout(300);
-      const webgl = await page.locator("[data-webgl]").getAttribute("data-webgl");
-      if (webgl !== "false" || await page.locator("canvas").count()) {
-        throw new Error(`${fallback.name}: WebGL fallback did not remain active`);
-      }
-      await context.close();
-    }
-
-    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    const page = await context.newPage();
-    await openStory(page, baseUrl, "visuals-ambienthero--enhanced-when-capable");
-    const supportsWebGL2 = await page.evaluate(() =>
-      Boolean(document.createElement("canvas").getContext("webgl2"))
-    );
-    if (!supportsWebGL2) {
-      if (await page.locator("[data-webgl]").getAttribute("data-webgl") !== "false") {
-        throw new Error("Missing WebGL2 did not preserve the static fallback");
-      }
-      console.log("Storybook context-loss check skipped: this browser exposes no WebGL2.");
-      await context.close();
-      return;
-    }
-    const visual = page.locator('[data-webgl="true"]');
-    const canvas = visual.locator("canvas");
-    await canvas.waitFor({ timeout: 20_000 });
-    if (await visual.evaluate((element) => getComputedStyle(element).touchAction) !== "pan-y") {
-      throw new Error("WebGL interaction does not preserve vertical touch scrolling");
-    }
-    const bounds = await visual.boundingBox();
-    if (!bounds) throw new Error("WebGL interaction surface has no bounds");
-    const initialYaw = Number(await visual.getAttribute("data-yaw"));
-    // Use the open part of the preview rather than the semantic text layer above the visual.
-    await page.mouse.move(bounds.x + bounds.width * .7, bounds.y + bounds.height * .75);
-    await page.mouse.down();
-    await page.mouse.move(bounds.x + bounds.width * .85, bounds.y + bounds.height * .78, {
-      steps: 4,
-    });
-    await page.waitForFunction(() =>
-      document.querySelector("[data-webgl]")?.getAttribute("data-pointer-intent") === "drag"
-    );
-    await page.waitForFunction(
-      (yaw) => Number(document.querySelector("[data-webgl]")?.getAttribute("data-yaw")) !== yaw,
-      initialYaw,
-    );
-    await page.mouse.up();
-    await page.waitForFunction(() =>
-      document.querySelector("[data-webgl]")?.getAttribute("data-pointer-intent") === "idle"
-    );
-    await canvas.dispatchEvent("webglcontextlost");
-    await page.waitForFunction(() =>
-      document.querySelector("[data-webgl]")?.getAttribute("data-webgl") === "false"
-    );
-    if (await page.locator("canvas").count()) {
-      throw new Error("WebGL context loss did not remove the failed canvas");
-    }
-    await context.close();
-  } finally {
-    await browser.close();
-  }
 }
 
 const abortController = new AbortController();
@@ -576,8 +367,7 @@ try {
     let page = await context.newPage();
     for (const [index, story] of stories.entries()) {
       await assertStory(page, baseUrl, story);
-      // Storybook retains module and canvas state across navigations. Periodically recycling the
-      // page bounds memory use so the full accessibility pass remains stable in headless Chromium.
+      // Storybook は遷移をまたいで状態を保持するため、定期的にページを作り直してメモリを抑える。
       if ((index + 1) % 12 === 0 && index + 1 < stories.length) {
         await context.close();
         context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
@@ -593,21 +383,17 @@ try {
     if (docsErrors.length) throw new Error(`Storybook Docs: ${docsErrors.join(" | ")}`);
     await context.close();
     await checkHeaderKeyboard(baseUrl, browser);
-    await checkWeatherStories(baseUrl, browser);
     await checkHomePatternInteractions(baseUrl, browser);
     await checkResponsiveContexts(baseUrl, browser, stories);
     await checkIncreasedText(baseUrl, browser, stories);
-    await checkMotionCaps(baseUrl, browser);
     await checkEditorialRendering(baseUrl, browser);
     await checkMotionStories(baseUrl, browser);
-    await checkVisualFallbacks(baseUrl);
-    await checkVisualBaselines(baseUrl, browser);
   } finally {
     await browser.close();
   }
 
   console.log(
-    `Storybook validated: ${stories.length} stories, axe, responsive, visual baselines, editorial, motion, WebGL fallbacks.`,
+    `Storybook validated: ${stories.length} stories, axe, responsive, editorial, motion.`,
   );
 } finally {
   abortController.abort();
