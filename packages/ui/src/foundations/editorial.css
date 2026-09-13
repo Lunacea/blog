@@ -3,27 +3,44 @@
 .prose {
   width: min(100%, var(--prose-width));
   min-width: 0;
-  /* Reading copy sits a step under the interface so the section titles carry the structure. */
+  font-family: var(--font-editorial);
   font-size: var(--text-body);
   font-weight: var(--weight-quiet);
+  letter-spacing: var(--tracking-copy);
   line-height: var(--leading-copy);
   text-shadow: var(--shadow-text-mask);
 }
 
-.prose h2,
-.prose h3 {
-  scroll-margin-top: var(--article-anchor-offset);
+.prose :where(code, kbd, samp, .code-block, .mermaid-source, .mermaid-diagram) {
+  letter-spacing: normal;
+}
+
+.prose :where(p, li, dd, td, blockquote) :where(code, kbd, samp) {
+  border-radius: var(--radius-small);
+  padding: 0.15em 0.36em;
+  background: color-mix(in srgb, var(--color-foreground) 6%, transparent);
+  font-size: 0.9em;
+  /* 折り返した各断片が個別に padding を持つ。 */
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  margin-inline: 0.15em;
+}
+
+.prose :is(h2, h3, h4, h5, h6) {
+  scroll-margin-top: calc(var(--article-anchor-offset) - var(--site-header-block));
+  font-family: var(--font-sans);
+  font-weight: var(--weight-component);
   line-height: var(--leading-heading);
   text-wrap: pretty;
 }
 
+/* h2は帯、h3は罫線、h4以降は書体だけで段階を示す。 */
 .prose h2 {
   margin: var(--space-16) 0 var(--space-5);
-  border-bottom: var(--border-width-rule) solid var(--color-line);
-  padding-bottom: var(--space-3);
-  font-family: var(--font-sans);
+  border-radius: var(--radius-small);
+  padding: var(--space-3) var(--space-4);
+  background: color-mix(in srgb, var(--color-foreground) 5%, transparent);
   font-size: var(--text-prose-h2);
-  font-weight: var(--weight-component);
   letter-spacing: var(--tracking-ui);
 }
 
@@ -33,16 +50,29 @@
 
 .prose h3 {
   margin: var(--space-10) 0 var(--space-4);
-  font-family: var(--font-sans);
+  border-bottom: var(--border-width-rule) solid var(--color-line);
+  padding-bottom: var(--space-2);
   font-size: var(--text-prose-h3);
-  font-weight: var(--weight-component);
+}
+
+.prose :is(h4, h5, h6) {
+  margin: var(--space-8) 0 var(--space-3);
+  font-size: var(--text-body);
 }
 
 .prose p,
 .prose ul,
 .prose ol,
 .prose table {
-  margin-block: var(--space-2);
+  margin-block: var(--space-6);
+}
+
+.prose blockquote > :first-child {
+  margin-block-start: 0;
+}
+
+.prose blockquote > :last-child {
+  margin-block-end: 0;
 }
 
 .prose blockquote {
@@ -126,7 +156,7 @@
   text-decoration: none;
 }
 
-.code-block::before {
+.code-block[data-title]::before {
   display: flex;
   min-height: var(--control-size);
   align-items: center;
@@ -139,7 +169,7 @@
   font-size: var(--text-caption);
 }
 
-/* Enhanced blocks name themselves inside their own bar, so the CSS title bar stands down. */
+/* 拡張済みブロックは自前のバーにファイル名を出すため、CSS 側のタイトルは下げる。 */
 .code-block[data-enhanced]::before {
   content: none;
 }
@@ -157,15 +187,6 @@
   z-index: auto;
   margin: 0;
   border: 0;
-}
-
-.code-block:not([data-title])::before {
-  content: attr(data-language);
-  font-family: var(--font-sans);
-  font-size: var(--text-folio);
-  font-stretch: 84%;
-  letter-spacing: var(--type-tracking-folio);
-  text-transform: uppercase;
 }
 
 .code-block .highlighted {

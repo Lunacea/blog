@@ -37,6 +37,10 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
 }
 
 @layer base {
+  html {
+    scroll-padding-top: var(--site-header-block);
+  }
+
   body {
     font-synthesis: none;
     min-height: 100vh;
@@ -83,9 +87,7 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 
   /*
-    One indicator everywhere: a solid ink ring just outside the control, with the small radius the
-    rest of the interface uses. It is declared in the base layer, so a control that carries its own
-    radius keeps it, and it is a single colour rather than a ring over a glow.
+    フォーカス表示は全体で1種類。base レイヤーで宣言するので、独自の角丸を持つ操作子はそれを保つ。
   */
   :focus-visible {
     outline: 2px solid var(--color-accent);
@@ -95,9 +97,8 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 
   /*
-    Inside anything that clips or scrolls, the ring is drawn just inside the control instead: an
-    outward ring on a row flush with the edge of a table of contents or a code block loses its
-    right and bottom sides.
+    クリップやスクロールする要素の内側では、リングを操作子の内側に描く。
+    外側だと目次やコードブロックの端に接した行で右辺と下辺が欠ける。
   */
   .desktop-toc :focus-visible,
   .mobile-toc-content :focus-visible,
@@ -126,7 +127,7 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   width: 1px;
   height: 1px;
   overflow: hidden;
-  /* design-literal: visually hidden content follows the standard one-pixel clipping recipe. */
+  /* design-literal: 視覚的非表示の定型レシピ。 */
   margin: -1px;
   padding: 0;
   border: 0;
@@ -156,11 +157,9 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
 }
 
 /*
-  Every control answers a press: it sinks a hair into the page and gives slightly under the finger.
-  The movement is immediate on the way down and eases on the way back, which is what makes a tap
-  feel received rather than merely registered. Tailwind 4 writes `translate` and `scale` as
-  independent properties, so both are named in the transition. Controls that already animate a
-  transform on hover declare their own `active:` step instead of relying on this one.
+  押下への応答。沈みは即時、戻りはイージング。
+  Tailwind 4 は `translate` と `scale` を独立したプロパティとして書くため、両方を transition に挙げる。
+  ホバーで既に transform を動かす操作子は、これに頼らず自前の `active:` を宣言する。
 */
 @utility pressable {
   transition-property: translate, scale, color, background-color, border-color, box-shadow, opacity;
@@ -175,7 +174,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
 }
 
 @utility shell {
-  /* Matches the header and the catalog: the content box, not the container box. */
   width: min(
     calc(100% - (2 * var(--layout-gutter))),
     calc(var(--content-width) - (2 * var(--layout-gutter)))
@@ -201,7 +199,7 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
 
   & svg {
     width: 100%;
-    /* Shrink to fit only down to a legible scale; beyond that the figure scrolls. */
+    /* 可読な倍率までは縮小し、それ以下は横スクロールに切り替える。 */
     min-width: var(--mermaid-legible-width, 0);
     height: auto;
   }
@@ -229,7 +227,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
 }
 
 @utility content-shell {
-  /* The bar reserves no space any more, so this is simply the shared content box. */
   width: min(
     calc(100% - (2 * var(--layout-gutter))),
     calc(var(--content-width) - (2 * var(--layout-gutter)))
@@ -244,17 +241,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   letter-spacing: var(--tracking-label);
   line-height: var(--leading-ui);
   text-transform: uppercase;
-}
-
-@utility page-title {
-  max-width: 18ch;
-  margin: 0;
-  font-family: var(--font-serif);
-  font-size: var(--text-h1);
-  font-weight: var(--weight-regular);
-  letter-spacing: var(--tracking-display);
-  line-height: var(--leading-title);
-  text-wrap: balance;
 }
 
 @utility lead {

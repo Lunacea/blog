@@ -71,8 +71,6 @@
   --font-weight-strong: var(--weight-strong);
   --font-weight-label: var(--weight-label);
   --text-masthead: var(--type-size-masthead);
-  --text-page-title: var(--type-size-page-title);
-  --text-oversize: var(--type-size-oversize);
   --text-index: var(--type-size-index);
   --text-folio: var(--type-size-folio);
   --text-display: var(--type-size-display);
@@ -82,10 +80,8 @@
   --text-prose-h2: var(--type-size-prose-h2);
   --text-prose-h3: var(--type-size-prose-h3);
   --text-body: var(--type-size-body);
-  --text-quote: var(--type-size-quote);
   --text-small: var(--type-size-small);
   --text-caption: var(--type-size-caption);
-  --text-title-glyph: var(--type-size-title-glyph);
   --leading-none: var(--type-leading-none);
   --leading-display: var(--type-leading-display);
   --leading-title: var(--type-leading-title);
@@ -93,18 +89,16 @@
   --leading-snug: var(--type-leading-snug);
   --leading-heading: var(--type-leading-heading);
   --leading-compact: var(--type-leading-compact);
-  --leading-profile: var(--type-leading-profile);
   --leading-ui: var(--type-leading-ui);
   --leading-card: var(--type-leading-card);
   --leading-body: var(--type-leading-body);
   --leading-copy: var(--type-leading-copy);
   --leading-relaxed: var(--type-leading-relaxed);
-  --leading-hero-copy: var(--type-leading-hero-copy);
   --tracking-masthead: var(--type-tracking-masthead);
   --tracking-folio: var(--type-tracking-folio);
   --tracking-display: var(--type-tracking-display);
   --tracking-heading: var(--type-tracking-heading);
-  --tracking-prose-heading: var(--type-tracking-prose-heading);
+  --tracking-copy: var(--type-tracking-copy);
   --tracking-label: var(--type-tracking-label);
   --tracking-ui: var(--type-tracking-ui);
   --spacing-gutter: var(--layout-gutter);
@@ -113,7 +107,6 @@
   --container-content: var(--content-width);
   --container-prose: var(--prose-width);
   --container-grid-compact: var(--layout-grid-compact);
-  --container-grid-standard: var(--layout-grid-standard);
   --container-grid-wide: var(--layout-grid-wide);
   --radius-sharp: var(--radius-none);
   --radius-subtle: var(--radius-small);
@@ -195,7 +188,7 @@
     }
   }
 
-  /* Squash and stretch out of phase: the heart behaves like a drop, not a pop. */
+  /* 位相をずらした squash & stretch。弾けるのではなく滴のように振る舞う。 */
   @keyframes praise-liquid {
     0% {
       scale: 1 1;
@@ -367,21 +360,17 @@
   @keyframes toc-open {
     from {
       height: 0;
-      opacity: 0;
     }
     to {
       height: var(--bits-collapsible-content-height);
-      opacity: 1;
     }
   }
   @keyframes toc-close {
     from {
       height: var(--bits-collapsible-content-height);
-      opacity: 1;
     }
     to {
       height: 0;
-      opacity: 0;
     }
   }
   @keyframes profile-card-arrive {
@@ -455,13 +444,12 @@
 :root {
   color-scheme: light dark;
 
-  /* Semantic values use light-dark() so each role is declared exactly once. */
+  /* light-dark() を使い、各ロールの宣言を1回に保つ。 */
   --color-background: light-dark(#f7f7f5, #111111);
   --color-surface: light-dark(#ffffff, #1b1b1b);
   /*
-    The business card is printed on its own stock rather than on a panel: on a dark page it is
-    black card, laid down darker than the page it rests on, so the object still reads as an object
-    and not as a lifted surface. Its rule and its shadow are what give it an edge.
+    名刺はパネルではなく自前の紙。暗いページでは地より暗い黒い紙として置く
+    （浮いた面ではなく物として読ませるため）。縁は罫線と影が作る。
   */
   --color-card-stock: light-dark(#ffffff, #080808);
   --color-foreground: light-dark(#171717, #eeeeec);
@@ -481,7 +469,6 @@
   --color-neon: light-dark(#555555, #eeeeec);
   --color-white: #f7f7f5;
   --color-black: #111111;
-  /* Pure primaries for the light field; the alpha channel does the theming. */
   --color-light-source: #ffffff;
   --color-shadow-body: #000000;
   --color-graph-marker: var(--color-white);
@@ -490,14 +477,12 @@
   --color-print-background: #fff;
   --color-print-foreground: #000;
 
-  /* Sans carries the whole system; serif is a Latin-only decorative accent. */
+  /* sans が全体を担い、serif はラテン専用の装飾。 */
   --font-sans: "Archivo", "Archivo Fallback", "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", "Noto Sans JP", sans-serif;
   --font-serif: "Zen Kaku Gothic New", "Zen Kaku Gothic New Fallback", "Hiragino Sans", Georgia, serif;
   --font-mono: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  /* Masthead is sized to bleed past both gutters; the wrapper clips, never scrolls. */
+  /* 題字は両 gutter の外へはみ出す寸法。ラッパーはクリップし、スクロールさせない。 */
   --type-size-masthead: clamp(3.5rem, 20.4vw, 21rem);
-  --type-size-page-title: clamp(3rem, 19vw, 19.5rem);
-  --type-size-oversize: clamp(2.25rem, 8.4vw, 8.5rem);
   --type-size-index: clamp(1.375rem, 3.2vw, 2.75rem);
   --type-size-folio: 0.6875rem;
   --type-size-display: clamp(3.75rem, 8.1vw, 7.5rem);
@@ -507,12 +492,10 @@
   --type-size-prose-h2: clamp(1.5rem, 2.5vw, 2.25rem);
   --type-size-prose-h3: clamp(1.2rem, 1.45vw, 1.5rem);
   --type-size-body: clamp(1.0625rem, 0.25vw + 1rem, 1.125rem);
-  --type-size-quote: clamp(1.125rem, 0.6vw + 1rem, 1.375rem);
   --type-size-small: 0.875rem;
   --type-size-caption: 0.75rem;
-  --type-size-title-glyph: .74em;
   --weight-regular: 550;
-  --weight-quiet: 500;
+  --weight-quiet: 400;
   --weight-display: 700;
   --weight-component: 700;
   --weight-title: 700;
@@ -526,18 +509,16 @@
   --type-leading-snug: 1.2;
   --type-leading-heading: 1.25;
   --type-leading-compact: 1.35;
-  --type-leading-profile: 1.42;
   --type-leading-ui: 1.5;
   --type-leading-card: 1.6;
   --type-leading-body: 1.86;
   --type-leading-copy: 1.9;
   --type-leading-relaxed: 1.75;
-  --type-leading-hero-copy: 1.8;
   --type-tracking-masthead: -0.055em;
   --type-tracking-folio: 0.085em;
   --type-tracking-display: -0.055em;
   --type-tracking-heading: -0.045em;
-  --type-tracking-prose-heading: -0.025em;
+  --type-tracking-copy: 0.03em;
   --type-tracking-label: 0.08em;
   --type-tracking-ui: 0.035em;
 
@@ -560,12 +541,11 @@
   --layout-gutter: clamp(1.125rem, 4vw, 3.75rem);
   --section-space: clamp(4rem, 9vw, 8rem);
   --content-width: 78rem;
-  --prose-width: 42em;
+  --prose-width: 38em;
   --layout-grid-compact: 12rem;
-  --layout-grid-standard: 18rem;
   --layout-grid-wide: 24rem;
   --profile-card-width: 20rem;
-  /* A 91x55mm business card reads at roughly this width on screen. */
+  /* 91x55mm の名刺が画面上でこの幅に相当する。 */
   --profile-card-print: 24rem;
   --profile-card-media: 3.5rem;
   --profile-card-padding: var(--space-5);
@@ -580,9 +560,7 @@
   --border-width-rule: 1px;
   --control-size: 2.75rem;
   --header-menu-width: var(--space-28);
-  --site-header-block: 4.3125rem;
-  /* The header is a normal in-flow bar now, so nothing is reserved beside the content. */
-  --header-inline-reserve: 0rem;
+  --site-header-block: calc(var(--control-size) + var(--border-width-rule));
   --page-start-clearance: calc(env(safe-area-inset-top) + var(--layout-gutter));
   --article-anchor-offset: var(--space-28);
 
@@ -592,14 +570,10 @@
   --radius-card: 0.625rem;
   --shadow-overlay: 0 0.75rem 2.5rem light-dark(rgb(16 47 35 / 14%), rgb(0 0 0 / 34%));
   /*
-    A card set down on the page, in three layers, because that is how many a real shadow has: a
-    tight dark line where the stock actually touches the paper, the short soft one that gives it
-    thickness, and a wide faint one for the light it blocks from the room. A single wide blur —
-    which is what this was — has no contact at all, so the card read as a panel floating above the
-    page rather than as something lying on it. The contact layer is in pixels: how thickly a card
-    meets a table does not change with the reader's text size. On a dark page a cast shadow is
-    black on nearly black and says almost nothing, so the top edge also catches a hair of the room
-    light — that inset line is what carries the card's thickness where the shadow cannot.
+    置かれたカードの影を3層で作る：接地する暗い線、厚みを出す短く柔らかい層、
+    遮った光としての広く淡い層。単一の広いぼかしでは接地が無く、浮いたパネルに見える。
+    接地層だけ px 指定（紙と机の接し方は文字サイズで変わらない）。
+    暗いページでは影がほぼ効かないため、上端の inset 線が厚みを担う。
   */
   --shadow-profile:
     inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 6%)),
@@ -607,10 +581,7 @@
     0 3px 6px light-dark(rgb(16 47 35 / 11%), rgb(0 0 0 / 32%)),
     0 10px 22px light-dark(rgb(16 47 35 / 9%), rgb(0 0 0 / 24%));
   /*
-    The same card picked up. Lifting it takes the contact away and lets the other two layers fall
-    further and spread, which is the whole of why a hover reads as height rather than as a colour
-    change. It is the card's own shadow rather than the shared overlay one, which belongs to
-    panels that never touch the page at all.
+    持ち上げた状態。接地層を外し残り2層を深く広げることで、色ではなく高さとして読める。
   */
   --shadow-profile-lifted:
     inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 8%)),
@@ -672,7 +643,7 @@
   --home-light-opacity: 0.15;
 }
 
-/* `opacity` takes no light-dark(), so the dark value is set per theme instead. */
+/* opacity は light-dark() を取れないため、テーマごとに指定する。 */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --home-light-opacity: 0.15;
@@ -681,7 +652,7 @@
 
 @media (max-width: 44rem) {
   :root {
-    /* Reading copy sits a step smaller on a phone; its weight is the same everywhere. */
+    /* 本文は電話では一段小さく。ウェイトはどこでも同じ。 */
     --type-size-body: 1rem;
     --layout-gutter: 1.125rem;
     --section-space: clamp(3.5rem, 14vw, 5rem);
@@ -695,19 +666,17 @@
   --shadow-paper: 0 1px 0 var(--color-rule), 0 4px 12px light-dark(rgb(16 47 35 / 12%), rgb(0 0 0 / 46%));
 }
 
-/* Cold Logic, Warm UX: editorial dimensions, the lunar disc and the opening. */
 @theme {
   --animate-opening-resolve: opening-resolve 1250ms var(--ease-enter) both;
   --animate-opening-rise: opening-rise 820ms var(--ease-spring) 340ms both;
   --animate-disc-arrive: disc-arrive 1000ms var(--ease-spring) 220ms both;
-  /* Backwards only: the last frame is the resting state, so the tilt is not applied twice. */
+  /* backwards のみ。最終フレームが静止状態なので傾きを二重に適用しない。 */
   --animate-card-arrive: card-arrive 900ms var(--ease-spring) 480ms backwards;
 }
 
 /*
-  The masthead is the opening: the wordmark is displaced like wet ink and settles onto its mark.
-  Nothing here gates content visibility, and the keyframes must not declare `filter` — that would
-  override the displacement filter the animation exists to show.
+  オープニングはコンテンツの表示を一切ゲートしない。
+  キーフレームで `filter` を宣言してはならない（見せるための変位フィルタを上書きしてしまう）。
 */
 @keyframes opening-resolve {
   0% {
@@ -725,7 +694,6 @@
   }
 }
 
-/* The disc swings in past its mark and settles, so the wordmark lands rather than fades. */
 @keyframes disc-arrive {
   0% {
     opacity: 0;
@@ -753,22 +721,18 @@
 :root {
   --home-section-space: clamp(4rem, 8vw, 9rem);
   --home-light-opacity: 0.2;
-  /* Lunar disc dimensions are expressed against the masthead cap height. */
+  /* 月の寸法は題字のキャップハイト基準。 */
   --masthead-disc-size: 0.92em;
   --masthead-disc-rise: 0.07em;
   --masthead-disc-stroke: 0.012em;
   --grain-opacity: 0.05;
-  /*
-    The tooth and the coarser unevenness of the card's stock. Enough to read as paper under the
-    ink, never as noise over it, and the unevenness stays the quieter of the two so the surface
-    reads as one sheet rather than as two textures.
-  */
+  /* 名刺の紙の目と粗いむら。インクの下の紙として読める強さに留め、上のノイズにはしない。 */
   --index-row-space: clamp(1.25rem, 2.2vw, 2.25rem);
   --card-tilt: 10deg;
   --index-rail-width: 11rem;
-  /* The reach of the lens that warps the footer address under the pointer. */
+  /* フッタのアドレスを歪ませるレンズの半径。 */
   --footer-lens: 5.5rem;
-  /* How far a control sinks under a press, and how much it gives. Controls may tighten both. */
+  /* 押下時にコントロールが沈む量。個別に詰めてよい。 */
   --press-shift: 1px;
   --press-scale: 0.985;
 }
@@ -778,7 +742,7 @@
     --control-size: 44px;
     --header-menu-width: min(7rem, 24vw);
     --masthead-disc-size: 0.86em;
-    /* A tilted card needs room for its rotated bounding box on narrow screens. */
+    /* 傾いたカードは回転後のバウンディングボックス分の余地が要る。 */
     --card-tilt: 6deg;
   }
 }
