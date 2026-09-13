@@ -27,19 +27,41 @@ so the masthead is set wide and heavy while folio labels are set narrow and trac
 `font-stretch-*` utilities address the width axis. Instrument Serif is a Latin-only decorative
 accent and is never used for Japanese or for body text. Fira Code followed by system monospace is
 limited to fenced/inline code, keyboard input, and technical identifiers. Dates, navigation, tags,
-and ordinary status text use the sans role with tabular numerals where alignment is useful. The
-global weight scale is intentionally one step heavier than the font defaults: ordinary text is 500,
-component and editorial emphasis is 700, and strong labels use 800 where the selected face supports
-it. Faces capped below a requested value use their heaviest authored weight.
+and ordinary status text use the sans role with tabular numerals where alignment is useful.
+Interface text is 550, article reading copy is a lighter 400, component and editorial emphasis is
+700, and strong labels use 800 where the selected face supports it. Archivo is variable, so it
+renders each of those literally. Zen Kaku Gothic New is not: it has only Regular and Bold, and with
+nothing authored between them 400 lands on Regular while 550, 700 and 800 all land on Bold. The
+interface weight is therefore chosen above 500 deliberately — it keeps ordinary Japanese text on the
+same face the headings already need. Faces capped below a requested value use their heaviest
+authored weight.
+
+The hairline bar is sticky, so `scroll-padding-top` on the root reserves its height and every anchor
+lands clear of it.
+
+Weather is read from Open-Meteo for one fixed location and shown as light, never as a forecast. A
+reported shower or snowfall is always shown as it is. A clear or clouded sky occasionally turns over
+instead: cloud breaks to clear, or a passing shower crosses it. A passing shower keeps the sky's
+frame and exposure and thins only the weather in it, every part of it by the same share, so it
+covers the same ground without reading as either overcast or a settled fall. How often that happens
+follows the location's own monthly rates, so summer showers and winter flurries are common and the
+reverse never occurs; it is rarer over a clear sky than over cloud. The choice is a hash of a
+twenty-minute bucket, so a shower holds still and then passes. In dev, `?weather=` and `?intensity=`
+on Home or Articles force either.
 
 The palette is monochrome throughout, including the theme control. The only colour on the site comes
 from the author's own identity artwork on the profile card.
 
+The library carries only what the site renders; a component the site stops using is removed with its
+tests and its story. Storybook documents what remains, and `storybook:check` holds it to the groups,
+the accessibility sweep and the 200% text rule.
+
 These fonts are self-hosted from repository-pinned OFL sources. The build derives hashed WOFF2
 subsets from public content, UI strings, and configuration, emits the same generated CSS for Web and
-Storybook, and never contacts Google Fonts at runtime. Only the variable sans Latin face and medium
-sans Japanese face needed for first paint are preloaded; the preload budget is 350 KiB and the total
-initial-route custom-font budget is 500 KiB.
+Storybook, and never contacts Google Fonts at runtime. Only the variable sans Latin face and the
+bold sans Japanese face needed for first paint are preloaded; the preload budget is 350 KiB and the
+total initial-route custom-font budget is 500 KiB. Article routes additionally fetch the regular
+Japanese face their reading copy is set in; no other route needs it.
 
 ## Components and behavior
 
@@ -85,10 +107,15 @@ and transparency need.
 Cold Logic, Warm UX uses near-white paper, near-black ink and grayscale interaction states, with a
 muted vintage red reserved for the praise control. Shared semantic tokens retain their roles in both
 themes. Archivo sets the oversized masthead and every label; Instrument Serif provides Latin-only
-decorative contrast. Japanese prose stays in Zen Kaku Gothic New, 17–18px equivalent (16px on a
-phone, at the same weight as everywhere else), line-height 1.9 and a maximum width of 42em. Code
-highlighting may retain semantic syntax colors. Text colour is never animated; state is carried by
-rules, position, width axis and reveal instead.
+decorative contrast. Article reading copy is set in Zen Kaku Gothic New for Latin as well as
+Japanese, so a Latin word inside a sentence keeps the weight of the kana around it; headings and the
+interface keep Archivo. It is 17–18px equivalent (16px on a phone, a step lighter than the interface
+around it), line-height 1.9, tracked open 0.03em, paragraphs separated by a full space step, and
+held to a maximum width of 38em — about 37 full-width characters a line. The tracking is reading
+copy only: monospace is set on a grid and diagrams to their own metrics, so both reset it. Inline
+code is set at 0.9em on a faint tint with room on either side, so a run of it reads as an object in
+the sentence rather than a change of font. Code highlighting may retain semantic syntax colors. Text
+colour is never animated; state is carried by rules, position, width axis and reveal instead.
 
 Home carries no header. The masthead is the identity: LUNACEA is set at 20.4vw so it bleeds past
 both gutters, centred by a flex container inside `overflow-x-clip` so the overflow is symmetric and
@@ -195,11 +222,13 @@ fallbacks, missing WebGL2, and context-loss cleanup.
 
 Articles opens with a modest ARTICLES heading. A sticky rail owns the two ordering controls: All
 plus every category with its count, and the sort order. The records themselves are one index shared
-with Home (`patterns/IndexList`): date, title, tags and category on one vertically centred row, plus
-a summary that opens on hover or focus on desktop and is always open on small screens. Nothing in a
-row changes size on hover. Sort sits in the rail beneath the categories; search and tags close the
-page in a low-emphasis panel. There is no oversized page title, view toggle, lead story, Pick Up box
-or ranking rail.
+with Home (`patterns/IndexList`): date, title, tags and category on one row, the date and category
+sitting on the title's first baseline so they hold still, plus a summary that opens on hover or
+focus on desktop and is always open on small screens. On the articles index the glass pane fades to
+transparent toward both outer edges, so it ends on no hard edge beside the date or the category; the
+rule under the row comes up in place rather than travelling. Sort sits in the rail beneath the
+categories; search and tags close the page in a low-emphasis panel. There is no oversized page
+title, view toggle, lead story, Pick Up box or ranking rail.
 
 Desktop TOC has a decorative vertical minimap: short lines represent prose, accent-colored
 rectangles represent technical and media blocks in source order. Existing TOC links and active
@@ -207,6 +236,11 @@ marker own navigation; section sizing resolves by heading ID. Mobile retains its
 TOC. Missing composition data never prevents reading or navigation.
 
 Article titles use the sans role at `--text-h2`; the serif accent never appears in a record.
+
+Prose headings carry three different separations, one per level. `h2` is a tinted band the width of
+the measure — background, never a rule — so a new section is a change of ground rather than a line
+drawn across the column. `h3` carries the hairline rule. `h4` and below carry neither: the sans role
+and the weight are the whole of the step down.
 
 Code and diagram blocks share one shell (`patterns/block-tools`): a bar carrying the block's own
 identity, a Preview/Source pair of tabs, Copy and — once the source has been changed — Reset. The
