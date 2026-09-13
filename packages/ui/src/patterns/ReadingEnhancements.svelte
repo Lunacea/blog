@@ -8,18 +8,18 @@
   import { announceHeaderDisclosure, listenForHeaderDisclosure } from "../components/header-disclosures.ts";
   import { IndexGlyph } from "../icons/index.ts";
   import * as Collapsible from "../primitives/collapsible";
+  import { cn } from "../utils.ts";
+  import type { ArticleCompositionVisual } from "../visuals/article-composition-types.ts";
   import ArticleCompositionGraph from "../visuals/ArticleCompositionGraph.svelte";
   import { createBlockShell, type BlockShell } from "./block-tools.ts";
-  import type { ArticleCompositionVisual } from "../visuals/article-composition-types.ts";
-  import { cn } from "../utils.ts";
 
   type Heading = { id: string; text: string; level: number };
   type DiagramRecord = {
     source: HTMLElement;
-    /** The current graph: the authored one until the reader edits it. */
+    /** 現在のグラフ。読者が編集するまでは元の記述。 */
     graph: string;
     title: string;
-    /** Where the rendered diagram belongs — the shell's preview panel. */
+    /** 描画された図の置き場所（シェルのプレビュー面）。 */
     host: HTMLElement;
     figure?: HTMLElement;
   };
@@ -30,7 +30,7 @@
     headings: suppliedHeadings = [],
     composition,
   }: {
-    /** Rendered under the desktop table of contents, inside the same sticky rail. */
+    /** PC の目次の下、同じ sticky レールの中に描く。 */
     tools?: Snippet;
     root?: HTMLElement | null;
     headings?: Heading[];
@@ -40,7 +40,7 @@
   const headings = $derived(
     suppliedHeadings.length ? suppliedHeadings : discoveredHeadings,
   );
-  // Source estimates render first; measured heights replace them once the prose is laid out.
+  // 初回は推定値を描き、本文レイアウト後に実測値へ差し替える。
   let measured = $state<ArticleCompositionVisual | undefined>(undefined);
   const shownComposition = $derived(measured ?? composition);
   const tocRows = $derived(
@@ -53,7 +53,7 @@
   let enhancementsReady = $state(false);
   let desktopTocList = $state<HTMLOListElement | null>(null);
   let mobileTocList = $state<HTMLOListElement | null>(null);
-  /** Fraction of the list height each heading row occupies; the minimap is projected onto it. */
+  /** 各見出し行が一覧の高さに占める割合。ミニマップはこれに射影する。 */
   let tocSpans = $state<Array<{ id: string; start: number; end: number }>>([]);
   let tocMarkerY = $state(0);
   let tocMarkerHeight = $state(0);
@@ -104,7 +104,7 @@
     void updateTocMarker();
   });
 
-  // The contents share the Header disclosure channel, so only one panel is open at a time.
+  // ヘッダと同じ開閉チャンネルを共有し、同時に開くパネルを1つに保つ。
   $effect(() => {
     if (tocOpen) announceHeaderDisclosure("toc");
   });
@@ -211,7 +211,7 @@
     proseResizeObserver.observe(prose);
     scheduleMeasure();
 
-    // Anything that scrolls sideways at large text has to be reachable from the keyboard.
+    // 横スクロールする要素はキーボードから到達できる必要がある。
     prose.querySelectorAll<HTMLElement>("pre").forEach((scroller) => {
       scroller.tabIndex = 0;
       scroller.setAttribute("role", "region");
@@ -223,12 +223,11 @@
     });
 
     /*
-     * Every code block becomes a pair of views: the highlighted rendering, and the source as text
-     * the reader can edit, copy and put back. An edited block shows its own text in the preview
-     * rather than the highlighted original, so the two views never contradict each other.
+     * コードブロックは「ハイライト済みの描画」と「編集可能なソース」の2ビューになる。
+     * 編集されたブロックはプレビューにも読者のテキストを出し、2つのビューが食い違わないようにする。
      */
     const shells: BlockShell[] = [];
-    /** One live region serves every block, and it clears itself on the design's own timing. */
+    /** ライブリージョンは全ブロックで1つ。一定時間後に自動で空にする。 */
     let statusTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
     const report = (message: string) => {
       copyStatus = message;
@@ -247,7 +246,7 @@
         block,
         id: `code-${index}`,
         name,
-        caption: block.dataset.title ?? block.dataset.language,
+        caption: block.dataset.title,
         source,
         onStatus: report,
         onEdit: (value) => {
@@ -277,8 +276,6 @@
     const diagrams: DiagramRecord[] = [
       ...prose.querySelectorAll<HTMLElement>(".mermaid-source"),
     ].map((source, index) => {
-      // The diagram gets the same frame and the same pair of views as a code block, on the page's
-      // own surface rather than the code palette.
       const graph = source.textContent ?? "";
       const title = source.dataset.title ?? "Mermaid diagram";
       const block = document.createElement("div");
@@ -332,25 +329,19 @@
               const figure = document.createElement("figure");
               figure.className = "mermaid-diagram";
               figure.setAttribute("role", "img");
-              // The figure scrolls horizontally, so it must be reachable from the keyboard.
+              // 横スクロールするためキーボードから到達できるようにする。
               figure.setAttribute("tabindex", "0");
               figure.setAttribute("aria-label", record.title);
               figure.innerHTML = svg;
               const drawing = figure.querySelector("svg");
               drawing?.setAttribute("aria-hidden", "true");
-              // Below nine tenths of its authored width the labels stop being readable,
-              // so the figure scrolls from there instead of shrinking further.
+              // 元幅の9割を下回るとラベルが読めなくなるため、以降は縮小せずスクロールさせる。
               const authored = drawing?.viewBox?.baseVal?.width ?? 0;
               if (authored) {
                 figure.style.setProperty(
                   "--mermaid-legible-width",
                   `${Math.round(authored * 0.9)}px`,
                 );
-              }
-              if (record.source.dataset.title) {
-                const caption = document.createElement("figcaption");
-                caption.textContent = record.source.dataset.title;
-                figure.append(caption);
               }
               rendered.push(figure);
             } catch {
@@ -392,7 +383,7 @@
         });
       await sharedMermaidQueue;
     };
-    /** Typing is not a render trigger; a pause in the typing is. */
+    /** 入力そのものではなく、入力が止まったことを再描画の契機にする。 */
     let diagramTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
     const scheduleDiagram = () => {
       clearTimeout(diagramTimer);
@@ -426,8 +417,7 @@
         active = requestedHeading;
         return;
       }
-      // A quarter of the viewport below the anchor line, so a section reads as current while
-      // its opening paragraphs are still in view rather than only once it reaches the top.
+      // アンカー線から画面の1/4下。見出しが最上部に達する前に現在地として扱う。
       const activation = offset + globalThis.innerHeight * 0.24;
       let current = headingElements[0]?.id ?? "";
       for (const heading of headingElements) {
@@ -467,7 +457,7 @@
   });
 
   const tocTriggerClass =
-    "mobile-toc-trigger inline-flex min-h-(--control-size) cursor-pointer list-none items-center justify-start gap-(--space-2) border-0 bg-ink px-(--space-3) font-sans text-small tracking-ui text-canvas pressable [--press-scale:0.96] [&::-webkit-details-marker]:hidden";
+    "mobile-toc-trigger flex w-full min-h-(--control-size) cursor-pointer list-none items-center justify-start gap-(--space-2) border-0 bg-ink px-(--space-3) font-sans text-small tracking-ui text-canvas pressable [--press-scale:0.96] [&::-webkit-details-marker]:hidden";
 
   function selectHeading(heading: Heading) {
     tocOpen = false;
@@ -487,7 +477,7 @@
 
 {#snippet tocItems()}
   {#each headings as heading}
-    <li class={cn("relative z-(--z-content) flex min-h-(--control-size) items-center [.desktop-toc_&]:min-h-(--space-8)", heading.level === 3 && "pl-(--space-3)")}>
+    <li class={cn("relative z-(--z-content) flex min-h-(--control-size) items-center in-[.desktop-toc]:min-h-(--space-8)", heading.level === 3 && "pl-(--space-3)")}>
       <a
         href={"#" + heading.id}
         aria-current={active === heading.id ? "location" : undefined}
@@ -516,13 +506,18 @@
 <p class="copy-status absolute size-px overflow-hidden whitespace-nowrap [clip:rect(0,0,0,0)]" aria-live="polite">{copyStatus}</p>
 
 {#if headings.length || tools}
-<div class="reading-rail sticky top-(--article-anchor-offset) grid gap-y-(--space-6) self-start max-lg:static max-lg:gap-y-0">
+<div class={cn(
+  "reading-rail sticky top-[calc(var(--site-header-block)+var(--space-3))] grid gap-y-(--space-6) self-start max-sm:static max-sm:gap-y-0 lg:top-(--article-anchor-offset)",
+  "sm:max-lg:col-start-2 sm:max-lg:row-start-1 sm:max-lg:row-span-2",
+  "sm:max-h-[calc(100dvh-var(--site-header-block)-var(--space-6))] lg:max-h-[calc(100dvh-var(--article-anchor-offset)-var(--space-6))]",
+  headings.length > 0 && "lg:grid-rows-[minmax(0,1fr)_auto]",
+)}>
 {#if headings.length}
-  <aside class="desktop-toc max-h-[calc(100vh-var(--article-anchor-offset)-var(--space-16))] overflow-auto pl-(--space-2) max-lg:hidden" aria-label="目次" data-ready={enhancementsReady}>
+  <aside class="desktop-toc min-h-0 overflow-auto pl-(--space-2) max-lg:hidden" aria-label="目次" data-ready={enhancementsReady}>
     <p class="mb-(--space-4) border-b border-rule pb-(--space-2) font-sans text-caption tracking-label text-quiet">目次</p>
     <div class="toc-composition relative">
       {#if shownComposition}
-        <span class="pointer-events-none absolute top-0 bottom-0 left-0 z-(--z-base) w-12"><ArticleCompositionGraph composition={shownComposition} spans={tocSpans} id="detail-toc" orientation="vertical" /></span>
+        <span class="pointer-events-none absolute top-0 bottom-0 left-0 z-(--z-base) w-12"><ArticleCompositionGraph composition={shownComposition} spans={tocSpans} id="detail-toc" /></span>
       {/if}
       <ol
         class="toc-list relative m-0 grid list-none grid-rows-(--toc-rows) pl-(--space-16) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-reduced:after:duration-(--motion-duration-immediate) motion-off:after:duration-(--motion-duration-immediate)"
@@ -536,7 +531,7 @@
 {/if}
 
   {#if tools}
-    <div class="reading-tools max-lg:hidden">{@render tools()}</div>
+    <div class="reading-tools max-sm:hidden">{@render tools()}</div>
   {/if}
 </div>
 {/if}
@@ -544,7 +539,7 @@
 {#if headings.length}
 
   <div
-    class="mobile-toc-region pointer-events-none relative z-(--z-overlay) hidden w-fit max-lg:row-start-1 max-lg:block max-lg:sticky max-lg:top-(--space-3) max-lg:pb-(--space-2) [&_*]:pointer-events-auto"
+    class="mobile-toc-region pointer-events-none relative z-(--z-overlay) hidden w-full max-lg:col-start-1 max-lg:row-start-1 max-lg:block max-lg:sticky max-lg:top-[calc(var(--site-header-block)+var(--space-3))] max-lg:pb-(--space-2) **:pointer-events-auto"
     data-ready={enhancementsReady}
   >
     <Collapsible.Root
@@ -555,8 +550,8 @@
       <Collapsible.Trigger class={tocTriggerClass}>
         {@render tocGlyph()}<span>目次</span>
       </Collapsible.Trigger>
-      <Collapsible.Content class="mobile-toc-content absolute top-[calc(100%+var(--space-2))] left-0 z-(--z-overlay) w-[min(20rem,calc(100vw-2*var(--layout-gutter)))] origin-top-left overflow-hidden border border-rule bg-(--color-glass-solid) p-(--space-3) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-disclosure-in data-[state=closed]:animate-disclosure-out motion-reduced:animate-none motion-off:animate-none">
-        <nav aria-label="目次">
+      <Collapsible.Content class="mobile-toc-content absolute top-full left-0 z-(--z-overlay) w-full origin-top-left overflow-hidden border border-t-0 border-rule bg-(--color-glass-solid) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-toc-open data-[state=closed]:animate-toc-close motion-reduced:animate-none motion-off:animate-none">
+        <nav class="p-(--space-3)" aria-label="目次">
           <ol
             class="toc-list relative m-0 list-none pl-(--space-3) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-reduced:after:duration-(--motion-duration-immediate) motion-off:after:duration-(--motion-duration-immediate)"
             bind:this={mobileTocList}

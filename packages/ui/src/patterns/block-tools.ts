@@ -1,29 +1,24 @@
 /**
- * Code and diagram blocks in an article are read far more often than they are copied, but when a
- * reader does want the source they want all of it, and when they want to try a change they want it
- * without leaving the page. Both kinds of block therefore carry the same shell: a rendered view, an
- * editable source view, a copy of whatever the source currently says, and a way back to the
- * original.
+ * コードブロックと図が共有するシェル：描画ビュー、編集可能なソースビュー、コピー、元に戻す。
  *
- * The shell is built here rather than in markup because the blocks arrive as HTML from the content
- * pipeline. Without this script the block still renders and still reads correctly — the shell is an
- * enhancement, and every control it adds is a real button with a real label.
+ * ブロックはコンテンツパイプラインから HTML として届くため、マークアップではなくここで組む。
+ * このスクリプトがなくてもブロックは描画され正しく読める（シェルは拡張）。
  */
+
+import copyIcon from "@iconify-icons/solar/copy-linear.js";
+import copiedIcon from "@iconify-icons/solar/check-circle-linear.js";
 
 export type BlockPanel = "preview" | "source";
 
 export type BlockShell = {
-  /** Where the rendered view belongs: highlighted code, or a diagram. */
+  /** 描画ビューの置き場所（ハイライト済みコード、または図）。 */
   readonly preview: HTMLElement;
   readonly editor: HTMLTextAreaElement;
   select(panel: BlockPanel): void;
   destroy(): void;
 };
 
-/*
- * Both kinds of block declare their own ink in `--block-ink` — the code palette on a code block,
- * the page's ink on a diagram — so one set of classes serves both surfaces.
- */
+/* 各ブロックが `--block-ink` に自分のインクを宣言するので、1組のクラスで両方の面に使える。 */
 const label = "inline-flex min-h-control items-center border-0 bg-transparent px-(--space-4) " +
   "font-sans font-stretch-84% text-folio leading-none tracking-folio uppercase " +
   "text-[color-mix(in_srgb,var(--block-ink)_66%,transparent)] cursor-pointer " +
@@ -44,44 +39,46 @@ export function createBlockShell({
   onEdit,
   onStatus,
 }: {
-  /** The block element; its existing children become the rendered view. */
+  /** ブロック要素。既存の子要素がそのまま描画ビューになる。 */
   block: HTMLElement;
   id: string;
-  /** Accessible name of the pair of views, e.g. the file name or the diagram title. */
+  /** 2つのビューのアクセシブルネーム（ファイル名や図の題）。 */
   name: string;
-  /** The block's own identity, shown in the bar: a file name, or the diagram's title. */
+  /** バーに出すブロック自身の名前。 */
   caption?: string;
   source: string;
   previewName?: string;
-  /** Called with the current text whenever the reader edits or resets it. */
+  /** 読者が編集またはリセットしたときに現在のテキストで呼ばれる。 */
   onEdit?: (value: string) => void;
   onStatus?: (message: string) => void;
 }): BlockShell {
   const existing = [...block.childNodes];
 
   const bar = document.createElement("div");
-  bar.className = `flex flex-wrap items-stretch justify-between gap-x-(--space-2) border-b ${rule}`;
+  bar.className = `grid border-b ${rule}`;
 
-  // The block's identity stays in the bar next to the views it belongs to.
-  const left = document.createElement("div");
-  left.className = "flex flex-wrap min-w-0 items-stretch";
   if (caption) {
     const title = document.createElement("span");
-    title.className = "flex min-w-0 items-center truncate pl-(--space-4) pr-(--space-2) " +
+    title.className = `min-w-0 truncate border-b ${rule} px-(--space-4) py-(--space-2) ` +
       "font-mono text-caption leading-none " +
       "text-[color-mix(in_srgb,var(--block-ink)_80%,transparent)]";
     title.textContent = caption;
-    left.append(title);
+    bar.append(title);
   }
+
+  const controls = document.createElement("div");
+  controls.className = "flex flex-wrap items-stretch justify-between gap-x-(--space-2)";
+  bar.append(controls);
 
   const tabs = document.createElement("div");
   tabs.className = "flex flex-wrap items-stretch";
   tabs.setAttribute("role", "tablist");
   tabs.setAttribute("aria-label", `${name}の表示`);
-  left.append(tabs);
+  controls.append(tabs);
 
   const actions = document.createElement("div");
   actions.className = "flex flex-wrap items-stretch";
+  controls.append(actions);
 
   const preview = document.createElement("div");
   preview.className = "block-preview";
@@ -122,37 +119,42 @@ export function createBlockShell({
   const previewTab = tabFor("preview", previewName);
   const sourceTab = tabFor("source", "Source");
 
+  const glyph = (icon: { body: string }, state: "copy" | "copied") =>
+    `<svg viewBox="0 0 24 24" class="size-(--space-4)" data-glyph="${state}" aria-hidden="true" focusable="false">${icon.body}</svg>`;
   const copy = document.createElement("button");
   copy.type = "button";
   copy.className = `${label} border-l ${rule}`;
-  copy.textContent = "Copy";
+  copy.setAttribute("aria-label", `${name}をコピー`);
+  copy.innerHTML = glyph(copyIcon, "copy");
 
   const reset = document.createElement("button");
   reset.type = "button";
   reset.className = `${label} border-l ${rule}`;
   reset.textContent = "Reset";
-  // Nothing has been changed yet, so there is nothing to go back to.
   reset.hidden = true;
   actions.append(reset, copy);
 
-  bar.append(left, actions);
   block.append(bar, preview, editorPanel);
 
   let statusTimer: ReturnType<typeof setTimeout> | undefined;
 
-  const announce = (message: string, text: string) => {
-    copy.textContent = text;
+  const rest = () => {
+    copy.innerHTML = glyph(copyIcon, "copy");
+    copy.setAttribute("aria-label", `${name}をコピー`);
+  };
+  const announce = (message: string, copied: boolean) => {
+    copy.innerHTML = glyph(copied ? copiedIcon : copyIcon, copied ? "copied" : "copy");
+    copy.setAttribute("aria-label", message);
     onStatus?.(message);
     clearTimeout(statusTimer);
-    statusTimer = setTimeout(() => (copy.textContent = "Copy"), 2400);
+    statusTimer = setTimeout(rest, 2400);
   };
 
   const select = (panel: BlockPanel) => {
     for (const [tab, owned] of [[previewTab, "preview"], [sourceTab, "source"]] as const) {
       const selected = owned === panel;
       tab.setAttribute("aria-selected", String(selected));
-      // Both tabs stay in the tab order: with only two views, a reader looking for the source
-      // should find it by tabbing rather than having to guess at an arrow key.
+      // ビューが2つだけなので、矢印キーではなく Tab で辿れるよう両方をタブ順に残す。
       tab.tabIndex = 0;
     }
     preview.hidden = panel !== "preview";
@@ -190,9 +192,9 @@ export function createBlockShell({
   const write = async () => {
     try {
       await navigator.clipboard.writeText(editor.value);
-      announce(`${name}をコピーしました`, "Copied");
+      announce(`${name}をコピーしました`, true);
     } catch {
-      announce(`${name}をコピーできませんでした`, "Failed");
+      announce(`${name}をコピーできませんでした`, false);
     }
   };
 
@@ -212,7 +214,6 @@ export function createBlockShell({
     select,
     destroy() {
       clearTimeout(statusTimer);
-      // The block goes back to exactly the markup the page was served with.
       block.append(...[...preview.childNodes]);
       bar.remove();
       preview.remove();

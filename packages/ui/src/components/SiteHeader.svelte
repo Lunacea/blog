@@ -27,14 +27,9 @@
   });
 </script>
 
-<!--
-  A single hairline bar. Home renders no header at all; there the masthead is the identity, so this
-  carries the same wordmark at control size. Its C is the sun-and-moon mark, decorative here — the
-  whole wordmark stays the way back to Home — and both preference controls sit at the other end.
--->
-<header class="relative z-(--z-header) border-b border-rule" data-ready={ready}>
+<!-- ホームはヘッダを持たない（題字がアイデンティティ）ため、ここでは同じ題字を操作サイズで出す。 -->
+<header class="sticky top-0 z-(--z-header) border-b border-rule bg-(--color-glass) backdrop-blur-glass" data-ready={ready}>
   <div class="mx-auto flex w-full max-w-content flex-wrap items-center justify-between gap-x-(--space-6) gap-y-(--space-1) px-(--layout-gutter)">
-<!-- The mark is small type; the link around it is a full-size target. -->
     <a class="flex min-h-control shrink-0 items-center font-stretch-104% text-small leading-none font-strong tracking-heading text-ink uppercase no-underline pressable [--press-scale:0.97] hover:no-underline" href="/">
       <span class="sr-only">Lunacea</span>
       <span class="flex items-baseline" aria-hidden="true">
