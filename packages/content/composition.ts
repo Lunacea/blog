@@ -14,7 +14,7 @@ export type ArticleComposition = {
   sections: CompositionSection[];
 };
 
-/** One sheet stands for one reading minute, so the stack reads as time rather than file size. */
+/** 1枚が読了1分。積み重ねがファイルサイズではなく時間として読める。 */
 export function paperLayerCount(estimatedMinutes: number): number {
   return Math.min(5, Math.max(1, Math.ceil(estimatedMinutes)));
 }
@@ -44,7 +44,7 @@ export function analyzeArticleComposition(source: string): ArticleComposition {
     const characters = [...plain(value)].length;
     commit("text", characters, characters);
   };
-  // Process embedded objects in source order, rather than aggregating by kind.
+  // 種類ごとに集約せず、ソース順に処理する。
   const paragraph = (value: string) => {
     const objects =
       /!\[[^\]]*\]\([^)]*\)|<(?:img|figure|picture|MediaSlot|ResponsiveImage|LinkCard)\b[^>]*>|\$[^$\n]+\$/giu;

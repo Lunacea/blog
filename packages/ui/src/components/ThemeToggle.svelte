@@ -12,7 +12,7 @@
 
   let { placement = "header" }: { placement?: "header" | "masthead" } = $props();
   let theme = $state<EffectiveTheme>("light");
-  /** Hydration signal: the control only responds once this is true. */
+  /** ハイドレーション済みかどうか。true になるまでこの操作子は反応しない。 */
   let ready = $state(false);
 
   function refresh() {
@@ -35,7 +35,6 @@
   });
 </script>
 
-<!-- One monochrome sun-and-moon mark, drawn at control size in the bar and at display size as the C. -->
 <button
   class={cn(
     "theme-toggle group cursor-pointer border-0 bg-transparent p-0",

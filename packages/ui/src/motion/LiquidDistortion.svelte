@@ -7,12 +7,8 @@
   let { class: className = "", children }: { class?: string; children: Snippet } = $props();
 
   /**
-   * Oversized display type warped through the opening's own displacement map: the same ink as
-   * the Home opening and the masthead's pointer wave, to the number. It arrives with one push and then holds still,
-   * and while a pointer is on it the surface keeps moving — taken away, it carries past its rest
-   * and rings back rather than cutting off. The map rests at scale zero and the filter is only
-   * attached while there is something to warp, so between disturbances the glyphs are plain type
-   * and there is no decorative loop to stop.
+   * オープニングと同じ変位マップで歪ませる特大の見出し。静止時はマップの scale が 0 で
+   * フィルタ自体を外すため、装飾の常時ループは存在しない。
    */
   const id = $props.id();
   let glyphs = $state<HTMLElement | null>(null);
@@ -80,15 +76,13 @@
   }
 
   onMount(() => {
-    // The listeners are bound here rather than declared: the glyphs carry no meaning and no role,
-    // and a hover flourish must not turn them into something a reader is told about.
+    // 装飾でしかないため、宣言せずここで束ねて支援技術に露出させない。
     glyphs?.addEventListener("pointerenter", hold);
     glyphs?.addEventListener("pointerleave", release);
     const watcher = new IntersectionObserver(([entry]) => {
       onscreen = Boolean(entry?.isIntersecting);
       if (!onscreen) stop();
-      // The numerals arrive out of the same ink the opening does: one push, then still.
-      else if (!frame && liquidAllowed()) {
+        else if (!frame && liquidAllowed()) {
         spring.kick(5.5);
         start();
       }

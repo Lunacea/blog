@@ -11,10 +11,7 @@ const manifest = JSON.parse(
 
 const generatedNodes = new URL("../.svelte-kit/generated/client-optimized/nodes/", import.meta.url);
 
-/**
- * Stale generated nodes survive rebuilds, so every match is collected and then narrowed to the
- * ones the current manifest actually knows about.
- */
+/** 生成物はリビルドをまたいで残るため、一度全件集めてから現在のマニフェストに絞る。 */
 async function nodeKeysFor(routeFile: string): Promise<string[]> {
   const keys: string[] = [];
   for await (const entry of Deno.readDir(generatedNodes)) {
@@ -31,7 +28,7 @@ async function nodeKeysFor(routeFile: string): Promise<string[]> {
 const homeNodeKeys = await nodeKeysFor("src/routes/+page.svelte");
 const catalogNodeKeys = await nodeKeysFor("src/routes/articles/+page.svelte");
 const articleDetailNodeKeys = await nodeKeysFor("src/routes/articles/[slug]/+page.svelte");
-/** Routes allowed to mount the animated field: Home and the article catalog. */
+/** アニメーション背景を持てるルート。 */
 const fieldRoutes = new Set([...homeNodeKeys, ...catalogNodeKeys]);
 const articleDetailNodeKey = articleDetailNodeKeys[0];
 

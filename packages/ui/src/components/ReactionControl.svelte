@@ -7,7 +7,7 @@
     pending = false,
     disabled = false,
     message = "",
-    /** Increments only when the reader praises the article, so a revisit never replays it. */
+    /** 称賛したときだけ増える。再訪で再生されることはない。 */
     celebrate = 0,
     ontoggle,
   }: {
@@ -20,7 +20,6 @@
     ontoggle: () => void;
   } = $props();
 
-  /** The acknowledgement lives in the glyph itself: it squashes and settles like a drop. */
   let celebrating = $state(false);
   let played = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;

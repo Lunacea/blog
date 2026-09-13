@@ -1,12 +1,9 @@
-/**
- * The catalog layout follows the `view` parameter alone. Categories are always visible and search
- * lives in the Header, so a filtered URL no longer has to fall back to the list to stay operable.
- */
+/** 一覧のレイアウトは `view` パラメータのみで決まる。 */
 export function articleView(params: URLSearchParams): "grid" | "list" {
   return params.get("view") === "list" ? "list" : "grid";
 }
 
-/** Deterministic per-day picks keep server rendering, hydration and shared caches in agreement. */
+/** 日ごとに決定論的に選ぶ。サーバ描画・ハイドレーション・共有キャッシュの結果を一致させるため。 */
 export function serendipityPicks<T>(pool: readonly T[], count: number, day: number): T[] {
   const picks: T[] = [];
   const remaining = [...pool];
@@ -20,7 +17,7 @@ export function serendipityPicks<T>(pool: readonly T[], count: number, day: numb
   return picks;
 }
 
-/** A small archive keeps its chronology; a larger one can spare three records for the box. */
+/** 記事が少ないうちは時系列を崩さない。 */
 export function serendipityCount(poolSize: number): number {
   if (poolSize >= 6) return 3;
   return poolSize >= 4 ? 2 : 0;

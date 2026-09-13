@@ -2,9 +2,7 @@ import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { ARTICLE, headerOverlap, horizontalOverflow, motionOff, SEARCH_TERM } from "./support.ts";
 
-// One audit per surface archetype instead of per route: Home, a filtered catalog and an article
-// between them render every component the site owns. The dark pass rides on the article because
-// it carries the most themed surfaces, and contrast is the only theme-sensitive rule.
+// ルートごとではなく面の原型ごとに1回監査する。ホーム・絞り込み一覧・記事で全コンポーネントを覆う。
 const AUDITS = [
   { route: "/", theme: "light" },
   { route: `/articles?q=${encodeURIComponent(SEARCH_TERM)}`, theme: "light" },
@@ -17,11 +15,9 @@ for (const { route, theme } of AUDITS) {
   test(`${route} passes the ${theme} accessibility audit`, {
     tag: ["@desktop"],
   }, async ({ page }) => {
-    // axe walks the whole document, which outlasts the default budget on a long article.
+    // axe は文書全体を走査するため、長い記事では既定のタイムアウトを超える。
     test.setTimeout(120_000);
-    // The pre-paint script reads both preferences, so the audited page never waits for hydration
-    // to re-apply a theme, and motion off removes the colour transition that would otherwise be
-    // sampled part-way and reported as contrast that never appears on screen.
+    // 色の遷移途中をサンプリングして実在しないコントラスト違反が出るのを防ぐためモーションを切る。
     await page.addInitScript((theme) => {
       localStorage.setItem("lunacea-theme", theme);
       localStorage.setItem("lunacea-motion", "off");
@@ -29,7 +25,7 @@ for (const { route, theme } of AUDITS) {
     await page.goto(route);
     await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
     await expect(page.locator("main")).toBeVisible();
-    // A diagram arrives after its script; auditing before it lands would skip it at random.
+    // 図はスクリプト後に現れるため、到着を待たないと監査対象から漏れる。
     if (route === ARTICLE) {
       await expect(page.locator(".mermaid-diagram")).toBeVisible({ timeout: 15_000 });
     }
@@ -47,13 +43,11 @@ test("narrow viewports and 200% text never scroll sideways", {
       const where = `${route} @${width}`;
       await page.setViewportSize({ width, height: 900 });
       await page.goto(route);
-      // The measurement has to wait for the real faces: a fallback face is narrower, and reflow
-      // measured against it reports room the reader never has.
+      // 代替フォントは幅が狭く実際にない余地を報告するため、実フォント読み込みを待つ。
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => document.documentElement.style.fontSize = "200%");
       await expect(page.locator("main")).toBeVisible();
       expect(await horizontalOverflow(page), where).toBeLessThanOrEqual(1);
-      // Enlarged type must reflow around the bar rather than under it.
       expect(await headerOverlap(page, "main h1"), where).toBe(0);
     }
   }

@@ -7,14 +7,13 @@ export function createDenoKvImpressionRepository(
   windowMs = 12 * 60 * 60_000,
 ): ImpressionRepository {
   /**
-   * One handle for the process. Opening the store per operation gives each call its own
-   * connection to the same database file, and concurrent writes then fail with
-   * "database is locked"; a shared handle lets Deno KV serialise them internally.
+   * プロセスで1つのハンドルを共有する。操作ごとに開くと同じDBファイルへの接続が分かれ、
+   * 同時書き込みが "database is locked" で失敗する。
    */
   let opened: Promise<Deno.Kv> | undefined;
   const openStore = () => {
     opened ??= getKv().catch((error) => {
-      // A failed open must not be cached, or the process never recovers.
+      // 失敗したオープンをキャッシュするとプロセスが復帰できなくなる。
       opened = undefined;
       throw error;
     });

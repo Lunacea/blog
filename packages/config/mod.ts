@@ -17,7 +17,7 @@ export const siteConfig = {
   catalogFilters: {
     articles: { categories: [], tags: [] },
   },
-  /** Representative stack shown under the Home introduction; icons resolve by name. */
+  /** ホームの紹介文の下に出す代表的な技術スタック。アイコンは名前で解決する。 */
   techStack: ["TypeScript", "Svelte", "SvelteKit", "Deno", "Three.js", "Design"],
   defaultLocation: {
     id: "morioka-jp",
@@ -62,8 +62,8 @@ export type AuthoredMedia = {
 };
 
 /**
- * Authored media is intentionally empty in sample mode. Replace these values with
- * owned AVIF/WebP assets; the UI never synthesizes people, plants, or identity art.
+ * サンプルモードでは意図的に空。自前の AVIF/WebP に差し替える。
+ * UI が人物・植物・アイデンティティ画像を生成することはない。
  */
 export const visualAssets = {
   identity: {

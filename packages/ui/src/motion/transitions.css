@@ -1,4 +1,3 @@
-/* One-shot enhancements. The non-JS frame remains visible. */
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal] {
   opacity: 0;
   transform: translateY(calc(var(--space-2) + var(--reveal-parallax, 0px)));
@@ -61,14 +60,12 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"][data-vi
 }
 
 /*
-  The page crosses over as one image. Naming the scrolling <main> made the transition group animate
-  its own box, so leaving a long page dragged the outgoing snapshot down across the viewport before
-  the incoming page appeared. The root snapshot is always the viewport, so the crossing is the same
-  wherever the reader had scrolled to.
+  ページは1枚の画像として入れ替わる。スクロールする <main> に名前を付けると遷移グループが
+  自身のボックスをアニメーションし、長いページから出るとき旧画像が画面を縦断してしまう。
+  root のスナップショットは常にビューポートなので、スクロール位置によらず同じ切り替わりになる。
 
-  The two images overlap rather than queue: the header and the footer are identical on both sides,
-  so a dissolve holds them perfectly still, while a gap between the outgoing and incoming page
-  would blank the whole window for a frame.
+  2枚は順番待ちではなく重ねる。ヘッダとフッタは両側で同一なので溶暗で完全に静止し、
+  間に隙間を空けると1フレーム窓全体が空白になる。
 */
 ::view-transition-group(*) {
   animation-duration: var(--motion-duration-page);
@@ -89,8 +86,7 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"][data-vi
     calc(var(--motion-duration-exit) * 0.5) both;
 }
 
-/* A navigation that only changes the query string stays on the same page, so it crosses over
-   faster. */
+/* クエリ文字列だけの遷移は同一ページ内なので速く切り替える。 */
 html[data-catalog-transition="true"]::view-transition-old(root) {
   animation: catalog-exit var(--motion-duration-fast) var(--motion-ease-exit) both;
 }
@@ -125,7 +121,7 @@ html[data-catalog-transition="true"]::view-transition-group(*) {
   }
 }
 
-/* Opacity only: the incoming image covers the shell too, and a rise would ghost the hairline. */
+/* 不透明度のみ。移動を入れると罫線がゴーストになる。 */
 @keyframes page-enter {
   from {
     opacity: 0;

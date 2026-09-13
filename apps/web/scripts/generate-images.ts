@@ -8,9 +8,8 @@ const legacyOutputRoot = new URL("../static/images/.generated/", import.meta.url
 const moduleOutput = new URL("../src/lib/.generated/images.ts", import.meta.url);
 const widths = [480, 800, 1200];
 /*
- * The identity mark is authored at 960px but never drawn larger than the business card's portrait
- * slot, so it gets its own small ladder in device-pixel steps. Serving the source PNG cost half a
- * megabyte for a 56px picture.
+ * アイデンティティマークは 960px で作られているが名刺の枠より大きく描かれないため、
+ * 解像度倍率の小さな段階だけを用意する。元 PNG をそのまま配ると 56px の絵に 0.5MB かかる。
  */
 const markRoot = new URL("../static/images/", import.meta.url);
 const markWidths = [56, 112, 168];

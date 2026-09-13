@@ -28,10 +28,9 @@ function parseMetadata(path: string, metadata: unknown): Content {
 }
 
 /**
- * The bundled `sample: true` entries are development fixtures: they exercise every editorial
- * block while authoring, and a production build leaves them out of the registry entirely rather
- * than publishing them. Everything downstream — Home, the catalog, detail routes, OG images,
- * feeds and the sitemap — reads this one list, so nothing has to filter samples again.
+ * `sample: true` の記事は開発用のフィクスチャで、本番ビルドではレジストリから外れる。
+ * 下流（ホーム・一覧・詳細・OG画像・フィード・サイトマップ）はすべてこの1つのリストを読むので、
+ * 各所で再度サンプルを除く必要はない。
  */
 const publishSamples = import.meta.env.DEV;
 

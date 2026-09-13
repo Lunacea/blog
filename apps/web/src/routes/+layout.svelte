@@ -9,9 +9,8 @@
   import { onMount } from "svelte";
 
   let { children } = $props();
-  // Home is its own masthead; every other route gets the hairline bar.
   const masthead = $derived(page.url.pathname === "/");
-  // Home and the catalog mount their own animated field, so the shell does not add a second one.
+  // ホームと一覧は自前の背景を持つため、シェルでは重ねない。
   const ownsField = $derived(masthead || page.url.pathname === "/articles");
   installPageTransitions();
   onMount(() => {
@@ -35,7 +34,7 @@
   </SiteHeader>
 {/if}
 <main class="relative z-(--z-visual)" id="main-content">
-  <!-- The field lives inside main so its negative layer stays above the page background. -->
+  <!-- 負のレイヤーがページ背景より上に来るよう main の中に置く。 -->
   {#if !ownsField}<StaticLight id="page" condition={$ambientWeather} />{/if}
   {@render children()}
 </main>

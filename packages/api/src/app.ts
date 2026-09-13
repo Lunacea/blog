@@ -109,7 +109,7 @@ export function createApi(options: ApiOptions = {}): Hono<ApiEnvironment> {
     );
   });
 
-  // One anonymous impression per article per window. Nothing about the reader is stored.
+  // 期間内は記事ごとに匿名の閲覧1件。読者に関する情報は保存しない。
   app.post("/impressions/:type/:slug", async (context) => {
     if (!sameOrigin(context.req.raw)) return context.json({ error: "invalid_origin" }, 403);
     const target = reactionTargetSchema.safeParse(context.req.param());

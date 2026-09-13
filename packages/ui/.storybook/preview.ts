@@ -66,7 +66,7 @@ const preview: Preview = {
     a11y: {
       test: "error",
       config: {
-        // Component stories are fragments, so page-level document structure is out of scope.
+        // ストーリーは断片なのでページ単位の文書構造は対象外。
         rules: [
           { id: "landmark-one-main", enabled: false },
           { id: "page-has-heading-one", enabled: false },

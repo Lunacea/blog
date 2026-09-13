@@ -1,4 +1,4 @@
-/** One row of the shared numbered index used by Home and the article catalog. */
+/** ホームと記事一覧が共有する番号付き索引の1行。 */
 export type IndexEntry = {
   slug: string;
   href: string;

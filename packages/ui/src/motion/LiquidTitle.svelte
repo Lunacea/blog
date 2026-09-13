@@ -5,18 +5,10 @@
   import { createLiquidSpring, liquid, liquidAllowed, verticalInk } from "./liquid.ts";
 
   /**
-   * Display type that the cursor warps. The opening sets the wordmark down out of wet ink; from
-   * then on the pointer draws a distortion out of it — along the letters' height only, and at a
-   * fine grain, so the ink tears vertically inside a glyph rather than lifting the whole of it.
+   * カーソルが歪ませる見出し。歪みは運動ではなく形で、カーソル位置が最も深く1〜2文字で消える。
+   * 振動しないのでポインタを止めればフレームループも止まる。
    *
-   * The warp is a shape, not a motion. It stands where the cursor is, deepest under it and dying
-   * away within a letter or two, and it moves because the cursor moves — nothing here oscillates,
-   * so a pointer held still leaves the wordmark held still too, and the frame loop lets go. Taken
-   * away, the ink carries a little past its rest and settles, which is the only inertia here.
-   *
-   * The letters are decoration over an accessible name the caller owns, and a letter at rest
-   * carries no filter at all, so the server-rendered wordmark, forced colours and a reader with
-   * motion off are all the plain type.
+   * 文字は呼び出し側が持つアクセシブルネームの上の装飾で、静止時はフィルタを持たない。
    */
   let {
     text,
@@ -26,9 +18,8 @@
   }: {
     text: string;
     /**
-     * The letter whose glyph `slot` replaces. It keeps the letter's advance and is the one letter
-     * the wave leaves alone: it is the mark the wordmark lands on, and on Home it is also the
-     * control the pointer is aiming at, which must not warp out from under it.
+     * `slot` が字形を差し替える文字。字送りは保ったまま、この文字だけは歪ませない
+     * （ホームではこれ自体がポインタの狙う操作子であるため）。
      */
     slotIndex?: number;
     class?: string;
@@ -42,20 +33,18 @@
   );
 
   let row = $state<HTMLElement | null>(null);
-  /* Bound per letter, so they are state: a plain array would take the nodes but warn about it. */
+  /* 文字ごとに bind するため state にする。素の配列でも動くが警告が出る。 */
   const cells = $state<(HTMLElement | null)[]>([]);
   const maps = $state<(SVGFEDisplacementMapElement | null)[]>([]);
 
-  /* Where each letter's middle sits along the row, as a fraction of it, and the row's own box. */
   const centres: number[] = [];
   const wetted: boolean[] = [];
   let rowLeft = 0;
   let rowWidth = 0;
 
   /*
-   * Damped harder than the shared spring: this one carries no oscillation of its own, so all the
-   * ringing a reader would ever see is the single overshoot it makes on release. More than that
-   * and a warp that is meant to answer the cursor starts to wobble on its own.
+   * 共通のバネより強く減衰させる。見えるのは解放時の行き過ぎ1回だけ。
+   * これ以上だとカーソルへの応答であるはずの歪みが自励振動に見える。
    */
   const spring = createLiquidSpring(40, 7.4);
   let frame = 0;
@@ -77,7 +66,7 @@
     }
   }
 
-  /** A letter only carries a filter while it has something to warp. */
+  /** 歪ませるものがある間だけフィルタを付ける。 */
   function wet(index: number, value: boolean) {
     const cell = cells[index];
     if (!cell || wetted[index] === value) return;
@@ -96,14 +85,11 @@
     const delta = Math.min(last ? (now - last) / 1000 : 0, 0.05);
     last = now;
     const envelope = spring.advance(intent, delta);
-    // The warp follows the cursor rather than jumping to it, so dragging the pointer along the
-    // word pulls the distortion with it instead of stepping it from letter to letter.
     const before = chased;
     chased += (touch - chased) * Math.min(1, delta * 15);
     for (const { index } of glyphs) {
       if (index === slotIndex) continue;
-      // Distance from the pointer is the whole of it: deepest under the cursor, gone within a
-      // letter or two, and never delayed — a delay is what turned this into a travelling wave.
+      // 距離だけで決める。遅延を入れると進行波になってしまう。
       const distance = Math.abs((centres[index] ?? 0.5) - chased);
       const depth = envelope * Math.exp(-distance * liquid.falloff);
       if (Math.abs(depth) < liquid.still) {
@@ -121,9 +107,8 @@
       return;
     }
     /*
-     * Nothing here oscillates, so once the ink has reached the shape the cursor asks for there is
-     * no next frame worth drawing: the loop lets go and the warp simply stands there until the
-     * pointer moves again. A few frames of grace keep a slow drag from starting and stopping.
+     * 振動しないので、カーソルが要求する形に達したら描くべき次フレームはない。
+     * 数フレームの猶予は、ゆっくりしたドラッグで停止と再開を繰り返さないため。
      */
     const moved = Math.abs(chased - before) > 0.0002 ||
       Math.abs(envelope - intent) > liquid.still * 0.5;
@@ -154,7 +139,7 @@
   }
 
   function track(event: PointerEvent) {
-    // A wave answers a pointer hovering the type; a finger is dragging the page past it.
+    // 波はホバーへの応答。タッチはページを動かしている操作なので反応しない。
     if (event.pointerType === "touch" || !rowWidth || !onscreen || !liquidAllowed()) return;
     touch = (event.clientX - rowLeft) / rowWidth;
     intent = 1;
@@ -163,18 +148,16 @@
 
   function release() {
     intent = 0;
-    // The loop lets go while the pointer rests on the word, so the settling has to wake it.
+    // ポインタが止まるとループが停止するため、収束時に起こし直す。
     start();
   }
 
   onMount(() => {
     measure();
-    // The listeners are bound here rather than declared: the letters carry no meaning and no
-    // role, and a pointer flourish must not turn them into something a reader is told about.
+    // 装飾でしかないため、宣言せずここで束ねて支援技術に露出させない。
     row?.addEventListener("pointermove", track, { passive: true });
     row?.addEventListener("pointerleave", release);
-    // Glyph advances are only final once the real face has loaded, and the row is wider than the
-    // window, so the letters' positions have to be taken again afterwards.
+    // 実フォント読み込み後に字送りが確定するため、位置を測り直す。
     void document.fonts?.ready.then(measure).catch(() => {});
     const observer = new ResizeObserver(measure);
     if (row) observer.observe(row);
@@ -202,10 +185,9 @@
 </script>
 
 <!--
-  One map per letter, all sampling one turbulence. The noise is generated in user space, so the
-  letters read a single continuous sheet of ink rather than each getting its own pattern, and only
-  the maps the wave has reached are given a scale to displace by. Red is the horizontal term: held
-  flat at its midpoint it displaces nothing, so the ink can only ever move along the letter.
+  文字ごとに1つのマップが同一の turbulence を参照する。ノイズはユーザ空間で生成するため、
+  文字ごとに別の模様にならず1枚の連続したインクとして読める。
+  赤チャンネルが水平成分。中央値で固定すると変位しないので、インクは縦にしか動かない。
 -->
 <svg class="absolute size-0" aria-hidden="true" focusable="false">
   {#each glyphs as glyph (glyph.index)}
