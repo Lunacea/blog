@@ -59,9 +59,6 @@ export const workCoverSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-/** @deprecated Use imageCoverSchema. */
-export const coverSchema = imageCoverSchema;
-
 export const revisionSchema = z.object({
   date: isoDate,
   summary: nonEmpty,
