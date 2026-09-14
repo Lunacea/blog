@@ -1,16 +1,14 @@
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal] {
   opacity: 0;
-  transform: translateY(calc(var(--space-2) + var(--reveal-parallax, 0px)));
+  transform: translateY(var(--space-2));
   transition:
     opacity var(--motion-duration-page) var(--motion-ease-enter),
     transform var(--motion-duration-page) var(--motion-ease-enter);
-  transition-delay: var(--reveal-delay, 0ms);
-  animation-delay: var(--reveal-delay, 0ms);
 }
 
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal][data-visible="true"] {
   opacity: 1;
-  transform: translateY(var(--reveal-parallax, 0px));
+  transform: translateY(0);
   animation: reveal-mask var(--motion-duration-slow) var(--motion-ease-enter) both;
 }
 
@@ -23,7 +21,7 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="line"][data-vis
 }
 
 html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"] {
-  transform: translateY(calc(var(--space-1) + var(--reveal-parallax, 0px)));
+  transform: translateY(var(--space-1));
   filter: saturate(0.72) contrast(0.92);
 }
 
@@ -76,14 +74,85 @@ html[data-reveal-ready="true"][data-motion="full"] [data-reveal="image"][data-vi
   animation: none;
 }
 
+/*
+  背景（天候の場）は前後のページで連続しているので、地そのものは動かさない。
+  旧画像を薄くすると重なりのアルファが 1 を割り、地が透けて明暗の谷ができる。
+  旧画像は不透明のまま下に残し、上に載るものだけが入ってくる。
+*/
 ::view-transition-old(root) {
-  animation: page-exit calc(var(--motion-duration-exit) + var(--motion-duration-fast))
-    var(--motion-ease-exit) both;
+  animation: none;
+  z-index: 0;
 }
 
 ::view-transition-new(root) {
-  animation: page-enter var(--motion-duration-base) var(--motion-ease-enter)
-    calc(var(--motion-duration-exit) * 0.5) both;
+  z-index: 1;
+  animation: page-enter var(--motion-duration-base) var(--motion-ease-enter) both;
+}
+
+/*
+  ヘッダの有無は上下で示す。ホームだけヘッダを持たないので、そこを出入りするときだけ動かす。
+  両側にヘッダがあるときは名前が一致してグループが作られ、そのまま居座る。
+  出入り以外でも上下させると、あるものを一度しまってまた出すことになる。
+*/
+.site-header {
+  view-transition-name: site-header;
+}
+
+html[data-header-change="enter"]::view-transition-new(site-header) {
+  animation: header-drop var(--motion-duration-page) var(--motion-ease-signature) both;
+}
+
+html[data-header-change="leave"]::view-transition-old(site-header) {
+  animation: header-lift var(--motion-duration-exit) var(--motion-ease-signature) both;
+}
+
+@keyframes header-drop {
+  from {
+    opacity: 0;
+    translate: 0 -100%;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes header-lift {
+  to {
+    opacity: 0;
+    translate: 0 -100%;
+  }
+}
+
+/*
+  一覧から記事へ入るときは、溶暗ではなく紙を手渡す。
+  動かすのは記事の面だけ。root ごと動かすとヘッダや記事タイトルまで斜めに流れてしまう。
+  面に名前を与えて自分のグループを持たせ、下からせり上げて着地させる。
+  移動中だけ影を付け、着地したら消す。
+*/
+.article-paper {
+  view-transition-name: article-paper;
+}
+
+html[data-paper-handoff="true"]::view-transition-new(article-paper) {
+  animation: paper-rise var(--motion-duration-page) var(--motion-ease-signature) both;
+}
+
+@keyframes paper-rise {
+  from {
+    opacity: 0;
+    translate: 0 var(--space-16);
+    box-shadow: 0 -1rem 2.5rem light-dark(rgb(16 47 35 / 0%), rgb(0 0 0 / 0%));
+  }
+  55% {
+    opacity: 1;
+    box-shadow: 0 -1rem 2.5rem light-dark(rgb(16 47 35 / 18%), rgb(0 0 0 / 44%));
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    box-shadow: 0 -1rem 2.5rem light-dark(rgb(16 47 35 / 0%), rgb(0 0 0 / 0%));
+  }
 }
 
 /* クエリ文字列だけの遷移は同一ページ内なので速く切り替える。 */
@@ -190,6 +259,7 @@ html[data-motion="off"]::view-transition-group(*) {
   animation-duration: var(--motion-duration-immediate);
 }
 
+/* 目次などからの移動だけを滑らかにする。常時 smooth にはしない。 */
 html[data-smooth-anchor="true"] {
   scroll-behavior: smooth;
 }

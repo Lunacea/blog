@@ -83,14 +83,21 @@ test("history navigation and page transitions keep the shell intact", {
     const named = (selector: string) =>
       getComputedStyle(document.querySelector(selector)!).viewTransitionName;
     return {
-      names: [named("main"), named("header"), named(".index-list > li")],
-      oldDuration: getComputedStyle(root, "::view-transition-old(root)").animationDuration,
-      newDelay: getComputedStyle(root, "::view-transition-new(root)").animationDelay,
+      // スクロールする器に名前を付けると、遷移グループが自分のボックスを動かして
+      // 長いページから出るとき旧画像が画面を縦断する。ここは名前を持たない。
+      scroller: named("main"),
+      row: named(".index-list > li"),
+      // ヘッダは出入りを上下で示すので自分のグループを持つ。
+      header: named("header"),
+      // 地（天候の場）は前後で連続しているので旧画像は動かさない。
+      // 薄くすると重なりのアルファが 1 を割り、地が透けて明暗の谷ができる。
+      oldDuration: getComputedStyle(root, "::view-transition-old(root)").animationName,
+      newDuration: getComputedStyle(root, "::view-transition-new(root)").animationDuration,
     };
   });
-  expect(timing.names).toEqual(["none", "none", "none"]);
-  const [duration, delay] = [timing.oldDuration, timing.newDelay].map(Number.parseFloat);
-  expect(duration).toBeGreaterThan(0);
-  expect(delay).toBeGreaterThan(0);
-  expect(delay).toBeLessThan(duration);
+  expect(timing.scroller).toBe("none");
+  expect(timing.row).toBe("none");
+  expect(timing.header).toBe("site-header");
+  expect(timing.oldDuration).toBe("none");
+  expect(Number.parseFloat(timing.newDuration)).toBeGreaterThan(0);
 });
