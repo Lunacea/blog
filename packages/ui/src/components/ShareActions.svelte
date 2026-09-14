@@ -37,9 +37,6 @@
     return `https://x.com/intent/post?${parameters.join("&")}`;
   });
 
-  let status = $state("");
-  let timer: ReturnType<typeof setTimeout> | undefined;
-
   async function shareLink() {
     if (navigator.share) {
       try {
@@ -49,24 +46,18 @@
         // 共有シートのキャンセルは失敗ではないのでクリップボードに落とす。
       }
     }
-    try {
-      await navigator.clipboard.writeText(url);
-      status = "リンクをコピーしました";
-    } catch {
-      status = "コピーできませんでした";
-    }
-    clearTimeout(timer);
-    timer = setTimeout(() => (status = ""), 2400);
+    await navigator.clipboard.writeText(url).catch(() => {});
   }
 
   const rail = $derived(variant === "rail");
   const action = $derived(cn(
     /*
       渡す動作なので、文字が一字ずつ上へ送られて同じ字に入れ替わる（スロット）。
-      同時に下からインクが薄く満ちて、押す前から反応が始まっているように見せる。
+      同時に左からインクが薄く満ちて、押す前から反応が始まっているように見せる。
+      インクが流れる向きはサイト共通で左から右（ALL ARTICLES と同じ）。
     */
     "relative isolate inline-flex min-h-control items-center gap-x-(--space-2) overflow-hidden rounded-ui-card border border-rule px-(--space-4) font-stretch-84% text-folio leading-none tracking-folio uppercase text-ink no-underline pressable hover:border-ink hover:no-underline focus-visible:border-ink active:border-ink active:bg-ink active:text-canvas [&_svg]:size-(--space-4)",
-    "before:absolute before:inset-0 before:-z-1 before:origin-bottom before:scale-y-0 before:bg-ink before:opacity-[.07] before:transition-[scale] before:duration-(--motion-duration-hover) before:ease-signature hover:before:scale-y-100 focus-visible:before:scale-y-100 motion-off:before:transition-none",
+    "before:absolute before:inset-0 before:-z-1 before:origin-left before:scale-x-0 before:bg-ink before:opacity-[.07] before:transition-[scale] before:duration-(--motion-duration-base) before:ease-signature hover:before:scale-x-100 focus-visible:before:scale-x-100 motion-off:before:transition-none",
   ));
   /* 隠す判断は share-rail 側（global.css）が幅を見て行う。 */
   const label = "share-label";
@@ -88,11 +79,10 @@
 <nav class={cn("share-actions flex flex-wrap items-center gap-(--space-2)", rail && "share-rail max-read-wide:flex-col max-read-wide:items-stretch max-read-wide:flex-nowrap", className)} aria-label="この記事を共有">
   <button class={cn(action, "cursor-pointer bg-transparent")} type="button" onclick={shareLink}>
     <Icon name={interfaceIcons.externalLink} />
-    <span class={label}>{@render slot(status ? "Copied" : "Share")}</span>
+    <span class={label}>{@render slot("Share")}</span>
   </button>
   <a class={action} href={xHref} target="_blank" rel="noopener noreferrer">
     <Icon name={socialIcons.x} />
     <span class={label}>{@render slot("Post")}</span>
   </a>
-  <p class="sr-only" aria-live="polite">{status}</p>
 </nav>
