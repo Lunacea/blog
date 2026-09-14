@@ -1,4 +1,5 @@
 export { default as SiteFooter } from "./SiteFooter.svelte";
+export { default as AllArticlesLink } from "./AllArticlesLink.svelte";
 export { default as CategoryLabel } from "./CategoryLabel.svelte";
 export { default as LinkCard } from "./LinkCard.svelte";
 export { default as ResponsivePicture } from "./ResponsivePicture.svelte";
