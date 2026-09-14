@@ -206,6 +206,26 @@ html[data-motion="off"] .share-slot-cell > span {
 }
 
 /*
+  記事一覧への導線の文字。インクは面を左から満たすので、差分で抜けば塗られた画素だけが
+  反転し、うねる縁にもそのまま追従する。色を時間で切り替えると面の満ち引きと別々に動く。
+
+  ただし差分はモーションを切った環境では意味を持たない（インクが満ちないので、
+  白い文字が明るい地の上に残る）。そこでは素の色で対比を取る。
+*/
+.all-articles-label {
+  color: var(--color-ink);
+}
+
+:is(a, button):is(:hover, :focus-visible) .all-articles-label {
+  color: var(--color-canvas);
+}
+
+html[data-motion="full"] .all-articles-label {
+  color: var(--color-light-source);
+  mix-blend-mode: difference;
+}
+
+/*
   レールのシェアは「文言が二つとも入らないときだけ」アイコンだけにする。
   判断はビューポートではなくレール自身の幅に対して行う（.reading-tools が問い合わせ対象）。
 
