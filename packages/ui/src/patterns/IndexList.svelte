@@ -14,11 +14,9 @@
   } = $props();
 
   const rules = $derived(bleed === "compact" ? "max-md:-mx-(--layout-gutter)" : "");
-  const paneFade = $derived(
-    bleed === "compact"
-      ? "md:mask-[linear-gradient(to_right,transparent_0%,black_20%,black_80%,transparent_100%)]"
-      : "",
-  );
+  // ガラスの縁の抜き方はホバーの見え方であって配置の都合ではないので、bleed にも幅にもよらず同じにする。
+  const paneFade =
+    "mask-[linear-gradient(to_right,transparent_0%,black_20%,black_80%,transparent_100%)]";
   const inner = $derived(
     bleed === true
       ? "mx-auto w-full max-w-content px-(--layout-gutter)"
@@ -31,11 +29,11 @@
 <ol class={cn("index-list m-0 grid list-none border-t border-ink p-0", rules)} aria-label={label}>
   {#each entries as entry (entry.slug)}
     <li
-      class="group relative isolate border-b border-rule before:absolute before:inset-x-0 before:-bottom-px before:h-0.5 before:bg-ink before:opacity-0 before:transition-opacity before:duration-(--motion-duration-base) before:ease-enter hover:before:opacity-100 focus-within:before:opacity-100 active:before:opacity-100 motion-off:before:duration-(--motion-duration-immediate)"
+      class="group relative isolate border-b border-rule before:absolute before:inset-x-0 before:-bottom-px before:h-0.5 before:bg-ink before:opacity-0 before:transition-opacity before:duration-(--motion-duration-base) before:ease-signature hover:before:opacity-100 focus-within:before:opacity-100 active:before:opacity-100 motion-off:before:duration-(--motion-duration-immediate)"
     >
       <!-- 読んでいる行の下のすりガラス。文字には触れず、左右に罫線も足さない。 -->
       <span
-        class={cn("pointer-events-none absolute inset-0 -z-1 bg-[linear-gradient(to_bottom,color-mix(in_srgb,var(--color-surface)_34%,transparent),color-mix(in_srgb,var(--color-surface)_14%,transparent))] border-t border-t-[color-mix(in_srgb,var(--color-light-source)_34%,transparent)] backdrop-blur-[18px] backdrop-saturate-150 opacity-0 transition-opacity duration-(--motion-duration-base) ease-enter group-hover:opacity-100 group-focus-within:opacity-100 group-active:opacity-100 motion-off:duration-(--motion-duration-immediate) forced-colors:hidden print:hidden", paneFade)}
+        class={cn("pointer-events-none absolute inset-0 -z-1 bg-[linear-gradient(to_bottom,color-mix(in_srgb,var(--color-surface)_34%,transparent),color-mix(in_srgb,var(--color-surface)_14%,transparent))] border-t border-t-[color-mix(in_srgb,var(--color-light-source)_34%,transparent)] backdrop-blur-[18px] backdrop-saturate-150 opacity-0 transition-opacity duration-(--motion-duration-base) ease-signature group-hover:opacity-100 group-focus-within:opacity-100 group-active:opacity-100 motion-off:duration-(--motion-duration-immediate) forced-colors:hidden print:hidden", paneFade)}
         aria-hidden="true"
       ></span>
       <div class={cn(
@@ -55,7 +53,7 @@
           <time class="mt-(--space-3) block font-stretch-84% text-folio leading-none tracking-folio text-quiet tabular-nums sm:hidden" datetime={entry.publishedAt}>{entry.publishedAt.replaceAll("-", ".")}</time>
 
           {#if entry.summary}
-            <div class="hidden grid-rows-[1fr] transition-[grid-template-rows] duration-(--motion-duration-base) ease-enter sm:grid md:grid-rows-[0fr] md:group-hover:grid-rows-[1fr] md:group-focus-within:grid-rows-[1fr] motion-off:duration-(--motion-duration-immediate)">
+            <div class="index-summary hidden grid-rows-[1fr] transition-[grid-template-rows] duration-(--motion-duration-base) ease-signature sm:grid md:grid-rows-[0fr] md:group-hover:grid-rows-[1fr] md:group-focus-within:grid-rows-[1fr] motion-off:duration-(--motion-duration-immediate)">
               <div class="overflow-hidden">
                 <p class="mt-(--space-3) mb-0 max-w-prose text-small leading-copy text-quiet">{entry.summary}</p>
               </div>

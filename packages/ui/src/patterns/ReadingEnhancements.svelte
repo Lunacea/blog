@@ -457,7 +457,7 @@
   });
 
   const tocTriggerClass =
-    "mobile-toc-trigger flex w-full min-h-(--control-size) cursor-pointer list-none items-center justify-start gap-(--space-2) border-0 bg-ink px-(--space-3) font-sans text-small tracking-ui text-canvas pressable [--press-scale:0.96] [&::-webkit-details-marker]:hidden";
+    "mobile-toc-trigger group/toc flex w-full min-h-(--control-size) cursor-pointer list-none items-center justify-start gap-(--space-2) border border-t-0 border-rule bg-(--color-glass) px-(--space-4) font-sans text-small tracking-ui text-ink backdrop-blur-glass pressable [--press-scale:1] [--press-shift:0px] rounded-b-none transition-[border-radius] duration-(--motion-duration-fast) ease-signature data-[state=closed]:rounded-b-ui-large data-[state=closed]:duration-(--motion-duration-fast) data-[state=closed]:delay-(--motion-duration-base) [details:not([open])>&]:rounded-b-ui-large motion-off:transition-none [&::-webkit-details-marker]:hidden";
 
   function selectHeading(heading: Heading) {
     tocOpen = false;
@@ -472,16 +472,28 @@
 </script>
 
 {#snippet tocGlyph()}
-  <IndexGlyph class="shrink-0" />
+  <!--
+    線の左端を枠の左端に合わせる（flush）。枠を小さくすると線まで短くなるので、
+    線の長さが元と変わらない寸法にしたうえで高さだけ本文に寄せる。
+  -->
+  <span
+    class="grid size-[1.375em] shrink-0 transition-transform duration-(--motion-duration-hover) ease-signature group-active/toc:translate-x-[0.14em] motion-off:transition-none [&>svg]:size-full"
+  >
+    <IndexGlyph flush />
+  </span>
 {/snippet}
 
+<!--
+  目次の項目は沈ませない。aside が overflow-auto なので、最後の項目が 1px 下がるだけで
+  はみ出し領域が伸びてスクロールバーが出る。押下の応答は色だけで返す。
+-->
 {#snippet tocItems()}
   {#each headings as heading}
     <li class={cn("relative z-(--z-content) flex min-h-(--control-size) items-center in-[.desktop-toc]:min-h-(--space-8)", heading.level === 3 && "pl-(--space-3)")}>
       <a
         href={"#" + heading.id}
         aria-current={active === heading.id ? "location" : undefined}
-        class="flex size-full min-w-0 items-center text-small leading-ui text-quiet no-underline pressable [--press-scale:0.98] aria-[current=location]:text-ink"
+        class="flex size-full min-w-0 items-center text-small leading-ui text-quiet no-underline pressable [--press-scale:1] [--press-shift:0px] aria-[current=location]:text-ink"
         onclick={() => selectHeading(heading)}
       >
         <span>{heading.text}</span>
@@ -507,13 +519,13 @@
 
 {#if headings.length || tools}
 <div class={cn(
-  "reading-rail sticky top-[calc(var(--site-header-block)+var(--space-3))] grid gap-y-(--space-6) self-start max-sm:static max-sm:gap-y-0 lg:top-(--article-anchor-offset)",
-  "sm:max-lg:col-start-2 sm:max-lg:row-start-1 sm:max-lg:row-span-2",
-  "sm:max-h-[calc(100dvh-var(--site-header-block)-var(--space-6))] lg:max-h-[calc(100dvh-var(--article-anchor-offset)-var(--space-6))]",
-  headings.length > 0 && "lg:grid-rows-[minmax(0,1fr)_auto]",
+  "reading-rail sticky top-[calc(var(--site-header-block)+var(--space-3))] grid gap-y-(--space-6) self-start max-read:static max-read:gap-y-0 read-wide:top-(--article-anchor-offset)",
+  "read:max-read-wide:col-start-2 read:max-read-wide:row-start-1 read:max-read-wide:row-span-2",
+  "read:max-h-[calc(100dvh-var(--site-header-block)-var(--space-6))] read-wide:max-h-[calc(100dvh-var(--article-anchor-offset)-var(--space-6))]",
+  headings.length > 0 && "read-wide:grid-rows-[minmax(0,1fr)_auto]",
 )}>
 {#if headings.length}
-  <aside class="desktop-toc min-h-0 overflow-auto pl-(--space-2) max-lg:hidden" aria-label="目次" data-ready={enhancementsReady}>
+  <aside class="desktop-toc min-h-0 overflow-auto pl-(--space-2) max-read-wide:hidden" aria-label="目次" data-ready={enhancementsReady}>
     <p class="mb-(--space-4) border-b border-rule pb-(--space-2) font-sans text-caption tracking-label text-quiet">目次</p>
     <div class="toc-composition relative">
       {#if shownComposition}
@@ -531,7 +543,7 @@
 {/if}
 
   {#if tools}
-    <div class="reading-tools max-sm:hidden">{@render tools()}</div>
+    <div class="reading-tools @container max-read:hidden">{@render tools()}</div>
   {/if}
 </div>
 {/if}
@@ -539,7 +551,7 @@
 {#if headings.length}
 
   <div
-    class="mobile-toc-region pointer-events-none relative z-(--z-overlay) hidden w-full max-lg:col-start-1 max-lg:row-start-1 max-lg:block max-lg:sticky max-lg:top-[calc(var(--site-header-block)+var(--space-3))] max-lg:pb-(--space-2) **:pointer-events-auto"
+    class="mobile-toc-region pointer-events-none relative z-(--z-overlay) hidden w-full max-read-wide:col-start-1 max-read-wide:row-start-1 max-read-wide:block max-read-wide:sticky max-read-wide:top-(--site-header-block) max-read-wide:-mt-section max-read-wide:pb-(--space-2) **:pointer-events-auto"
     data-ready={enhancementsReady}
   >
     <Collapsible.Root
@@ -550,8 +562,8 @@
       <Collapsible.Trigger class={tocTriggerClass}>
         {@render tocGlyph()}<span>目次</span>
       </Collapsible.Trigger>
-      <Collapsible.Content class="mobile-toc-content absolute top-full left-0 z-(--z-overlay) w-full origin-top-left overflow-hidden border border-t-0 border-rule bg-(--color-glass-solid) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-toc-open data-[state=closed]:animate-toc-close motion-reduced:animate-none motion-off:animate-none">
-        <nav class="p-(--space-3)" aria-label="目次">
+      <Collapsible.Content class="mobile-toc-content absolute top-full left-0 z-(--z-overlay) w-full origin-top-left overflow-hidden rounded-b-ui-large border border-t-0 border-rule bg-(--color-glass) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-toc-open data-[state=closed]:animate-toc-close motion-reduced:animate-none motion-off:animate-none">
+        <nav class="p-(--space-3) pb-(--radius-large)" aria-label="目次">
           <ol
             class="toc-list relative m-0 list-none pl-(--space-3) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-reduced:after:duration-(--motion-duration-immediate) motion-off:after:duration-(--motion-duration-immediate)"
             bind:this={mobileTocList}
