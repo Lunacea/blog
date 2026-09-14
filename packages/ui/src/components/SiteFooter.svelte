@@ -183,9 +183,9 @@
   </svg>
 
   <div class="mx-auto w-full max-w-content px-(--layout-gutter) py-(--space-16)">
-    <div class="grid justify-items-center gap-y-(--space-4) py-(--space-10) text-center">
+    <div class="grid justify-items-center gap-y-(--space-2) py-(--space-4) text-center">
       <a
-        class="group/mail relative m-0 grid min-h-control max-w-full content-center text-index leading-tight font-strong tracking-heading wrap-anywhere no-underline pressable [--footer-wet:0] [--press-scale:0.99] hover:no-underline"
+        class="group/mail relative m-0 grid min-h-control max-w-full content-center text-h2 leading-tight font-strong tracking-heading wrap-anywhere no-underline pressable [--footer-wet:0] [--press-scale:0.99] hover:no-underline"
         href={`mailto:${email}`}
         style={lens}
         data-liquid={disturbed ? "wet" : "dry"}
@@ -195,10 +195,10 @@
         <span class="col-start-1 row-start-1 opacity-(--footer-wet) filter-[url(#footer-ink)] transition-opacity duration-(--motion-duration-base) ease-standard motion-off:transition-none mask-[radial-gradient(circle_var(--footer-lens)_at_var(--touch-x)_var(--touch-y),currentColor_0%,currentColor_52%,transparent_92%)] group-focus-visible/mail:[--footer-wet:1] motion-off:hidden forced-colors:hidden print:hidden" aria-hidden="true">{email}</span>
       </a>
       {#if links.length}
-        <nav class="mt-(--space-2) flex items-center gap-x-(--space-5)" aria-label="ソーシャルリンク">
+        <nav class="flex items-center gap-x-(--space-5)" aria-label="ソーシャルリンク">
           {#each links as link}
             <a
-              class="inline-grid size-control place-items-center text-ink no-underline transition-[translate,scale] duration-(--motion-duration-fast) ease-spring hover:-translate-y-0.5 hover:no-underline focus-visible:-translate-y-0.5 active:translate-y-px active:scale-90 motion-off:transition-none [&_svg]:size-(--space-5)"
+              class="inline-grid size-control place-items-center text-h3 text-ink no-underline transition-[translate,scale] duration-(--motion-duration-fast) ease-spring hover:-translate-y-0.5 hover:no-underline focus-visible:-translate-y-0.5 active:translate-y-px active:scale-90 motion-off:transition-none [&_svg]:size-(--space-5)"
               href={link.href}
               rel={link.rel}
               aria-label={link.label}

@@ -16,7 +16,7 @@
     d="M19.5 12H5.5"
   />
   <path
-    class="in-[a:hover]:-translate-x-[3px] in-[a:focus-visible]:-translate-x-[3px]"
-    d="M11 6L5 12L11 18"
+    class="fill-current! stroke-none! in-[a:hover]:-translate-x-[3px] in-[a:focus-visible]:-translate-x-[3px]"
+    d="M11 6.5Q9.8 10.35 5 12Q9.8 13.65 11 17.5Z"
   />
 </svg>

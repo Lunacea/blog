@@ -61,21 +61,38 @@
 
   const rail = $derived(variant === "rail");
   const action = $derived(cn(
-    "inline-flex min-h-control items-center gap-x-(--space-2) rounded-ui-card border border-rule px-(--space-4) font-stretch-84% text-folio leading-none tracking-folio uppercase text-ink no-underline pressable hover:border-ink hover:no-underline focus-visible:border-ink active:border-ink active:bg-ink active:text-canvas [&_svg]:size-(--space-4)",
-    rail && "max-lg:justify-center max-lg:px-0",
+    /*
+      渡す動作なので、文字が一字ずつ上へ送られて同じ字に入れ替わる（スロット）。
+      同時に下からインクが薄く満ちて、押す前から反応が始まっているように見せる。
+    */
+    "relative isolate inline-flex min-h-control items-center gap-x-(--space-2) overflow-hidden rounded-ui-card border border-rule px-(--space-4) font-stretch-84% text-folio leading-none tracking-folio uppercase text-ink no-underline pressable hover:border-ink hover:no-underline focus-visible:border-ink active:border-ink active:bg-ink active:text-canvas [&_svg]:size-(--space-4)",
+    "before:absolute before:inset-0 before:-z-1 before:origin-bottom before:scale-y-0 before:bg-ink before:opacity-[.07] before:transition-[scale] before:duration-(--motion-duration-hover) before:ease-signature hover:before:scale-y-100 focus-visible:before:scale-y-100 motion-off:before:transition-none",
   ));
-  /** 視覚的にのみ隠す。アクセシブルネームには残す。 */
-  const label = $derived(rail ? "max-lg:sr-only" : "");
+  /* 隠す判断は share-rail 側（global.css）が幅を見て行う。 */
+  const label = "share-label";
 </script>
 
-<nav class={cn("share-actions flex flex-wrap items-center gap-(--space-2)", rail && "max-lg:flex-col max-lg:items-stretch max-lg:flex-nowrap", className)} aria-label="この記事を共有">
+{#snippet slot(text: string)}
+  <!-- 読み上げには素の語を渡し、目に見えるほうは一字ずつの箱にする。 -->
+  <span class="sr-only">{text}</span>
+  <span class="share-slot" aria-hidden="true">
+    {#each text.split("") as glyph, index}
+      <span class="share-slot-cell" style={`--slot-index:${index}`}>
+        <span>{glyph}</span>
+        <span>{glyph}</span>
+      </span>
+    {/each}
+  </span>
+{/snippet}
+
+<nav class={cn("share-actions flex flex-wrap items-center gap-(--space-2)", rail && "share-rail max-read-wide:flex-col max-read-wide:items-stretch max-read-wide:flex-nowrap", className)} aria-label="この記事を共有">
   <button class={cn(action, "cursor-pointer bg-transparent")} type="button" onclick={shareLink}>
     <Icon name={interfaceIcons.externalLink} />
-    <span class={label}>{status ? "Copied" : "Share"}</span>
+    <span class={label}>{@render slot(status ? "Copied" : "Share")}</span>
   </button>
   <a class={action} href={xHref} target="_blank" rel="noopener noreferrer">
     <Icon name={socialIcons.x} />
-    <span class={label}>Post</span>
+    <span class={label}>{@render slot("Post")}</span>
   </a>
   <p class="sr-only" aria-live="polite">{status}</p>
 </nav>

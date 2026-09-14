@@ -28,9 +28,9 @@
 </script>
 
 <!-- ホームはヘッダを持たない（題字がアイデンティティ）ため、ここでは同じ題字を操作サイズで出す。 -->
-<header class="sticky top-0 z-(--z-header) border-b border-rule bg-(--color-glass) backdrop-blur-glass" data-ready={ready}>
-  <div class="mx-auto flex w-full max-w-content flex-wrap items-center justify-between gap-x-(--space-6) gap-y-(--space-1) px-(--layout-gutter)">
-    <a class="flex min-h-control shrink-0 items-center font-stretch-104% text-small leading-none font-strong tracking-heading text-ink uppercase no-underline pressable [--press-scale:0.97] hover:no-underline" href="/">
+<header class="site-header sticky top-0 z-(--z-header) border-b border-rule bg-(--color-glass) backdrop-blur-glass" data-ready={ready}>
+  <div class="mx-auto flex w-full max-w-content flex-wrap items-center justify-between gap-x-(--space-4) gap-y-(--space-1) xs:gap-x-(--space-6) px-(--layout-gutter) py-(--space-2)">
+    <a class="flex min-h-control shrink-0 items-center font-stretch-104% text-small xs:text-body leading-none font-strong tracking-heading text-ink uppercase no-underline pressable [--press-scale:0.97] hover:no-underline" href="/">
       <span class="sr-only">Lunacea</span>
       <span class="flex items-baseline" aria-hidden="true">
         <span>LUNA</span>
@@ -43,10 +43,10 @@
       </span>
     </a>
 
-    <nav class="ml-auto flex flex-wrap items-center gap-x-(--space-5) font-stretch-84% text-folio tracking-folio uppercase" aria-label="主要ナビゲーション">
+    <nav class="flex flex-wrap items-center gap-x-(--space-5) font-stretch-84% text-folio xs:text-caption tracking-folio uppercase" aria-label="主要ナビゲーション">
       {#each navigation as item}
         <a
-          class="relative inline-flex min-h-control items-center text-quiet no-underline pressable [--press-scale:0.96] before:absolute before:inset-y-0 before:-inset-x-(--space-2) before:content-[''] after:absolute after:inset-x-0 after:bottom-[calc(50%-.85em)] after:h-px after:origin-left after:scale-x-0 after:bg-ink after:transition-[scale] after:duration-(--motion-duration-base) after:ease-standard hover:text-ink hover:no-underline hover:after:scale-x-100 focus-visible:text-ink focus-visible:after:scale-x-100 aria-[current=page]:text-ink aria-[current=page]:after:scale-x-100 motion-off:after:duration-(--motion-duration-immediate)"
+          class="relative inline-flex min-h-control items-center text-quiet no-underline pressable [--press-scale:0.96] before:absolute before:inset-y-0 before:-inset-x-(--space-2) before:content-[''] after:absolute after:inset-x-0 after:bottom-[calc(50%-.85em)] after:h-px after:origin-left after:scale-x-0 after:bg-ink after:transition-[scale] after:duration-(--motion-duration-base) after:ease-signature hover:text-ink hover:no-underline hover:after:scale-x-100 focus-visible:text-ink focus-visible:after:scale-x-100 aria-[current=page]:text-ink aria-[current=page]:after:scale-x-100 motion-off:after:duration-(--motion-duration-immediate)"
           href={item.href}
           aria-current={isCurrent(item.href) ? "page" : undefined}
         >{item.label}</a>
