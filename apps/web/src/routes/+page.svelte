@@ -1,29 +1,16 @@
 <script lang="ts">
-  import { dev } from "$app/environment";
   import { page } from "$app/state";
   import { responsiveImages } from "$lib/.generated/images.ts";
   import PageHead from "$lib/components/PageHead.svelte";
   import { useFixedLocationWeather } from "$lib/weather.ts";
   import { ThemeToggle } from "$ui/components";
-  import { ForwardGlyph } from "$ui/icons";
   import { HomeOpening, LiquidTitle } from "$ui/motion";
   import { IndexList, ProfileCard } from "$ui/patterns";
-  import EditorialLight from "$ui/visuals/EditorialLight.svelte";
-  import {
-      parseWeatherVisualIntensityOverride,
-      parseWeatherVisualOverride,
-  } from "$ui/visuals/weather-visual.ts";
+  import { AllArticlesLink } from "$ui/components";
   import { siteConfig, visualAssets } from "@lunacea/config";
 
   let { data } = $props();
   const weather = useFixedLocationWeather();
-  const condition = $derived(
-    (dev ? parseWeatherVisualOverride(page.url.searchParams.get("weather")) : null) ?? $weather.visual,
-  );
-  const intensity = $derived(
-    (dev ? parseWeatherVisualIntensityOverride(page.url.searchParams.get("intensity")) : null) ??
-      $weather.intensity,
-  );
 
   /*
    * マークは常に名刺の枠の寸法で描かれるので、変種は幅ではなく解像度倍率。
@@ -58,7 +45,6 @@
   <script type="application/ld+json">{JSON.stringify(structured)}</script>
 </svelte:head>
 <HomeOpening />
-<EditorialLight {condition} {intensity} />
 
 <!-- 横方向のみクリップ。名刺が題字や記事一覧の上を通れるよう縦のはみ出しは残す。 -->
 <div class="relative overflow-x-clip">
@@ -100,7 +86,7 @@
     <nav class="mx-auto mb-(--space-8) flex w-full max-w-content flex-wrap items-baseline gap-x-(--space-8) gap-y-(--space-2) px-(--layout-gutter) home-opening:animate-opening-rise" aria-label="カテゴリ">
       {#each data.categories as category}
         <a class="group/category inline-flex min-h-control items-center font-stretch-88% text-h3 leading-none font-strong tracking-heading uppercase no-underline pressable [--press-scale:0.97] hover:no-underline" href={`/articles?${new URLSearchParams({ category })}`}>
-          <span class="border-b-2 border-transparent pb-[.12em] transition-colors duration-(--motion-duration-fast) ease-standard group-hover/category:border-ink group-focus-visible/category:border-ink group-active/category:border-ink">{category}</span>
+          <span class="border-b-2 border-transparent pb-[.12em] transition-colors duration-(--motion-duration-hover) ease-signature group-hover/category:border-ink group-focus-visible/category:border-ink group-active/category:border-ink">{category}</span>
         </a>
       {/each}
     </nav>
@@ -108,11 +94,7 @@
     <IndexList entries={data.latest} label="最新の記事" bleed />
 
     <div class="mx-auto mt-(--space-12) flex w-full max-w-content justify-center px-(--layout-gutter)">
-      <!-- ボタン自体は動かさず塗りを引かせる。矢印側は字面に余白があるため右 padding を短くする。 -->
-      <a class="group/all relative isolate inline-flex min-h-control items-center gap-x-(--space-3) overflow-hidden rounded-ui-card border border-ink py-(--space-4) pl-(--space-8) pr-(--space-6) font-stretch-88% text-small leading-none font-strong tracking-label text-canvas uppercase no-underline pressable [--press-scale:0.97] before:absolute before:inset-0 before:-z-1 before:origin-bottom before:scale-y-100 before:bg-ink before:transition-[scale] before:duration-(--motion-duration-base) before:ease-spring hover:text-ink hover:no-underline hover:before:scale-y-0 focus-visible:text-ink focus-visible:before:scale-y-0 active:text-ink active:before:scale-y-0 motion-off:before:duration-(--motion-duration-immediate)" href="/articles">
-        <span>All articles</span>
-        <ForwardGlyph />
-      </a>
+      <AllArticlesLink />
     </div>
   </section>
 </div>

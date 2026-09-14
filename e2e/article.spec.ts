@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { ARTICLE, HYDRATED, motionOff, REACTION_ARTICLE, themeToggle } from "./support.ts";
 
-test("the article carries its reading tools on opaque surfaces and never opens WebGL", {
+test("the article is a sheet of paper and carries its reading tools on it", {
   tag: ["@desktop"],
 }, async ({ page }) => {
   const requests: string[] = [];
@@ -22,14 +22,15 @@ test("the article carries its reading tools on opaque surfaces and never opens W
   await expect(page.locator(".article-flags")).toContainText("更新中");
   await expect(page.locator(".article-dates")).toContainText("更新");
   await expect(page.locator(".status-badge")).toContainText("更新中");
-  await expect(page.getByRole("heading", { name: "関連記事" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Related" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "更新履歴" })).toBeVisible();
   await expect(page.locator('.related ol[aria-label="関連記事"] > li h3 a').first()).toBeVisible();
   await expect(page.getByText("この記録をどう感じましたか")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "#Design", exact: true }))
     .toHaveAttribute("href", "/articles?tag=Design");
 
-  await expect(page.locator(".reading-surface")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  // 記事の面は紙そのもの。外の場はこの面の上下にだけ見える。
+  await expect(page.locator(".reading-surface")).toHaveCSS("background-color", /^rgb\(/);
   await expect(page.locator(".mermaid-diagram")).toBeVisible({ timeout: 15_000 });
   const surfaces = await page.evaluate(() =>
     [".annotation", ".code-block", ".mermaid-diagram", ".link-card"].map((selector) =>
@@ -44,10 +45,10 @@ test("the article carries its reading tools on opaque surfaces and never opens W
     }),
   ).toBe(true);
 
-  expect(requests.filter((url) => /api\/v1\/weather|editorial-light|three\.js/.test(url)))
-    .toEqual([]);
-  await expect(page.locator("[data-editorial-light]")).not.toHaveAttribute("data-webgl", "true");
-  await expect(page.locator("canvas")).toHaveCount(0);
+  // 記事も外の場を持つ。ただし本文は不透明な紙なので、場が見えるのは紙の上下だけ。
+  // 自前の天候問い合わせはしない（描画前スクリプトが読んだ最後の空を引き継ぐ）。
+  expect(requests.filter((url) => /api\/v1\/weather/.test(url))).toEqual([]);
+  await expect(page.locator(".reading-surface")).toHaveCSS("background-color", /rgb\(/);
   await expect.poll(() => requests.some((url) => url.includes("/api/v1/impressions/"))).toBe(true);
   expect(rejected).toEqual([]);
 });

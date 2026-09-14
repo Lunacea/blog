@@ -20,6 +20,25 @@ export type WeatherContextState = {
  * 記事ルートは最後に読まれた値をそのまま引き継ぐ（自前のリクエストはしない）。
  */
 export const ambientWeather = writable<WeatherVisualCondition>("neutral");
+export const ambientIntensity = writable<WeatherVisualIntensity>("steady");
+
+/**
+ * 記事ページは事前描画されていて自前の問い合わせをしないため、読みをここに残しておく。
+ * app.html の描画前スクリプトがこれを読み、古すぎる読みを捨てたうえで初回描画から地色を決める。
+ */
+function publishSky(visual: WeatherVisualCondition, intensity: WeatherVisualIntensity) {
+  ambientWeather.set(visual);
+  ambientIntensity.set(intensity);
+  const root = document.documentElement;
+  root.dataset.weather = visual;
+  root.dataset.intensity = intensity;
+  try {
+    localStorage.setItem(
+      "lunacea-weather",
+      JSON.stringify({ v: visual, i: intensity, t: Date.now() }),
+    );
+  } catch { /* ストレージは任意。 */ }
+}
 
 function weatherUrl(): string {
   const location = siteConfig.defaultLocation;
@@ -59,7 +78,7 @@ export async function loadFixedLocationWeather(
     const weather = weatherStateSchema.parse(await response.json());
     const { condition, intensity } = applyPassingWeather(normalizeWeatherVisualCondition(weather));
     state.set({ visual: condition, intensity, loaded: true });
-    ambientWeather.set(condition);
+    publishSky(condition, intensity);
   } catch {
     if (signal?.aborted) return;
     state.set({ visual: "neutral", intensity: "steady", loaded: true });

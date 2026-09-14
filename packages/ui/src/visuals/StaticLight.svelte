@@ -22,8 +22,7 @@
 </script>
 
 <div class="pointer-events-none fixed inset-x-0 top-0 h-lvh -z-1 overflow-hidden print:hidden forced-colors:hidden" aria-hidden="true" data-editorial-light data-webgl={webgl} data-weather={condition}>
-  <!-- グレインのみ。ここにグラデーションを置くと背景の読み込み前に見えてしまう。 -->
-  {#if overlay}{@render overlay()}{/if}
+  {@render overlay?.()}
 
   <svg class="absolute inset-0 size-full opacity-(--grain-opacity) mix-blend-multiply theme-dark:mix-blend-screen">
     <filter id={`${id}-grain`}>

@@ -122,19 +122,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  /* design-literal: 視覚的非表示の定型レシピ。 */
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-}
-
 @utility rail-disclosure {
   interpolate-size: allow-keywords;
 
@@ -157,19 +144,94 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
 }
 
 /*
-  押下への応答。沈みは即時、戻りはイージング。
+  押下への応答。沈みは即時、戻りは署名イージングでゆっくり。
+  ホバーや色の変化もここを通るので、サイト中の操作子が同じ立ち上がり方をする。
   Tailwind 4 は `translate` と `scale` を独立したプロパティとして書くため、両方を transition に挙げる。
   ホバーで既に transform を動かす操作子は、これに頼らず自前の `active:` を宣言する。
 */
 @utility pressable {
   transition-property: translate, scale, color, background-color, border-color, box-shadow, opacity;
-  transition-duration: var(--motion-duration-fast);
-  transition-timing-function: var(--motion-ease-standard);
+  transition-duration: var(--motion-duration-hover);
+  transition-timing-function: var(--motion-ease-signature);
 
   &:active:not(:disabled):not([aria-disabled="true"]) {
     translate: 0 var(--press-shift);
     scale: var(--press-scale);
     transition-duration: var(--motion-duration-immediate);
+  }
+}
+
+/*
+  記事の内容が乗る箱。ヘッダ・カバー・本文グリッド・末尾がすべてこれを使うので、
+  幅の決め方をここ一箇所に持たせておけば、縦のラインが互いにずれない。
+  横にレールが立たない幅（--breakpoint-read 未満）では、余りを片側に落とさず
+  読み幅そのものに絞って中央に置く。
+*/
+/*
+  シェアの文言は一字ずつの箱に入れ、ホバーで上へ送って同じ字に入れ替える。
+  遅延を字ごとにずらすので、左から順に送られていくように見える。
+  高さは1文字ぶんに固定し、はみ出しを隠すことで送りが成立する。
+*/
+.share-slot {
+  display: inline-flex;
+}
+
+.share-slot-cell {
+  display: grid;
+  overflow: hidden;
+  height: 1em;
+  grid-template-rows: 1fr;
+}
+
+.share-slot-cell > span {
+  grid-area: 1 / 1;
+  transition: translate var(--motion-duration-base) var(--motion-ease-signature);
+  transition-delay: calc(var(--slot-index) * 28ms);
+}
+
+.share-slot-cell > span:last-child {
+  translate: 0 100%;
+}
+
+:is(a, button):is(:hover, :focus-visible) .share-slot-cell > span {
+  translate: 0 -100%;
+}
+
+:is(a, button):is(:hover, :focus-visible) .share-slot-cell > span:last-child {
+  translate: 0 0;
+}
+
+html[data-motion="off"] .share-slot-cell > span {
+  transition: none;
+}
+
+/*
+  レールのシェアは「文言が二つとも入らないときだけ」アイコンだけにする。
+  判断はビューポートではなくレール自身の幅に対して行う（.reading-tools が問い合わせ対象）。
+
+  コンテナクエリの条件式に var() は書けないので閾値は数値で持つしかない。根拠をここに残す:
+  実測（--text-folio / font-stretch-84%）で Share 95.7px・Post 86.8px、横並びは gap 込み 190.5px。
+  縦積みか横並びかは目次の有無で決める（目次の下に来るときだけ横並び）。
+  文言を出すかどうかだけは、決め打ちの幅ではなくレールの実幅で判断する。
+  境は、縦積みで広いほうの Share が収まる 96px。
+  条件式は px で書く（コンテナクエリ内の rem は解決先が紛らわしい）。
+  コピー直後だけ Share が Copied になり数 px 広がるが、そこで畳むと押した瞬間に
+  文言が消えて挙動が読めなくなるため、基準は Share のままにしている。
+  ボタンの字面や余白を変えたらここも測り直すこと。
+*/
+@container (width < 96px) {
+  .share-rail :is(a, button) {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .share-rail .share-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
@@ -179,6 +241,10 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
     calc(var(--content-width) - (2 * var(--layout-gutter)))
   );
   margin-inline: auto;
+
+  @media (width < 53rem) {
+    width: min(calc(100% - (2 * var(--layout-gutter))), var(--prose-width));
+  }
 }
 
 @utility mermaid-diagram {
@@ -222,49 +288,12 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 }
 
-@utility catalog-page {
-  min-height: 100vh;
-}
-
-@utility content-shell {
-  width: min(
-    calc(100% - (2 * var(--layout-gutter))),
-    calc(var(--content-width) - (2 * var(--layout-gutter)))
-  );
-  margin-inline: auto;
-}
-
-@utility eyebrow {
-  margin: 0 0 var(--space-3);
-  color: var(--color-secondary);
-  font-size: var(--text-caption);
-  letter-spacing: var(--tracking-label);
-  line-height: var(--leading-ui);
-  text-transform: uppercase;
-}
-
 @utility lead {
   max-width: 42rem;
   margin: var(--space-6) 0 0;
   color: var(--color-muted);
   font-size: var(--text-body);
   line-height: var(--leading-relaxed);
-}
-
-@utility section-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-4);
-  margin-block: 0 var(--space-8);
-
-  & h2 {
-    margin: 0;
-    font-size: var(--text-small);
-    font-weight: var(--weight-label);
-    letter-spacing: var(--tracking-label);
-    text-transform: uppercase;
-  }
 }
 
 @utility tag-list {
@@ -291,12 +320,6 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
 
   [data-webgl="true"] canvas {
     display: none;
-  }
-}
-
-@media (forced-colors: active), print {
-  body:has([data-article-catalog]) {
-    background-image: none;
   }
 }
 

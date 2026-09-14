@@ -27,11 +27,20 @@
           root.dataset.theme = theme;
           root.dataset.motionPreference = motionPreference;
           root.dataset.motion = motion;
-          // Declared before the first paint so the opening starts with the page rather than
-          // replaying once hydration catches up.
+          // 初回描画前に宣言する。ハイドレーション後に再生し直さないため。
           if (location.pathname === "/" && motion === "full") {
             root.dataset.homeOpening = "active";
           }
+          // 最後に読んだ空。記事ページは事前描画されていて自分では天候を問い合わせないので、
+          // ここで地色を確定させておく。読みが無いか古ければ無色のまま。
+          // 壊れた値が表示設定まで巻き込まないよう、ここだけ独立して握り潰す。
+          try {
+            const sky = JSON.parse(localStorage.getItem("lunacea-weather") || "null");
+            if (sky && Date.now() - sky.t < 10800000) {
+              root.dataset.weather = sky.v;
+              root.dataset.intensity = sky.i;
+            }
+          } catch {}
         } catch {
           document.documentElement.dataset.motion = "off";
         }
