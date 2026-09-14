@@ -53,17 +53,6 @@ export function findContentById(id: string): Content | undefined {
   );
 }
 
-export function findContentByPath(path: string): Content | undefined {
-  return allContent.find((entry) =>
-    hrefForContent(entry) === path || entry.legacyPaths.includes(path)
-  );
-}
-
-export function canonicalContentId(id: string): string | undefined {
-  const content = findContentById(id);
-  return content ? `${content.type}:${content.slug}` : undefined;
-}
-
 export async function loadContentModule(type: ContentType, slug: string): Promise<ContentModule> {
   const key = Object.keys(contentModules).find((path) =>
     path.endsWith(`/${type}s/${slug}/index.svx`) ||

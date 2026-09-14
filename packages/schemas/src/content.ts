@@ -18,7 +18,6 @@ export const articleCategorySchema = z.enum([
   "log",
   "talk",
 ]);
-export const archiveTypeSchema = z.enum(["diary", "photo", "place", "wine", "moment"]);
 
 const isoDate = z.preprocess(
   (value) => {
@@ -213,16 +212,13 @@ export type ContentStatus = z.infer<typeof contentStatusSchema>;
 export type ContentType = z.infer<typeof contentTypeSchema>;
 export type ArticleCategory = z.infer<typeof articleCategorySchema>;
 export type ImageCover = z.infer<typeof imageCoverSchema>;
-export type WorkCover = z.infer<typeof workCoverSchema>;
 export type Content = z.infer<typeof contentSchema>;
 export type Article = z.infer<typeof articleSchema>;
-export type Work = z.infer<typeof workSchema>;
 export type Diary = z.infer<typeof diarySchema>;
 export type Photo = z.infer<typeof photoSchema>;
 export type Place = z.infer<typeof placeSchema>;
 export type Wine = z.infer<typeof wineSchema>;
 export type Moment = z.infer<typeof momentSchema>;
-export type ArchiveContent = Diary | Photo | Place | Wine | Moment;
 
 export function contentId(content: Pick<Content, "type" | "slug">): string {
   return `${content.type}:${content.slug}`;
