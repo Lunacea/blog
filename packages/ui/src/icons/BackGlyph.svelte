@@ -1,12 +1,12 @@
 <script lang="ts">
   import { cn } from "../utils.ts";
-  import { glyphFrame, glyphStroke, glyphTravelTransition } from "./glyph.ts";
+  import { glyphFrame, glyphStroke, glyphTransition } from "./glyph.ts";
 
   let { class: className = "" }: { class?: string } = $props();
 </script>
 
 <svg
-  class={cn(glyphFrame, glyphStroke, glyphTravelTransition, "back-glyph size-(--space-5)", className)}
+  class={cn(glyphFrame, glyphStroke, glyphTransition, "back-glyph size-(--space-5)", className)}
   viewBox="0 0 24 24"
   aria-hidden="true"
   focusable="false"

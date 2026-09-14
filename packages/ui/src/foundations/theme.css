@@ -363,11 +363,15 @@
   --shadow-text-mask: 0 0 0.18em var(--color-background);
   --glass-blur: 0.625rem;
 
+  /*
+    往復する変化（ホバー・開閉・押下・テーマ）は base と署名イージング、
+    出入りする変化（reveal・ページ遷移）は page/exit と enter/exit カーブ。
+    ホバー専用の時間は置かない。役割ごとに速さを変えると一度の操作が分かれて着地する。
+  */
   --motion-duration-immediate: 1ms;
   --motion-duration-fast: 140ms;
   --motion-duration-micro: 240ms;
   --motion-duration-exit: 280ms;
-  --motion-duration-hover: 300ms;
   --motion-duration-base: 420ms;
   --motion-duration-page: 520ms;
   --motion-duration-slow: 760ms;
@@ -411,15 +415,20 @@
   --press-shift: 1px;
   --press-scale: 0.985;
 
+  /*
+    テーマの切り替えは light と dark を行き来する状態変化なので、署名イージングで動かす。
+    地も文字もグリフも同じ長さにする。役割ごとに時間を変えると、押した一度の操作が
+    いくつもの速さに分かれて着地する。
+  */
   transition:
-    --color-background var(--motion-duration-slow) var(--motion-ease-standard),
-    --color-surface var(--motion-duration-slow) var(--motion-ease-standard),
-    --color-foreground var(--motion-duration-base) var(--motion-ease-standard),
-    --color-primary var(--motion-duration-slow) var(--motion-ease-standard),
-    --color-secondary var(--motion-duration-slow) var(--motion-ease-standard),
-    --color-accent var(--motion-duration-slow) var(--motion-ease-standard),
-    --color-muted var(--motion-duration-base) var(--motion-ease-standard),
-    --color-praise var(--motion-duration-base) var(--motion-ease-standard);
+    --color-background var(--motion-duration-base) var(--motion-ease-signature),
+    --color-surface var(--motion-duration-base) var(--motion-ease-signature),
+    --color-foreground var(--motion-duration-base) var(--motion-ease-signature),
+    --color-primary var(--motion-duration-base) var(--motion-ease-signature),
+    --color-secondary var(--motion-duration-base) var(--motion-ease-signature),
+    --color-accent var(--motion-duration-base) var(--motion-ease-signature),
+    --color-muted var(--motion-duration-base) var(--motion-ease-signature),
+    --color-praise var(--motion-duration-base) var(--motion-ease-signature);
 }
 
 :root[data-theme="light"] {

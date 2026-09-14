@@ -205,12 +205,13 @@ test("anonymous praise and share stay available", { tag: ["@desktop"] }, async (
   await expect(praise.locator(".heart-glyph")).toHaveCSS("transition-property", /scale/);
 
   await praise.click();
-  await expect(praise).toHaveAttribute("aria-pressed", "true");
-  await expect(praise).toHaveCSS("background-color", idle);
-  await expect(praise.locator(".heart-glyph")).toHaveAttribute("data-filled", "true");
+  // 祝いは 900ms で消える。先に永続する状態を確かめると、測る前に居なくなる。
   const celebration = page.locator("[data-praise-celebration]");
   await expect(celebration).toHaveCSS("animation-name", /praise-liquid/u);
   expect((await celebration.boundingBox())?.width ?? 999).toBeLessThan(120);
+  await expect(praise).toHaveAttribute("aria-pressed", "true");
+  await expect(praise).toHaveCSS("background-color", idle);
+  await expect(praise.locator(".heart-glyph")).toHaveAttribute("data-filled", "true");
   await expect(celebration).toHaveCount(0, { timeout: 5_000 });
 
   await page.reload();

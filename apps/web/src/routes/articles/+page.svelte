@@ -52,7 +52,7 @@
   }
 
   const legend =
-    "m-0 shrink-0 font-stretch-84% text-folio leading-none tracking-folio text-quiet uppercase transition-colors duration-(--motion-duration-hover) ease-signature group-hover/rail:text-ink group-focus-visible/rail:text-ink";
+    "m-0 shrink-0 font-stretch-84% text-folio leading-none tracking-folio text-quiet uppercase transition-colors duration-(--motion-duration-base) ease-signature group-hover/rail:text-ink group-focus-visible/rail:text-ink";
   /*
    * ラベルとその罫線を囲む枠は一覧の先頭行と衝突するため、フォーカスは
    * ラベルの濃度と罫線の太さで示す。形を足さない。
@@ -60,7 +60,7 @@
   const summary =
     "group/rail flex min-h-control cursor-pointer list-none items-center gap-x-(--space-3) pressable [--press-scale:0.99] focus-visible:outline-none [&::-webkit-details-marker]:hidden md:min-h-(--space-8) md:cursor-default";
   const legendRule =
-    "h-px flex-1 bg-rule transition-[height,background-color] duration-(--motion-duration-hover) ease-signature group-hover/rail:bg-ink group-focus-visible/rail:h-0.5 group-focus-visible/rail:bg-ink";
+    "h-px flex-1 bg-rule transition-[height,background-color] duration-(--motion-duration-base) ease-signature group-hover/rail:bg-ink group-focus-visible/rail:h-0.5 group-focus-visible/rail:bg-ink";
   const railItem =
     "relative flex min-h-control items-baseline justify-between gap-x-(--space-3) font-stretch-88% text-small leading-none tracking-ui no-underline pressable [--press-scale:0.98] hover:text-ink hover:no-underline focus-visible:text-ink active:text-ink";
 </script>

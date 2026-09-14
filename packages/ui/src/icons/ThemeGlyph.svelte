@@ -4,7 +4,7 @@
   const uid = $props.id();
 </script>
 
-<span class="theme-glyph relative inline-block size-[1em] shrink-0 align-[-.08em] [&_svg]:absolute [&_svg]:inset-0 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-hidden [&_svg]:fill-current [&_svg]:transition-[opacity,transform] [&_svg]:duration-(--motion-duration-hover) [&_svg]:ease-signature" aria-hidden={title ? undefined : "true"}>
+<span class="theme-glyph relative inline-block size-[1em] shrink-0 align-[-.08em] [&_svg]:absolute [&_svg]:inset-0 [&_svg]:block [&_svg]:size-full [&_svg]:overflow-hidden [&_svg]:fill-current [&_svg]:transition-[opacity,transform] [&_svg]:duration-(--motion-duration-base) [&_svg]:ease-signature" aria-hidden={title ? undefined : "true"}>
   <svg
     class="sun scale-100 theme-dark:scale-[.94] theme-dark:opacity-0"
     viewBox="0 0 13.276 13.276"

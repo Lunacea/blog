@@ -151,7 +151,7 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
 */
 @utility pressable {
   transition-property: translate, scale, color, background-color, border-color, box-shadow, opacity;
-  transition-duration: var(--motion-duration-hover);
+  transition-duration: var(--motion-duration-base);
   transition-timing-function: var(--motion-ease-signature);
 
   &:active:not(:disabled):not([aria-disabled="true"]) {

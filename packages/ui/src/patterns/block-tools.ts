@@ -22,7 +22,7 @@ export type BlockShell = {
 const label = "inline-flex min-h-control items-center border-0 bg-transparent px-(--space-4) " +
   "font-sans font-stretch-84% text-folio leading-none tracking-folio uppercase " +
   "text-[color-mix(in_srgb,var(--block-ink)_66%,transparent)] cursor-pointer " +
-  "transition-[color,background-color,translate] duration-(--motion-duration-hover) ease-signature " +
+  "transition-[color,background-color,translate] duration-(--motion-duration-base) ease-signature " +
   "hover:bg-[color-mix(in_srgb,var(--block-ink)_10%,transparent)] hover:text-(--block-ink) " +
   "focus-visible:bg-[color-mix(in_srgb,var(--block-ink)_10%,transparent)] " +
   "focus-visible:text-(--block-ink) active:translate-y-px";

@@ -477,7 +477,7 @@
     線の長さが元と変わらない寸法にしたうえで高さだけ本文に寄せる。
   -->
   <span
-    class="grid size-[1.375em] shrink-0 transition-transform duration-(--motion-duration-hover) ease-signature group-active/toc:translate-x-[0.14em] motion-off:transition-none [&>svg]:size-full"
+    class="grid size-[1.375em] shrink-0 transition-transform duration-(--motion-duration-base) ease-signature group-active/toc:translate-x-[0.14em] motion-off:transition-none [&>svg]:size-full"
   >
     <IndexGlyph flush />
   </span>
