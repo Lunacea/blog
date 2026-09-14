@@ -22,3 +22,4 @@ export {
   subscribeThemeCapability,
   type ThemePreference,
 } from "./preferences.ts";
+export { installScrollInertia } from "./scroll-inertia.ts";

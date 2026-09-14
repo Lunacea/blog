@@ -4,7 +4,7 @@
   import { ambientIntensity, ambientWeather } from "$lib/weather.ts";
   import { FontPreloads, SettingsPanel, SiteFooter, SiteHeader, ThemeToggle } from "$ui/components";
   import "$ui/foundations/global.css";
-  import { installAnchorNavigation, installPageTransitions } from "$ui/motion";
+  import { installAnchorNavigation, installPageTransitions, installScrollInertia } from "$ui/motion";
   import EditorialLight from "$ui/visuals/EditorialLight.svelte";
   import {
     parseWeatherVisualIntensityOverride,
@@ -40,7 +40,11 @@
   });
   onMount(() => {
     const stopAnchorNavigation = installAnchorNavigation();
-    return stopAnchorNavigation;
+    const stopScrollInertia = installScrollInertia();
+    return () => {
+      stopAnchorNavigation();
+      stopScrollInertia();
+    };
   });
 </script>
 
