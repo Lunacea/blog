@@ -23,7 +23,7 @@ test("the article is a sheet of paper and carries its reading tools on it", {
   await expect(page.locator(".article-dates")).toContainText("更新");
   await expect(page.locator(".status-badge")).toContainText("更新中");
   await expect(page.getByRole("heading", { name: "Related" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "更新履歴" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Revisions" })).toBeVisible();
   await expect(page.locator('.related ol[aria-label="関連記事"] > li h3 a').first()).toBeVisible();
   await expect(page.getByText("この記録をどう感じましたか")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "#Design", exact: true }))
