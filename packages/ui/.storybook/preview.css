@@ -1,17 +1,15 @@
+/* ストーリーの余白。#storybook-root の高さが余白と連動するよう1つの変数から引く。 */
 body {
-  padding: var(--space-8);
+  --preview-pad: var(--space-8);
+  padding: var(--preview-pad);
 }
 
 #storybook-root {
-  min-height: calc(100vh - (2 * var(--space-8)));
+  min-height: calc(100vh - (2 * var(--preview-pad)));
 }
 
 @media (max-width: 44rem) {
   body {
-    padding: var(--space-4);
-  }
-
-  #storybook-root {
-    min-height: calc(100vh - (2 * var(--space-4)));
+    --preview-pad: var(--space-4);
   }
 }

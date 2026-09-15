@@ -2,9 +2,7 @@ import { Mesh, OrthographicCamera, PlaneGeometry, Scene, Vector2, WebGLRenderer 
 import { createEditorialLightMaterial } from "./editorial-light-material.ts";
 
 /**
- * A full-bleed field of light, shadow and grain. It is purely decorative: every word on the
- * page stays in HTML, and the static SVG underneath carries the same composition when this
- * never mounts.
+ * 光と影とグレインの全面背景。純粋な装飾で、これが載らない場合は下の静的 SVG が同じ構図を担う。
  */
 export function mountEditorialLight(host: HTMLElement, failure: () => void) {
   const pointer = matchMedia("(hover: hover) and (pointer: fine)");
@@ -50,17 +48,16 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     if (nextWidth === width && nextHeight === height) return;
     width = nextWidth;
     height = nextHeight;
-    // Buffer allocation clears the canvas: resize only immediately before drawing the next frame.
+    // バッファ確保でキャンバスがクリアされるため、描画直前にだけリサイズする。
     renderer.setSize(width, height, false);
     const ratio = width / height;
     uniforms.aspect.value.set(Math.max(1, ratio), Math.max(1, 1 / ratio));
     scrollPending = true;
   };
 
-  // The weather palette is read from the theme, so the whole of it is refreshed together.
   const theme = () => setTheme(document.documentElement.dataset.theme === "dark");
 
-  /** Without a hovering pointer the reader's scroll carries the light instead. */
+  /** ポインタがない場合はスクロールが光を運ぶ。 */
   let guidedUntil = 0;
   let progress = 0;
 
@@ -71,8 +68,7 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
   const move = (event: PointerEvent) => {
     if (event.pointerType === "touch" || !pointer.matches) return;
     target.set(event.clientX / width, 1 - event.clientY / height);
-    // The cursor is the light, so it stays where the reader parked it rather than wandering off
-    // again a moment later. The drift is for a page nobody is pointing at.
+    // 自動ドリフトは誰もポインタを置いていないページ用。置かれた位置はそのまま保つ。
     guidedUntil = performance.now() + 9000;
   };
 
@@ -80,7 +76,7 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     guidedUntil = 0;
   };
 
-  /** A slow, uneven figure so the drift never reads as a repeating loop. */
+  /** 繰り返しに見えないよう、ゆっくりとした不均等な軌跡にする。 */
   const drift = (seconds: number) => {
     target.set(
       0.5 + Math.sin(seconds * 0.21) * 0.3 + Math.sin(seconds * 0.081) * 0.12,
@@ -89,9 +85,8 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
   };
 
   /*
-   * On a touch screen the light answers the page rather than the finger: reading downwards walks
-   * the sun across and down the frame. A slow figure is added so it still breathes while the page
-   * is held still, and it is small enough that scrolling always reads as the cause.
+   * タッチ環境では光は指ではなくページに応答する。下へ読み進めると光も動く。
+   * 静止中も呼吸させるためゆっくりした軌跡を足すが、スクロールが原因だと読める程度に小さくする。
    */
   const sweep = (seconds: number) => {
     target.set(

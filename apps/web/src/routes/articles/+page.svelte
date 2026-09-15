@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import PageHead from "$lib/components/PageHead.svelte";
+  import { page } from "$app/state";
   import { useFixedLocationWeather } from "$lib/weather.ts";
-  import EditorialLight from "$ui/visuals/EditorialLight.svelte";
   import { HeaderSearch } from "$ui/components";
   import { IndexList } from "$ui/patterns";
   import { cn } from "$ui/utils.ts";
@@ -21,10 +21,8 @@
   ];
 
   const weather = useFixedLocationWeather();
-  const condition = $derived($weather.visual);
 
-  // The rail is open in the markup so it works without JavaScript; narrow screens fold it once
-  // the enhancement runs, because there it sits between the reader and the records.
+  // JavaScript なしでも使えるよう初期状態は開いておき、狭い画面では拡張実行後に畳む。
   let categoryOpen = $state(true);
   let sortOpen = $state(true);
   onMount(() => {
@@ -53,18 +51,16 @@
     return `/articles${params.size ? `?${params}` : ""}`;
   }
 
-  /** Every filter group is its name followed by a rule that runs to the end of the column. */
   const legend =
-    "m-0 shrink-0 font-stretch-84% text-folio leading-none tracking-folio text-quiet uppercase transition-colors duration-(--motion-duration-fast) ease-standard group-hover/rail:text-ink group-focus-visible/rail:text-ink";
+    "m-0 shrink-0 font-stretch-84% text-folio leading-none tracking-folio text-quiet uppercase transition-colors duration-(--motion-duration-base) ease-signature group-hover/rail:text-ink group-focus-visible/rail:text-ink";
   /*
-   * A box drawn around a label and the rule beside it collided with the first row of the list, so
-   * the disclosure states focus the way the rest of the design does: the label comes up to full
-   * ink and its rule thickens. Both are unmistakable and neither adds a shape.
+   * ラベルとその罫線を囲む枠は一覧の先頭行と衝突するため、フォーカスは
+   * ラベルの濃度と罫線の太さで示す。形を足さない。
    */
   const summary =
     "group/rail flex min-h-control cursor-pointer list-none items-center gap-x-(--space-3) pressable [--press-scale:0.99] focus-visible:outline-none [&::-webkit-details-marker]:hidden md:min-h-(--space-8) md:cursor-default";
   const legendRule =
-    "h-px flex-1 bg-rule transition-[height,background-color] duration-(--motion-duration-fast) ease-standard group-hover/rail:bg-ink group-focus-visible/rail:h-0.5 group-focus-visible/rail:bg-ink";
+    "h-px flex-1 bg-rule transition-[height,background-color] duration-(--motion-duration-base) ease-signature group-hover/rail:bg-ink group-focus-visible/rail:h-0.5 group-focus-visible/rail:bg-ink";
   const railItem =
     "relative flex min-h-control items-baseline justify-between gap-x-(--space-3) font-stretch-88% text-small leading-none tracking-ui no-underline pressable [--press-scale:0.98] hover:text-ink hover:no-underline focus-visible:text-ink active:text-ink";
 </script>
@@ -76,11 +72,9 @@
   robots={data.isFiltered ? "noindex,follow" : undefined}
 />
 
-<EditorialLight {condition} />
 
 <div class="pt-(--space-12) pb-(--section-space)">
   <div class="mx-auto grid w-full max-w-content grid-cols-1 gap-x-(--space-12) px-(--layout-gutter) md:grid-cols-[minmax(0,var(--index-rail-width))_minmax(0,1fr)]">
-    <!-- Category is the primary axis, so it and the sort order both live in a persistent rail. -->
     <div class="mb-(--space-10) grid gap-y-(--space-8) self-start md:sticky md:top-(--space-20) md:mb-0">
       <nav aria-label="カテゴリ">
         <details class="rail-disclosure" bind:open={categoryOpen}>
@@ -147,14 +141,13 @@
 
       <h2 class="sr-only">記事の一覧</h2>
       {#if data.entries.length}
-        <IndexList entries={data.entries} label="記事一覧" />
+        <IndexList entries={data.entries} label="記事一覧" bleed="compact" />
       {:else}
         <p class="border-t border-ink py-(--space-10) text-small text-quiet">条件に一致する記事はありません。条件を解除してもう一度お試しください。</p>
       {/if}
     </div>
   </div>
 
-  <!-- Search and tags are the least used controls, so they close the page rather than open it. -->
   <aside class="mx-auto mt-(--home-section-space) grid w-full max-w-content gap-x-(--space-12) gap-y-(--space-10) px-(--layout-gutter) md:grid-cols-2" aria-label="記事の絞り込み">
     <div>
       <p class="flex items-center gap-x-(--space-3)"><span class={legend}>Search</span><span class="h-px flex-1 bg-rule" aria-hidden="true"></span></p>

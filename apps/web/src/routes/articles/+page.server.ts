@@ -10,7 +10,7 @@ export const prerender = false;
 
 const impressions = createDenoKvImpressionRepository();
 
-/** Ranking is an optional read: an unavailable store leaves the catalog fully usable. */
+/** ランキングは任意の読み取り。ストアが落ちていても一覧は完全に使える。 */
 async function impressionCounts(ids: readonly string[]): Promise<Record<string, number>> {
   try {
     return await impressions.counts(ids);
@@ -52,7 +52,7 @@ export const load: PageServerLoad = async ({ url, setHeaders }) => {
     composition: articleComposition(entry.slug),
   }));
   const isFiltered = Boolean(query || filters.category || filters.tag || sort !== "published");
-  // The front section keeps its chronology; the daily box draws only from what follows it.
+  // 先頭は時系列を保ち、日替わり枠はそれ以降からのみ選ぶ。
   const pool = entries.slice(2);
   const serendipity = isFiltered
     ? []

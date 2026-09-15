@@ -2,16 +2,14 @@
   import { onMount } from "svelte";
 
   /**
-   * The filter ships with the server-rendered page so the reference already resolves on the first
-   * paint: the inline theme script declares the opening before anything is drawn, and the
-   * displacement therefore runs with the page instead of replaying once hydration catches up.
+   * フィルタはサーバ描画に含める。初回描画の時点で参照が解決し、
+   * ハイドレーション後に再生し直すのではなくページと一緒に動く。
    */
   let running = $state(true);
 
   onMount(() => {
     const root = document.documentElement;
-    // Only a document load declares the opening; a client-side visit never does, so navigating
-    // back to Home inside the app does not replay it, and the filter is dropped straight away.
+    // オープニングはドキュメント読み込み時のみ。アプリ内遷移では再生しない。
     if (root.dataset.motion !== "full" || root.dataset.homeOpening !== "active") {
       running = false;
       return;
@@ -31,11 +29,7 @@
   });
 </script>
 
-<!--
-  The masthead settles out of wet ink: the displacement runs from a heavy warp down to nothing and
-  the filter is then removed, so it costs nothing for the rest of the session. This distortion is
-  the opening — no other layer sweeps or grains on top of it.
--->
+<!-- 変位は強い歪みから0まで走り、その後フィルタごと外すのでセッション中の負荷は残らない。 -->
 {#if running}
   <svg class="absolute size-0" aria-hidden="true" focusable="false">
     <filter id="opening-ink" x="-14%" y="-45%" width="128%" height="190%" color-interpolation-filters="sRGB">

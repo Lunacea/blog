@@ -23,7 +23,7 @@ const config: StorybookConfig = {
         },
       },
       build: {
-        // Storybook's isolated preview includes axe and manager tooling that never ships to Web.
+        // Storybook のプレビューには Web に載らない axe などが含まれる。
         chunkSizeWarningLimit: 1000,
       },
     }),

@@ -1,22 +1,17 @@
 <script lang="ts">
   import type { ArticleCompositionVisual } from "./article-composition-types.ts";
-  let { composition, id, orientation = "vertical", spans = [] }: {
+  let { composition, id, spans = [] }: {
     composition: ArticleCompositionVisual;
     id: string;
-    orientation?: "horizontal" | "vertical";
-    /** Where each section actually sits in the rendered list, as fractions of its height. */
+    /** 各節が描画後の一覧のどこにあるか（高さに対する割合）。 */
     spans?: ReadonlyArray<{ id: string; start: number; end: number }>;
   } = $props();
 
-  /** Prose reads as ruled lines at a constant rhythm, so a short block simply draws fewer. */
+  /** 本文は一定の間隔の罫線として描く。短いブロックは本数が減るだけ。 */
   const lineGap = 7;
   const charactersPerLine = 34;
 
-  /**
-   * A block that runs across several headings would otherwise be drawn as one slab beside the
-   * first of them, so every block is cut at the section boundaries it crosses and each piece is
-   * placed against its own section.
-   */
+  /** 複数の見出しにまたがるブロックは節の境界で切り、各断片をそれぞれの節に対応させる。 */
   const pieces = $derived.by(() => {
     const sections = composition.sections;
     if (!sections.length) {
@@ -46,10 +41,7 @@
     );
   });
 
-  /**
-   * Article progress and list position are different scales once the rows take their natural
-   * height, so every piece is projected through the section that contains it.
-   */
+  /** 記事内の進行度と一覧上の位置は尺度が異なるため、各断片を所属する節を通して射影する。 */
   const projected = $derived.by(() => {
     const pairs = composition.sections.flatMap((section) => {
       const span = spans.find((candidate) => candidate.id === section.id);
@@ -72,7 +64,7 @@
   });
 </script>
 
-<svg class="pointer-events-none block size-full text-quiet" viewBox="0 0 48 480" preserveAspectRatio="none" aria-hidden="true" focusable="false" data-composition-graph data-map-id={id} data-orientation={orientation}>
+<svg class="pointer-events-none block size-full text-quiet" viewBox="0 0 48 480" preserveAspectRatio="none" aria-hidden="true" focusable="false" data-composition-graph data-map-id={id}>
   {#each pieces as piece}
     {@const top = projected(piece.start) * 480}
     {@const height = Math.max(1, (projected(piece.end) - projected(piece.start)) * 480 - 2)}

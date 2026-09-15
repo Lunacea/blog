@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 import { ARTICLE, SEARCH_TERM } from "./support.ts";
 
-// These read the HTTP boundary only, so they need no browser page.
+// HTTP 境界のみを見るためブラウザページを開かない。
 test("the public surface responds and filtered catalogs declare their policy", {
   tag: ["@desktop"],
 }, async ({ page, request }) => {
-  // The OG images are rasterised on first request, which a cold dev server does slowly.
+  // OG 画像は初回リクエストでラスタライズされ、冷えた開発サーバでは時間がかかる。
   test.setTimeout(120_000);
   for (
     const route of [
@@ -18,8 +18,6 @@ test("the public surface responds and filtered catalogs declare their policy", {
       "/api/v1/health",
     ]
   ) expect((await request.get(route)).ok(), route).toBe(true);
-  // A feed or a sitemap that answers but carries no record is the same as a missing one: every
-  // published article has to appear in all three.
   const published = [...(await (await request.get("/sitemap.xml")).text()).matchAll(
     /<loc>[^<]*\/articles\/([^<]+)<\/loc>/gu,
   )].map(([, slug]) => slug);
@@ -34,7 +32,6 @@ test("the public surface responds and filtered catalogs declare their policy", {
     expect(response.ok(), route).toBe(true);
     expect(response.headers()["content-type"], route).toBe("image/png");
   }
-  // A filtered view is one of many, so it caches at the edge and points crawlers at the catalog.
   const filtered = await page.goto(`/articles?q=${encodeURIComponent(SEARCH_TERM)}&sort=relevance`);
   expect(filtered?.headers()["cache-control"]).toBe(
     "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400",
@@ -75,9 +72,7 @@ test("retired routes are gone, legacy URLs redirect once, and a miss still reads
     expect(response.headers().location, from).toBe(to);
   }
 
-  // A missing record still arrives as a readable page rather than a bare status.
   expect((await page.goto("/this-page-does-not-exist"))?.status()).toBe(404);
-  // The page says what happened in plain words, not only with a status code.
   await expect(page.getByRole("heading", { level: 1, name: "このページはありません" }))
     .toBeVisible();
   await expect(page.getByRole("link", { name: "記事の一覧へ" })).toBeVisible();

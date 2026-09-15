@@ -27,8 +27,7 @@
   async function toggle() {
     if (!summary || pending) return;
     const active = !summary.selected;
-    // The count and the celebration both answer the press; the server response only reconciles
-    // the number. Waiting for the round trip made the glyph feel broken.
+    // 押下に即応し、サーバ応答では数値のみ整合させる。
     const previous = summary;
     summary = {
       ...summary,

@@ -1,7 +1,7 @@
 <main class="mx-auto grid w-[min(calc(100%-(2*var(--layout-gutter))),var(--content-width))] gap-(--space-20) py-(--section-space)">
   <header>
     <p class="m-0 text-caption text-quiet">Foundations / Typography</p>
-    <h2 class="my-(--space-4) max-w-[12ch] font-serif text-display leading-display font-display tracking-display">静かな構造と記録</h2>
+    <h2 class="my-(--space-4) max-w-[12ch] font-serif text-display leading-display tracking-display">静かな構造と記録</h2>
     <span class="text-caption text-quiet">Quiet structures, durable records.</span>
   </header>
 

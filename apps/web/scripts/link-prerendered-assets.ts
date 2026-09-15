@@ -1,13 +1,11 @@
 /**
- * Routes the prerendered files the Deno adapter leaves behind.
+ * Deno アダプタが取りこぼす事前描画ファイルを配線する。
  *
- * `@deno/svelte-adapter` builds `deploy.json`'s `staticFiles` from `prerendered.pages` and the
- * `static/` directory alone, so output prerendered from `+server.ts` endpoints — the feeds, the
- * sitemap, robots and every OG image — is written into the deployment but never given a URL, and
- * answers 404 in production. Endpoints have no server handler once prerendered, so nothing else
- * picks them up. This maps each remaining file in the adapter's static output to its own path.
+ * `@deno/svelte-adapter` は `deploy.json` の `staticFiles` を `prerendered.pages` と `static/`
+ * だけから作るため、`+server.ts` から事前描画された出力（フィード・サイトマップ・robots・OG画像）
+ * はデプロイに含まれても URL を持たず本番で 404 になる。
  *
- * Remove this step once the adapter routes `prerendered.assets` itself; it then reports nothing.
+ * アダプタが `prerendered.assets` を自分で配線するようになったらこの手順は不要。
  */
 const output = new URL("../.deno-deploy/", import.meta.url);
 const configPath = new URL("deploy.json", output);
@@ -32,11 +30,10 @@ const served = new Set(config.staticFiles.map((entry) => entry.destination));
 const linked: string[] = [];
 
 for await (const relative of walk(new URL("static/", output))) {
-  // The immutable bundle already travels under one wildcard entry.
   if (relative.startsWith("_app/immutable/")) continue;
   const source = `/${relative.split("/").map(encodeURIComponent).join("/")}`;
   const destination = `.deno-deploy/static/${relative}`;
-  // A prerendered page is already reachable at its route, not at its file name.
+  // 事前描画済みページはファイル名ではなくルートで到達できる。
   if (routed.has(source) || served.has(destination)) continue;
   config.staticFiles.push({ source, destination });
   linked.push(source);

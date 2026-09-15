@@ -1,8 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Every test declares the surfaces it is about with an @desktop, @mobile or @nojs tag, and each
-// project selects on that tag. Selecting rather than skipping inside the body means a test is
-// never started, and no browser context is opened, for a project it does not apply to.
+// 各テストは @desktop / @mobile / @nojs で対象面を宣言し、プロジェクト側が選択する。
+// 本文で skip せず選択することで、対象外のブラウザコンテキストを開かずに済む。
 export default defineConfig({
   testDir: "../../e2e",
   globalSetup: Deno.env.get("E2E_BASE_URL") || Deno.env.get("E2E_PREVIEW")
@@ -13,7 +12,6 @@ export default defineConfig({
   expect: { timeout: 8_000 },
   forbidOnly: Boolean(Deno.env.get("CI")),
   retries: Deno.env.get("CI") ? 2 : 0,
-  // Keep browser load comparable locally and in CI; only the dev server needs transform warm-up.
   workers: 2,
   reporter: Deno.env.get("CI") ? [["html", { open: "never" }], ["github"]] : "list",
   use: {
@@ -27,7 +25,7 @@ export default defineConfig({
       : "deno task dev --host 127.0.0.1 --port 4173",
     url: "http://127.0.0.1:4173/api/v1/health",
     reuseExistingServer: !Deno.env.get("CI") && !Deno.env.get("E2E_PREVIEW"),
-    // Font and responsive-image generation precede Vite; cold CI filesystems can exceed two minutes.
+    // フォントと画像の生成が Vite より先に走るため、CI では2分を超えることがある。
     timeout: 180_000,
   },
   projects: [

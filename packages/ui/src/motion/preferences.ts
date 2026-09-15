@@ -12,7 +12,7 @@ function storedValue<T extends string>(key: string, allowed: readonly T[], fallb
   let value: string | null = null;
   try {
     value = localStorage.getItem(key);
-  } catch { /* Storage is optional. */ }
+  } catch { /* ストレージは任意。 */ }
   return allowed.includes(value as T) ? (value as T) : fallback;
 }
 
@@ -59,7 +59,7 @@ export function applyMotionPreference(motionPreference = readMotionPreference())
 export function setThemePreference(preference: ThemePreference) {
   try {
     localStorage.setItem(themeKey, preference);
-  } catch { /* Keep in-memory controls usable. */ }
+  } catch { /* メモリ上の状態だけで動かす。 */ }
   const state = applyThemePreference(preference);
   globalThis.dispatchEvent(new CustomEvent("lunacea:theme", { detail: state }));
   return state;
@@ -68,7 +68,7 @@ export function setThemePreference(preference: ThemePreference) {
 export function setMotionPreference(preference: MotionPreference) {
   try {
     localStorage.setItem(motionKey, preference);
-  } catch { /* Keep in-memory controls usable. */ }
+  } catch { /* メモリ上の状態だけで動かす。 */ }
   const state = { ...applyThemePreference(), ...applyMotionPreference(preference) };
   globalThis.dispatchEvent(new CustomEvent("lunacea:motion", { detail: state }));
   return state;

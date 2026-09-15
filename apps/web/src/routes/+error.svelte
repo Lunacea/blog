@@ -18,8 +18,6 @@
 <svelte:head><title>{heading} — {siteConfig.name}</title></svelte:head>
 
 <div class="relative">
-  <!-- Home sets its identity in one oversized line and centres what follows; this page keeps that
-       composition. The status is decoration: the caption and heading below say it in words. -->
   <header
     class="relative flex justify-center overflow-x-clip pt-(--page-start-clearance)"
     aria-hidden="true"
@@ -32,8 +30,6 @@
   <section
     class="mx-auto flex w-full max-w-content flex-col items-center px-(--layout-gutter) pt-(--space-4) pb-(--home-section-space) text-center"
   >
-    <!-- The English line belongs to the numerals above it, so it is set at label scale rather
-         than as a caption, and the Japanese heading stays the loudest thing in the column. -->
     <p
       class="m-0 font-stretch-96% text-h2 leading-none font-strong"
     >{caption}</p>
@@ -48,8 +44,8 @@
     </nav>
 
     <h2 class="sr-only">記事を検索</h2>
-    <!-- A plain GET to the catalog, so the way out works before any script arrives. -->
-    <div class="mt-(--space-10) flex w-full justify-center">
+    <!-- 素の GET。スクリプトが届く前から動く。本文より一段狭くして、見出しの列に収める。 -->
+    <div class="mt-(--space-10) flex w-full max-w-lg justify-center">
       <HeaderSearch variant="static" />
     </div>
   </section>

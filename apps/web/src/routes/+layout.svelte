@@ -1,22 +1,50 @@
 <script lang="ts">
+  import { dev } from "$app/environment";
   import { page } from "$app/state";
-  import { ambientWeather } from "$lib/weather.ts";
+  import { ambientIntensity, ambientWeather } from "$lib/weather.ts";
   import { FontPreloads, SettingsPanel, SiteFooter, SiteHeader, ThemeToggle } from "$ui/components";
   import "$ui/foundations/global.css";
-  import { installAnchorNavigation, installPageTransitions } from "$ui/motion";
-  import StaticLight from "$ui/visuals/StaticLight.svelte";
+  import { installAnchorNavigation, installPageTransitions, installScrollInertia } from "$ui/motion";
+  import EditorialLight from "$ui/visuals/EditorialLight.svelte";
+  import {
+    parseWeatherVisualIntensityOverride,
+    parseWeatherVisualOverride,
+  } from "$ui/visuals/weather-visual.ts";
   import { primaryNavigation, siteConfig } from "@lunacea/config";
   import { onMount } from "svelte";
 
   let { children } = $props();
-  // Home is its own masthead; every other route gets the hairline bar.
   const masthead = $derived(page.url.pathname === "/");
-  // Home and the catalog mount their own animated field, so the shell does not add a second one.
-  const ownsField = $derived(masthead || page.url.pathname === "/articles");
+  /*
+    場はここで一度だけ持つ。ルートごとにマウントすると遷移のたびに
+    WebGL が破棄・再生成され、背景が一度消えてから戻るので明暗の谷になる。
+    同じ要素が居座れば、ページが変わっても外の景色は途切れない。
+  */
+  const condition = $derived(
+    (dev ? parseWeatherVisualOverride(page.url.searchParams.get("weather")) : null) ??
+      $ambientWeather,
+  );
+  const intensity = $derived(
+    (dev ? parseWeatherVisualIntensityOverride(page.url.searchParams.get("intensity")) : null) ??
+      $ambientIntensity,
+  );
   installPageTransitions();
+  // 地色は html の属性から決まるので、上書きもそこへ当てる。
+  // 事前描画されていて天候を読まない記事ページでも ?weather= で確認できる。
+  $effect(() => {
+    if (!dev) return;
+    const condition = parseWeatherVisualOverride(page.url.searchParams.get("weather"));
+    const intensity = parseWeatherVisualIntensityOverride(page.url.searchParams.get("intensity"));
+    if (condition) document.documentElement.dataset.weather = condition;
+    if (intensity) document.documentElement.dataset.intensity = intensity;
+  });
   onMount(() => {
     const stopAnchorNavigation = installAnchorNavigation();
-    return stopAnchorNavigation;
+    const stopScrollInertia = installScrollInertia();
+    return () => {
+      stopAnchorNavigation();
+      stopScrollInertia();
+    };
   });
 </script>
 
@@ -35,8 +63,8 @@
   </SiteHeader>
 {/if}
 <main class="relative z-(--z-visual)" id="main-content">
-  <!-- The field lives inside main so its negative layer stays above the page background. -->
-  {#if !ownsField}<StaticLight id="page" condition={$ambientWeather} />{/if}
+  <!-- 負のレイヤーがページ背景より上に来るよう main の中に置く。 -->
+  <EditorialLight {condition} {intensity} />
   {@render children()}
 </main>
 <SiteFooter

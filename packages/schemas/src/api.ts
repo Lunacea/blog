@@ -51,7 +51,6 @@ export const weatherStateSchema = z.object({
 });
 
 export type ReactionSummary = z.infer<typeof reactionSummarySchema>;
-export type ImpressionSummary = z.infer<typeof impressionSummarySchema>;
 export type Location = z.infer<typeof locationSchema>;
 export type WeatherCondition = z.infer<typeof weatherConditionSchema>;
 export type WeatherState = z.infer<typeof weatherStateSchema>;

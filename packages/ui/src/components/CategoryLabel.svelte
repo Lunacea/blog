@@ -1,10 +1,7 @@
 <script lang="ts">
   import { cn } from "../utils.ts";
 
-  /**
-   * A category is a section of the site, so it is set as a folio marker: condensed, tracked
-   * and uppercase. Tags are a different thing entirely and keep the `#tag` form.
-   */
+  /** カテゴリはサイトの区画なのでノンブルとして組む。タグは `#tag` の形を保つ。 */
   let {
     category,
     href,
@@ -19,7 +16,14 @@
 </script>
 
 {#if href}
-  <a class={cn(base, "inline-flex min-h-control items-center text-ink no-underline underline-offset-[.5em] pressable [--press-scale:0.97] hover:underline active:underline", className)} {href}>{category}</a>
+  <a
+    class={cn(base, "group/category inline-flex min-h-control items-center text-ink no-underline pressable [--press-scale:0.97] hover:no-underline", className)}
+    {href}
+  >
+    <span
+      class="border-b border-rule pb-[.3em] transition-colors duration-(--motion-duration-base) ease-signature group-hover/category:border-ink group-focus-visible/category:border-ink group-active/category:border-ink"
+    >{category}</span>
+  </a>
 {:else}
   <span class={cn(base, "text-quiet", className)}>{category}</span>
 {/if}

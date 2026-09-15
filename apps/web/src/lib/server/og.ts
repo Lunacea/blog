@@ -10,19 +10,19 @@ const japanese = {
   family: "Zen Kaku Gothic New Bold",
 };
 const portraitPath = resolve(process.cwd(), "static/images/Lunacea-nobg.png");
-/** The same order the site's --font-sans uses, so Latin lands on Archivo and Japanese on Zen. */
+/** --font-sans と同じ順序。ラテンが Archivo、日本語が Zen に落ちる。 */
 const display = "Archivo, Zen Kaku Gothic New Bold";
-/** Pango's SemiExpanded selects wdth 112 on the variable face — the masthead's own width. */
+/** Pango の SemiExpanded は可変フォントの wdth 112 を選ぶ。題字と同じ幅。 */
 const masthead = "Archivo SemiExpanded";
 
-/** Pango counts letter spacing in 1024ths of a point, while the site declares it in em. */
+/** Pango の字間はポイントの 1024 分の1 単位。サイト側は em で宣言している。 */
 function trackingFor(size: number, em: number): number {
   return Math.round(em * size * 1024);
 }
 
 /**
- * `fontfile` registers one file per render, so both faces are loaded once up front. Without this
- * the family list silently falls back to whichever file the first render happened to load.
+ * `fontfile` は描画ごとに1ファイルしか登録しないため、両方の face を最初に読み込む。
+ * これがないと、最初の描画が読んだファイルへ暗黙にフォールバックする。
  */
 let registration: Promise<unknown> | undefined;
 function registerFonts() {
@@ -37,28 +37,26 @@ function registerFonts() {
 }
 
 /**
- * Share cards are a fixed 1200x630 export, so their palette and geometry are declared in absolute
- * units rather than as responsive tokens. They are always the dark theme: a card is read against
- * someone else's timeline, and ink on near-black is what carries there.
+ * シェアカードは 1200x630 固定の書き出しなので、トークンではなく絶対値で宣言する。
+ * 常にダークテーマ（他人のタイムライン上で読まれるため）。
  */
-// design-literal: mirrors the dark theme's --color-background and --color-foreground.
+// design-literal: ダークテーマの --color-background / --color-foreground と対応。
 const canvas = { width: 1200, height: 630, ground: "#111111", ink: "#eeeeec" };
-// design-literal: the light and shadow primaries the field is built from.
+// design-literal: 背景を構成する光と影の原色。
 const light = "#ffffff";
-// design-literal: the light and shadow primaries the field is built from.
+// design-literal: 背景を構成する光と影の原色。
 const shadow = "#000000";
-// design-literal: the card surface in the dark theme, mirroring --color-surface.
+// design-literal: ダークテーマの --color-surface と対応。
 const surface = "#1b1b1b";
 const margin = 72;
 const chipHeight = 46;
-// The midpoint between the opening and closing rules.
 const titleBaseline = 326;
 
 export function escapeXml(value: string): string {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
-/** Pango measures and wraps actual local-font glyphs, including Japanese and unbroken words. */
+/** Pango は実際のローカルフォントの字形で計測・折り返しを行う（日本語や分割できない語も含む）。 */
 async function textImage(
   text: string,
   size: number,
@@ -86,20 +84,16 @@ async function textImage(
       },
     }).png().toBuffer({ resolveWithObject: true });
   const image = await render();
-  // Only re-render with a height cap when the natural block overflows its slot.
+  // はみ出したときだけ高さ上限を付けて再描画する。
   return options.height && image.info.height > options.height
     ? await render(options.height)
     : image;
 }
 
-/** Where a card's light gathers; its partner sits opposite through the centre. */
+/** カードの光が集まる位置。対になる光は中心を挟んで反対側に置く。 */
 type Position = "top-right" | "center";
 
-/**
- * Two soft lights placed point-symmetrically about the centre, shaped by one low-frequency
- * turbulence and closed by a vignette. Nothing is posterised: stepped alpha was what banded the
- * gradient into layers.
- */
+/** 中心対称の2つの柔らかい光。アルファを段階化するとグラデーションに縞が出るので連続値で扱う。 */
 function field(position: Position): Buffer {
   const [ax, ay] = position === "center" ? [0.5, 0.3] : [0.74, 0.24];
   const [bx, by] = [1 - ax, 1 - ay];
@@ -134,7 +128,7 @@ function field(position: Position): Buffer {
   );
 }
 
-/** A fine, even tooth around mid-grey: laid over with `overlay` it reads as paper, not as dirt. */
+/** 中間グレー周りの細かい粒。`overlay` で重ねると汚れではなく紙に見える。 */
 function paper(): Buffer {
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">
@@ -153,7 +147,6 @@ function paper(): Buffer {
   );
 }
 
-/** The card's lines: two solid rules and the hairline the content is set against. */
 function furniture(chipWidth: number, chipTop: number): Buffer {
   const inner = margin + 28;
   return Buffer.from(
@@ -215,7 +208,6 @@ export async function ogPngResponse(
   const mark = await wordmark(34);
   const inner = margin + 28;
   const chipWidth = label.info.width + 44;
-  // The chip and the headline are centred together between the two rules.
   const blockHeight = chipHeight + 26 + headline.info.height;
   const chipTop = Math.max(180, Math.round(titleBaseline - blockHeight / 2));
   const titleTop = chipTop + chipHeight + 26;
@@ -225,7 +217,6 @@ export async function ogPngResponse(
       { input: field("top-right") },
       { input: paper(), blend: "overlay" },
       { input: furniture(chipWidth, chipTop) },
-      // The wordmark is the site card's, set small and centred over the rule.
       ...placeWordmark(mark, Math.round((canvas.width - mark.width) / 2), 62),
       {
         input: label.data,
@@ -234,7 +225,6 @@ export async function ogPngResponse(
       },
       { input: headline.data, left: inner, top: titleTop },
       { input: site.data, left: inner, top: canvas.height - 74 },
-      // Tags close the card opposite the address, the way a catalog row closes.
       ...(keyline
         ? [{
           input: keyline.data,
@@ -249,11 +239,7 @@ export async function ogPngResponse(
   return pngResponse(new Uint8Array(image));
 }
 
-/**
- * LUNA + the moon + EA, set exactly as the masthead sets it: the SemiExpanded width axis, the
- * strong weight and the tracking the page declares in em. Both cards use this, so the wordmark
- * and the moon hold the same relationship at any size.
- */
+/** 題字と同じ組み方（SemiExpanded・strong・em 指定の字間）。どのサイズでも月との関係が保たれる。 */
 async function wordmark(size: number) {
   const face = { file: latin.file, family: masthead };
   const tracking = trackingFor(size, -0.055);
@@ -262,7 +248,7 @@ async function wordmark(size: number) {
     textImage("C", size, 800, face, { tracking, weight: 800 }),
     textImage("EA", size, 1600, face, { tracking, weight: 800 }),
   ]);
-  // Pango leaves leading above the caps, so the real cap box is measured before positioning.
+  // Pango はキャップの上にレディングを残すため、実際のキャップ矩形を測ってから配置する。
   const caps = await sharp(left.data).trim({ threshold: 1 }).toBuffer({ resolveWithObject: true });
   return {
     left,
@@ -275,9 +261,9 @@ async function wordmark(size: number) {
   };
 }
 
-/** Composite entries that place a wordmark with its cap box at the given point. */
+/** 指定位置にキャップ矩形を合わせてワードマークを配置する合成エントリ。 */
 function placeWordmark(mark: Awaited<ReturnType<typeof wordmark>>, x: number, capTop: number) {
-  // --masthead-disc-size is 0.92em against a cap height of roughly 0.72em, lifted 0.07em.
+  // --masthead-disc-size は 0.92em、キャップハイト約 0.72em に対し 0.07em 持ち上げる。
   const disc = Math.round(mark.capHeight * 1.28);
   return [
     { input: mark.left.data, left: Math.max(0, x), top: capTop - mark.capInset },
@@ -294,7 +280,7 @@ function placeWordmark(mark: Awaited<ReturnType<typeof wordmark>>, x: number, ca
   ];
 }
 
-/** The crescent from the site's own theme glyph, drawn at whatever size the masthead needs. */
+/** テーマグリフの三日月を題字が必要とするサイズで描く。 */
 function crescent(size: number): Buffer {
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="1.624 5.1 13.276 13.276">
@@ -303,7 +289,7 @@ function crescent(size: number): Buffer {
   );
 }
 
-/** The business card from Home, drawn at its printed proportion. */
+/** ホームの名刺を印刷比率で描く。 */
 async function businessCard(width: number) {
   const height = Math.round((width * 55) / 91);
   const padding = 40;
@@ -337,13 +323,9 @@ async function businessCard(width: number) {
     .toBuffer();
 }
 
-/**
- * The site card is Home itself: the bleeding masthead with the moon in place of the C, and the
- * business card resting at an angle as it rises out of the bottom edge.
- */
+/** サイトカードはホームそのもの。はみ出す題字と、下端から傾いて現れる名刺。 */
 export async function ogSiteResponse(): Promise<Response> {
   const trial = await wordmark(160);
-  // The masthead bleeds past both edges the way it does on Home.
   const mark = await wordmark(Math.round((160 * canvas.width * 1.06) / trial.width));
   const capTop = 84;
 
@@ -352,7 +334,6 @@ export async function ogSiteResponse(): Promise<Response> {
     .rotate(10, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer({ resolveWithObject: true });
-  // Only the upper part clears the bottom edge, as though the card were set down there.
   const cardTop = canvas.height - Math.round(rotated.info.height * 0.66);
   const cropped = await sharp(rotated.data)
     .extract({ left: 0, top: 0, width: rotated.info.width, height: canvas.height - cardTop })

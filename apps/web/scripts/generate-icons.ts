@@ -1,17 +1,14 @@
 import sharp from "sharp";
 
-/**
- * Cuts the tab, bookmark and touch icons from the identity mark rather than drawing it again, so
- * the browser chrome carries the same artwork as the business card on Home.
- */
+/** アイコン類はアイデンティティマークから切り出す。描き直さない。 */
 const source = new URL("../static/images/Lunacea-nobg.png", import.meta.url);
 const iconRoot = new URL("../static/icons/", import.meta.url);
-/** Clients that guess the path instead of reading the document still need this one at the root. */
+/** 文書を読まずパスを推測するクライアントのため、ルートに置く。 */
 const legacyIcon = new URL("../static/favicon.ico", import.meta.url);
 
-/** The mark is authored inside a wide transparent square; trimming lets 16px keep its shape. */
+/** マークは広い透明な正方形の中にあるため、トリムしないと 16px で形が崩れる。 */
 const inset = 0.06;
-/** iOS composites a touch icon over black, so this one is flattened onto the light canvas. */
+/** iOS はタッチアイコンを黒地に合成するため、明るい地に焼き込む。 */
 const touchBackground = "#f7f7f5";
 const transparent = { r: 0, g: 0, b: 0, alpha: 0 } as const;
 
@@ -34,7 +31,6 @@ async function square(size: number, background: sharp.Color): Promise<Uint8Array
   );
 }
 
-/** An ICO is a directory of whole PNGs, which is all any browser still reads it for. */
 function ico(entries: Array<{ size: number; png: Uint8Array }>): Uint8Array {
   const headerBytes = 6 + entries.length * 16;
   const file = new Uint8Array(

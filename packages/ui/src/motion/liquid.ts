@@ -1,31 +1,20 @@
 /**
- * One vocabulary for every liquid surface on the site. The masthead, the error number and the
- * footer address are all the same wet ink the opening arrives in, so they ring at the same rate
- * and keep the same inertia once the pointer leaves — one idea, not three effects.
+ * サイト上のすべての液体的な面が共有する語彙。題字・エラー番号・フッタのアドレスは
+ * 同じ速度で振動し、同じ慣性で収束する。3つの効果ではなく1つの考え方。
  */
 export const liquid = {
-  /** Radians per second the surface oscillates at once it has been disturbed. */
+  /** 乱された面が振動する角速度（ラジアン毎秒）。 */
   speed: 7.4,
-  /**
-   * How steeply the disturbance dies away from the pointer, per surface width. Steep, so what
-   * moves is the ink the cursor is actually on and a little of what stands next to it.
-   */
+  /** ポインタから離れるにつれ乱れが減衰する急峻さ（面の幅あたり）。 */
   falloff: 7.6,
-  /** Peak displacement of the ink, in the filter's user units. */
+  /** インクの最大変位（フィルタのユーザ単位）。 */
   scale: 30,
-  /**
-   * Below this the surface is indistinguishable from still: the frame loop lets go, and a letter
-   * this far from the disturbance is handed back its plain glyph rather than paying for a filter
-   * that would displace it by a fraction of a pixel.
-   */
+  /** これを下回ると静止と区別できない。フレームループを止め、フィルタも外す。 */
   still: 0.02,
 } as const;
 
 /**
- * The opening's ink, to the number. Every liquid surface reaches for the same turbulence, so a
- * letter disturbed by the pointer warps exactly the way it did when the masthead arrived — the
- * effect is the opening continuing, not a second one resembling it. Keep these in step with the
- * `opening-ink` filter that ships with the server-rendered page.
+ * オープニングのインクと同じ値。サーバ描画に含まれる `opening-ink` フィルタと必ず揃えること。
  */
 export const openingInk = {
   baseFrequency: ".004 .011",
@@ -38,12 +27,8 @@ export const openingInk = {
 } as const;
 
 /**
- * The masthead's own ink, which moves along one axis only. A displacement map pushes in both at
- * once, and across a whole word that reads as the letters swelling together — the same wobble
- * everywhere, which is the least interesting thing ink can do. Holding the red channel at its
- * midpoint kills the horizontal term outright, so all that is left is the letter tearing along
- * its own height, and a far finer vertical frequency keeps each tear local to a part of the glyph
- * rather than lifting the whole of it.
+ * 題字専用のインク。変位マップは本来2軸に押すが、赤チャンネルを中央値で固定して
+ * 水平成分を消し、縦方向の裂けだけを残す。縦の周波数を細かくして裂けを字形の一部に留める。
  */
 export const verticalInk = {
   baseFrequency: ".005 .03",
@@ -53,25 +38,18 @@ export const verticalInk = {
   y: "-45%",
   width: "116%",
   height: "190%",
-  /** Peak displacement, in filter user units. Higher than the shared ink: one axis is left. */
+  /** 最大変位。1軸しか残らないぶん共通のインクより大きい。 */
   scale: 44,
 } as const;
 
-/**
- * The shape of one oscillation. Two frequencies that do not divide into each other, so the
- * surface never settles onto a beat the eye can count — a single sine reads as a spring rather
- * than as something wet.
- */
+/** 1回の振動の形。割り切れない2つの周波数を重ね、数えられる拍にならないようにする。 */
 export function liquidWave(phase: number) {
   return Math.sin(phase) * 0.72 + Math.sin(phase * 1.73 + 1.1) * 0.28;
 }
 
 /**
- * The envelope that carries a disturbance: a damped spring rather than a fade. Released, it runs
- * past its rest and rings back through it over about two seconds, which is the inertia a
- * body of liquid has and an exponential decay does not. Lightly damped on purpose — the ringing
- * is the whole point, and a surface that cut off the moment the pointer left would read as a
- * switch rather than as something with weight.
+ * 乱れを運ぶ包絡線。フェードではなく減衰バネで、静止位置を通り越して約2秒かけて収束する。
+ * 減衰を弱くしているのは意図的（この揺り戻しが重さを表す）。
  */
 export function createLiquidSpring(stiffness = 40, damping = 4.4) {
   const rate = Math.sqrt(stiffness);
@@ -82,18 +60,17 @@ export function createLiquidSpring(stiffness = 40, damping = 4.4) {
       return value;
     },
     get moving() {
-      // The next crest of a lightly damped spring stands about velocity over its rate high, so
-      // the frame loop lets go only once neither the surface nor what it is about to do can be
-      // seen — never on a zero crossing, which is the fastest the surface ever moves.
+      // 次の山の高さは概ね「速度／レート」。位置と速度の両方が見えなくなるまで止めない
+      // （ゼロ交差は最速の瞬間なので停止条件に使えない）。
       return Math.abs(value) > liquid.still || Math.abs(velocity) / rate > liquid.still;
     },
-    /** Carry the envelope toward `target` across `delta` seconds. */
+    /** 包絡線を `delta` 秒かけて `target` へ運ぶ。 */
     advance(target: number, delta: number) {
       velocity += ((target - value) * stiffness - velocity * damping) * delta;
       value += velocity * delta;
       return value;
     },
-    /** A single push, for an arrival that nothing is hovering. */
+    /** ホバーを伴わない到着のための一度きりの push。 */
     kick(amount: number) {
       velocity += amount;
     },
@@ -104,11 +81,10 @@ export function createLiquidSpring(stiffness = 40, damping = 4.4) {
   };
 }
 
-/** Whether the document currently allows a decorative surface to move at all. */
+/** 装飾的な面を動かしてよい状態かどうか。 */
 export function liquidAllowed() {
   const root = document.documentElement;
-  // The pre-paint script folds OS reduced motion and forced colours into this one attribute, and
-  // the opening owns the wordmark until it hands it back.
+  // 描画前スクリプトが OS の設定をこの属性に畳み込む。
   return root.dataset.motion === "full" && root.dataset.homeOpening !== "active" &&
     !document.hidden;
 }

@@ -7,6 +7,10 @@ export default defineConfig({
   plugins: [svelte(), svelteTesting({ autoCleanup: false })],
   resolve: {
     alias: {
+      "$app/environment": fileURLToPath(
+        new URL("./src/test/mocks/app-environment.ts", import.meta.url),
+      ),
+      "$app/state": fileURLToPath(new URL("./src/test/mocks/app-state.ts", import.meta.url)),
       "$lib": fileURLToPath(new URL("./src/lib", import.meta.url)),
       "$routes": fileURLToPath(new URL("./src/routes", import.meta.url)),
       "$ui": fileURLToPath(new URL("../../packages/ui/src", import.meta.url)),

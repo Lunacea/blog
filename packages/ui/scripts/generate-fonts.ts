@@ -105,10 +105,11 @@ const fonts = [
   },
   {
     family: "Zen Kaku Gothic New",
-    key: "zen-500",
-    weight: 500,
-    file: "zen-kaku-gothic-new/ZenKakuGothicNew-Medium.ttf",
+    key: "zen-400",
+    weight: 400,
+    file: "zen-kaku-gothic-new/ZenKakuGothicNew-Regular.ttf",
     role: "all",
+    // 400 を要求するのは記事本文だけなので、記事ルートのみがこの face を読む。
     preload: false,
   },
   {
@@ -117,9 +118,7 @@ const fonts = [
     weight: 700,
     file: "zen-kaku-gothic-new/ZenKakuGothicNew-Bold.ttf",
     role: "all",
-    // Body copy asks for weight 550, and 700 is the nearest face at or above it, so this is the
-    // Japanese face every page actually paints. Preloading the 500 instead fetched a file no
-    // token can ever select.
+    // UI の 550 と見出しの 700/800 はすべてここに解決される。
     preload: true,
   },
   {

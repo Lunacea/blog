@@ -1,5 +1,5 @@
 import { ShaderMaterial, Vector2, Vector3 } from "three";
-import type { WeatherVisualCondition } from "./weather-visual.ts";
+import type { WeatherVisualCondition, WeatherVisualIntensity } from "./weather-visual.ts";
 
 type Sky = {
   cloud: number;
@@ -12,7 +12,7 @@ type Sky = {
   frost: number;
 };
 const skies: Record<WeatherVisualCondition, Sky> = {
-  /* Open sun: hard dappled shafts through the canopy, and a warm pool under the cursor. */
+  /* 快晴：木漏れ日の硬い斑と、カーソル位置の暖かい光だまり。 */
   clear: { cloud: 0.02, lift: 0.07, shaft: 1, streak: 0, sparkle: 0, sun: 1, ripple: 0, frost: 0 },
   neutral: {
     cloud: 0.45,
@@ -24,7 +24,7 @@ const skies: Record<WeatherVisualCondition, Sky> = {
     ripple: 0,
     frost: 0,
   },
-  /* A flat veil: the shafts close up and the whole frame steps down. */
+  /* 曇天：光条が閉じ、画面全体が一段暗くなる。 */
   cloudy: {
     cloud: 0.8,
     lift: -0.07,
@@ -35,7 +35,7 @@ const skies: Record<WeatherVisualCondition, Sky> = {
     ripple: 0,
     frost: 0,
   },
-  /* Deep shade under a caustic net: the still surface of a lake, never falling water. */
+  /* 雨：水面のコースティクスによる深い陰。降る水は描かない。 */
   rain: {
     cloud: 0.9,
     lift: -0.12,
@@ -46,7 +46,7 @@ const skies: Record<WeatherVisualCondition, Sky> = {
     ripple: 1,
     frost: 0,
   },
-  /* A low-contrast snowfield with fine glare over it, drawn in shadow on pale paper. */
+  /* 雪：低コントラストの雪原に細かい輝き。明るい地では陰として描く。 */
   snow: {
     cloud: 0.68,
     lift: 0.16,
@@ -59,7 +59,7 @@ const skies: Record<WeatherVisualCondition, Sky> = {
   },
 };
 
-/** Weather colour is a theme token, so it is read from the document rather than written here. */
+/** 天候色はテーマトークンなので、ここに書かず文書から読む。 */
 const tokens = {
   warm: "--color-weather-light",
   cool: "--color-weather-water-shadow",
@@ -73,7 +73,7 @@ function readToken(style: CSSStyleDeclaration, token: string, target: Vector3) {
   target.set(((packed >> 16) & 255) / 255, ((packed >> 8) & 255) / 255, (packed & 255) / 255);
 }
 
-/** Material and weather palette stay behind the renderer's lazy import boundary. */
+/** マテリアルと天候パレットはレンダラの遅延読み込み境界の内側に置く。 */
 export function createEditorialLightMaterial(coarse: boolean) {
   const uniforms = {
     light: { value: new Vector2(0.32, 0.72) },
@@ -81,19 +81,19 @@ export function createEditorialLightMaterial(coarse: boolean) {
     time: { value: 0 },
     dark: { value: 0 },
     cloud: { value: 0.45 },
-    /* Signed exposure: overcast and rain sit below the resting level, snow above it. */
+    /* 符号付き露出。曇と雨は基準より下、雪は上。 */
     lift: { value: 0 },
-    /* How much of the light arrives as directional shafts rather than flat veil. */
+    /* 光が一様な膜ではなく指向性の光条として届く割合。 */
     shaft: { value: 0.5 },
-    /* Vertical stretch of the noise: wet weather smears without anything falling. */
+    /* ノイズの縦伸ばし。降らせずに濡れた天候を表す。 */
     streak: { value: 0 },
-    /* Fine high-frequency lift: the flat glare of snow. */
+    /* 高周波の微細な持ち上げ。雪の平坦な輝き。 */
     sparkle: { value: 0 },
-    /* Direct sunlight: warmth, and one pool of light where the cursor rests. */
+    /* 直射光。暖色と、カーソル位置の光だまり。 */
     sun: { value: 0.22 },
-    /* The still surface of water: crossing wave trains and the caustic net they cast. */
+    /* 静かな水面。交差する波列とそれが落とすコースティクス。 */
     ripple: { value: 0 },
-    /* Snowfield cover: the pale blue-white it is drawn in, and how much of it there is. */
+    /* 雪原の被覆量。淡い青白さとその面積。 */
     frost: { value: 0 },
     warm: { value: new Vector3(0.93, 0.86, 0.69) },
     cool: { value: new Vector3(0.08, 0.17, 0.23) },
@@ -137,7 +137,7 @@ export function createEditorialLightMaterial(coarse: boolean) {
         return mat2(c, -s, s, c);
       }
 
-      /* Each octave is rotated, so the value-noise grid never lines up into visible tiers. */
+      /* オクターブごとに回転させ、値ノイズの格子が縞として見えないようにする。 */
       float fbm(vec2 p){
         float sum = 0.0;
         float weight = 0.5;
@@ -152,66 +152,35 @@ export function createEditorialLightMaterial(coarse: boolean) {
 
       void main(){
         /*
-         * The cursor is the light itself, and everything is measured out from it. The direction
-         * light falls from is a fixed overhead bias that the cursor only tilts, and the bias is
-         * always longer than the tilt can reach: normalising the cursor's own offset from the
-         * middle of the frame used to swing the whole field through half a turn the instant the
-         * cursor crossed the centre. Moving the cursor now slides the light rather than pivoting
-         * it, and a radial term is still never the wash — that is what drew concentric rings.
+         * 光源方向は上方向の固定バイアスをカーソルが傾けるだけにする。カーソル自身のオフセットを
+         * 正規化すると、中心を跨いだ瞬間に場が半回転する。
          */
         vec2 tilt = light - vec2(0.5, 0.5);
         vec2 toward = normalize(vec2(tilt.x * 1.2, 0.7 + tilt.y * 0.5));
         vec2 across = vec2(-toward.y, toward.x);
         /*
-         * The wash is measured across the middle of the frame rather than out from the cursor, so
-         * it always has a lit side and a shaded side on screen. Anchoring the ramp to the cursor
-         * instead pushed the whole range off the frame as the cursor reached an edge — carry it to
-         * the bottom of the window and every pixel came out the same tone, which on pale paper is
-         * no picture at all. The cursor keeps the direction, and the pool below keeps its place.
+         * 明暗のランプは画面中央基準で測る。カーソル基準にすると端に寄せたとき全画素が同じ階調になる。
          */
         vec2 fromCentre = uvCoord - vec2(0.5, 0.5);
         float span = dot(fromCentre, toward);
         float lateral = dot(fromCentre, across);
         float gradient = smoothstep(-0.72, 0.62, span);
 
-        /*
-         * The cursor never bends the ground and never brings anything of its own to it: it is
-         * simply where the weather is at its strongest. Nothing below is sampled from a moved
-         * coordinate or run at its own clock — both of those are a distortion of the ground by
-         * another name, and they read as a lens laid over the page rather than as the sky
-         * answering. All the pointer does is ask each sky for more of what it already is: deeper
-         * light and shade, thicker cloud, more of the net on the water, more glitter on the snow.
-         * One falloff, so it stays a pool and never draws a ring.
-         */
+        /* カーソルは座標も時間も動かさない。天候が最も強く出る位置を示すだけ。 */
         vec2 frame = uvCoord * aspect;
         float reach = length((uvCoord - light) * aspect);
         float pool = 1.0 - smoothstep(0.0, 0.82, reach);
         float near = pool * pool;
-        /*
-         * The pointer scales what the sky is doing rather than adding to it. Adding — another
-         * helping of the caustic net, of the snow's glitter — pushes the exposure one way, which
-         * is exactly the direction one theme draws in and the other cannot: the same pointer then
-         * strengthens the dark page and washes out the paper. Scaling deepens both sides of the
-         * crossing at once, so the light gets lighter and the shade gets deeper together, and
-         * every sky answers the cursor by the same amount in either theme.
-         */
+        /* 加算ではなく倍率。加算は露出を片側に寄せ、明暗どちらかのテーマでしか効かなくなる。 */
         float focus = 1.0 + near * (0.78 + sun * 0.85);
 
-        /* Wet weather stretches the noise downward; nothing is ever drawn falling. */
         vec2 stretch = vec2(1.0, mix(1.0, 0.28, streak));
 
-        /* Long thin breaks along the light: the shafts between the branches. */
         float shafts = fbm(vec2(lateral * 7.8, span * 1.4 + time * 0.02));
 
-        /* A canopy over them: high-contrast gaps that scatter the shafts into patches. */
         float canopy = fbm(frame * vec2(4.4, 3.7) * stretch + vec2(time * 0.014, -time * 0.009));
         float gaps = smoothstep(0.34, 0.78, canopy);
 
-        /*
-         * Cloud cover only ever closes the canopy further, and it gathers where the cursor is:
-         * the same veil, read through a narrower band, so its billows stand out from each other
-         * instead of the whole sheet lifting or thinning. More cloud, not different cloud.
-         */
         float overcast = fbm(frame * vec2(1.8, 1.3) * stretch + vec2(time * 0.008, time * 0.004));
         float billow = smoothstep(mix(0.3, 0.4, near), mix(0.74, 0.6, near), overcast);
         float occlusion = mix(1.0, 0.24 + 0.76 * billow, cloud);
@@ -220,13 +189,7 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float glare = sparkle * fbm(frame * 14.0 + vec2(time * 0.02, 0.0)) * 0.34;
         float ambient = fbm(frame * vec2(1.0, 0.75) - vec2(time * 0.005, time * 0.003));
 
-        /*
-         * Rain reads as the surface of a still lake instead of falling water: two wave trains
-         * cross, each warped by the slow swell beneath them, and the thin bright net where they
-         * meet is the caustic light on the floor. A second, finer pass of the same figure gives
-         * the net the detail a real surface has, and a wide rise and fall carries it all across
-         * the frame.
-         */
+        /* 雨は落下ではなく水面。交差する二つの波列とそのコースティクスで描く。 */
         vec2 swell = frame * vec2(5.2, 3.4) - vec2(time * 0.03, time * 0.018);
         vec2 warped = swell + vec2(fbm(swell * 0.5), fbm(swell * 0.5 + 4.7)) * 1.8;
         float crossA = 1.0 - abs(sin(warped.x * 1.9 + warped.y * 0.6 + time * 0.24));
@@ -237,47 +200,31 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float crossD = 1.0 - abs(sin(fine.y * 2.1 + fine.x * 0.4 - time * 0.27));
         caustic = caustic * 0.78 + pow(max(crossC, crossD), 5.0) * 0.34;
         float surface = 0.5 + 0.5 * sin(span * 5.4 - time * 0.5 + fbm(swell * 0.4) * 3.2);
-        /*
-         * On paper the net only ever pales the ground, which is the whole of the picture; on a
-         * dark page the same net is light on black and reads far louder than any other sky, so
-         * the dark theme takes it at well under half strength.
-         */
+        /* 暗いテーマでは網目が黒地の光になり突出するため、半分以下に落とす。 */
         float water = ripple * (caustic * 0.72 + surface * surface * 0.12) * mix(1.0, 0.3, dark);
 
         /*
-         * Each theme can only draw on one side of the resting level: white on pale paper is
-         * nothing, and shadow on a dark page is nothing either. So a condition's exposure is
-         * always spent on the side that reads — a bright sky becomes the dapple and drifts it
-         * casts on paper, a dull one becomes the light breaking through it in the dark — and a
-         * condition already sitting on the readable side is left exactly as it was.
+         * 各テーマは基準線の片側しか描けない（明るい地に白、暗い地に影は見えない）。
+         * 露出は常に見える側へ振り替える。
          */
         float exposure = lift - max(lift, 0.0) * 2.4 * (1.0 - dark) - min(lift, 0.0) * 2.4 * dark;
 
         float signal = (gradient * dapple * occlusion * 1.45 + ambient * 0.2 + glare
           + water * 0.9 - 0.42 + exposure) * focus;
 
-        /* Continuous on both sides of the crossing, so no tier ever draws an edge. */
+        /* 境界の両側で連続させ、階調の縁が出ないようにする。 */
         float glow = smoothstep(0.0, 0.6, signal);
         float shade = smoothstep(0.0, 0.42, -signal);
-        /* Weather is the only colour here: sun is warm, lake water cold, snow a pale blue-white. */
         vec3 lit = mix(mix(vec3(1.0), warm, sun * 0.78), pale, frost * 0.5);
         vec3 dim = mix(vec3(0.0), cool, clamp(ripple + frost * 0.35, 0.0, 1.0));
-        /* Sunlit shadow is never neutral: it carries the colour of whatever the light came
-           through, which is most of what makes a page read as being in the sun at all. */
+        /* 日向の影は無彩色にならない。透過した光の色を帯びることが日向らしさの大半を作る。 */
         dim = mix(dim, warm * 0.48, sun * 0.62);
         vec3 tone = mix(dim, lit, step(0.0, signal));
         float grain = (hash(gl_FragCoord.xy) - 0.5) * 0.045;
-        /*
-         * The two themes draw on opposite sides of the crossing — paper can only show the shade,
-         * a dark page only the light — so these two weights are what decides whether the field
-         * carries the same amount in both. They are held close together on purpose: the dark side
-         * used to be paid half again as much, and the same weather came out a mild wash on paper
-         * and a loud one in the dark.
-         */
+        /* 明暗で描く側が逆になるため、この2つの重みを近づけて両テーマの強度を揃える。 */
         float alpha = glow * mix(0.26, 0.3, dark) + shade * mix(0.3, 0.26, dark) + grain * glow;
-        /* A snowfield drawn in shadow needs a little more of it than a lit one to register. */
+        /* 陰として描く雪原は、明るい地では少し強めないと見えない。 */
         alpha += shade * frost * (1.0 - dark) * 0.05;
-        /* The caustic net is the whole picture in rain, so it carries its own weight. */
         alpha += glow * water * mix(0.26, 0.09, dark);
         gl_FragColor = vec4(tone, clamp(alpha, 0.0, 1.0));
       }`,
@@ -286,17 +233,26 @@ export function createEditorialLightMaterial(coarse: boolean) {
   return {
     material,
     uniforms,
-    setCondition(condition: WeatherVisualCondition) {
-      // Weather reads only as light: open sun, a flat veil, a lake surface, or a snowfield.
+    setCondition(
+      condition: WeatherVisualCondition,
+      intensity: WeatherVisualIntensity = "steady",
+    ) {
       const sky = skies[condition] ?? skies.neutral;
+      const passing = intensity === "passing";
+      /*
+       * 通り雨は範囲ではなく密度が薄い。cloud・shaft・lift（構図と露出）を下げると弱い天候ではなく
+       * 重い天候に見えるため触らず、天候そのものを表す4項に一律の係数をかける。
+       * 一部だけ落とすと雪の通り雨が曇天と区別できなくなる。
+       */
+      const weather = passing ? .55 : 1;
       uniforms.cloud.value = sky.cloud;
-      uniforms.lift.value = sky.lift;
       uniforms.shaft.value = sky.shaft;
-      uniforms.streak.value = sky.streak;
-      uniforms.sparkle.value = sky.sparkle;
       uniforms.sun.value = sky.sun;
-      uniforms.ripple.value = sky.ripple;
-      uniforms.frost.value = sky.frost;
+      uniforms.streak.value = sky.streak * weather;
+      uniforms.sparkle.value = sky.sparkle * weather;
+      uniforms.ripple.value = sky.ripple * weather;
+      uniforms.frost.value = sky.frost * weather;
+      uniforms.lift.value = sky.lift;
     },
     setTheme(dark: boolean) {
       uniforms.dark.value = dark ? 1 : 0;

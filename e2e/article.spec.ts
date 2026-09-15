@@ -1,13 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { ARTICLE, HYDRATED, motionOff, REACTION_ARTICLE, themeToggle } from "./support.ts";
 
-test("the article carries its reading tools on opaque surfaces and never opens WebGL", {
+test("the article is a sheet of paper and carries its reading tools on it", {
   tag: ["@desktop"],
 }, async ({ page }) => {
   const requests: string[] = [];
   const rejected: string[] = [];
   page.on("request", (request) => requests.push(request.url()));
-  // The impression is fire-and-forget, so a rejected write is invisible on the page itself.
   page.on("response", (response) => {
     if (response.status() >= 400 && response.url().includes("/api/")) {
       rejected.push(`${response.status()} ${response.request().method()} ${response.url()}`);
@@ -23,18 +22,15 @@ test("the article carries its reading tools on opaque surfaces and never opens W
   await expect(page.locator(".article-flags")).toContainText("更新中");
   await expect(page.locator(".article-dates")).toContainText("更新");
   await expect(page.locator(".status-badge")).toContainText("更新中");
-  await expect(page.getByRole("heading", { name: "関連記事" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "更新履歴" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Related" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Revisions" })).toBeVisible();
   await expect(page.locator('.related ol[aria-label="関連記事"] > li h3 a').first()).toBeVisible();
-  // The reaction prompt was retired; praise is the only invitation left.
   await expect(page.getByText("この記録をどう感じましたか")).toHaveCount(0);
-  // Tag pages are retired too, so a detail label targets the filtered catalog instead.
   await expect(page.getByRole("link", { name: "#Design", exact: true }))
     .toHaveAttribute("href", "/articles?tag=Design");
 
-  // The reading column is the page's own paper, and every block on it stays opaque so the field
-  // behind can never bleed into text.
-  await expect(page.locator(".reading-surface")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  // 記事の面は紙そのもの。外の場はこの面の上下にだけ見える。
+  await expect(page.locator(".reading-surface")).toHaveCSS("background-color", /^rgb\(/);
   await expect(page.locator(".mermaid-diagram")).toBeVisible({ timeout: 15_000 });
   const surfaces = await page.evaluate(() =>
     [".annotation", ".code-block", ".mermaid-diagram", ".link-card"].map((selector) =>
@@ -42,7 +38,6 @@ test("the article carries its reading tools on opaque surfaces and never opens W
     )
   );
   for (const background of surfaces) expect(background).not.toBe("rgba(0, 0, 0, 0)");
-  // A link card has to hold its whole summary rather than clipping it.
   expect(
     await page.locator(".link-card").evaluate((card) => {
       const copy = card.querySelector(".copy");
@@ -50,12 +45,10 @@ test("the article carries its reading tools on opaque surfaces and never opens W
     }),
   ).toBe(true);
 
-  // Reading routes keep the static field only: no weather reading, no renderer, no canvas.
-  expect(requests.filter((url) => /api\/v1\/weather|editorial-light|three\.js/.test(url)))
-    .toEqual([]);
-  await expect(page.locator("[data-editorial-light]")).not.toHaveAttribute("data-webgl", "true");
-  await expect(page.locator("canvas")).toHaveCount(0);
-  // Reading an article records one anonymous impression; the API has to accept it.
+  // 記事も外の場を持つ。ただし本文は不透明な紙なので、場が見えるのは紙の上下だけ。
+  // 自前の天候問い合わせはしない（描画前スクリプトが読んだ最後の空を引き継ぐ）。
+  expect(requests.filter((url) => /api\/v1\/weather/.test(url))).toEqual([]);
+  await expect(page.locator(".reading-surface")).toHaveCSS("background-color", /rgb\(/);
   await expect.poll(() => requests.some((url) => url.includes("/api/v1/impressions/"))).toBe(true);
   expect(rejected).toEqual([]);
 });
@@ -67,12 +60,10 @@ test("the desktop table of contents tracks the reading position", {
   const toc = page.locator(".desktop-toc");
   await expect(toc).toHaveAttribute("data-ready", "true", HYDRATED);
   await expect(page.locator(".mobile-toc-region")).toBeHidden();
-  // The minimap beside the list is decoration: it is drawn, and it is never announced.
   const map = toc.locator("[data-composition-graph]");
   await expect(map).toBeVisible();
   await expect(map).toHaveAttribute("aria-hidden", "true");
   expect(await map.locator("rect").count()).toBeGreaterThan(0);
-  // Rows stay large enough to hit even though the type is small.
   const rows = await toc.locator(".toc-list > li").evaluateAll((items) =>
     items.map((item) => item.getBoundingClientRect().height)
   );
@@ -82,7 +73,6 @@ test("the desktop table of contents tracks the reading position", {
   await link.click();
   await expect(link).toHaveAttribute("aria-current", "location");
   await expect(page.locator("#focusは消さない")).toBeInViewport();
-  // The marker is placed from the current row, so the two can never drift apart.
   const marker = await toc.locator(".toc-list").evaluate((list) => ({
     expected: list.querySelector('a[aria-current="location"]')
       ?.closest<HTMLElement>("li")?.offsetTop ?? -1,
@@ -90,7 +80,6 @@ test("the desktop table of contents tracks the reading position", {
   }));
   expect(marker.actual).toBeCloseTo(marker.expected, 1);
 
-  // Track and marker are drawn from theme tokens, so they have to repaint with the theme.
   const trackColour = () =>
     toc.locator(".toc-list").evaluate((list) => getComputedStyle(list, "::after").backgroundColor);
   const light = await trackColour();
@@ -115,7 +104,6 @@ test("the mobile table of contents is a disclosure", { tag: ["@mobile"] }, async
   await trigger.click();
   await expect(trigger).toHaveAttribute("data-state", "open");
   await expect(page.locator(".mobile-toc-content")).toHaveAttribute("data-state", "open");
-  // The three index rules collapse into the single full-width rule while the list is open.
   await expect(rules.first()).toHaveCSS("opacity", "0");
   await expect.poll(() => width(1)).toBeGreaterThan(folded);
   await trigger.click();
@@ -133,23 +121,30 @@ test("code and diagram blocks pair a rendered view with an editable source", {
   await expect(block.getByRole("tab", { name: "Preview" }))
     .toHaveAttribute("aria-selected", "true", HYDRATED);
   await expect(block.getByRole("button", { name: "Reset" })).toBeHidden();
-  // Copying belongs to the block's own bar, not to a square floating over the code.
-  const copy = block.getByRole("button", { name: /Copy|Copied/ });
+  const copy = block.getByRole("button", { name: /をコピー/u });
   await expect(copy).not.toHaveAttribute("title");
   const inBar = await copy.evaluate((button) => {
     const owner = button.closest<HTMLElement>(".code-block")!;
+    const bar = owner.firstElementChild as HTMLElement;
     const box = button.getBoundingClientRect();
     return {
-      offset: box.top - owner.getBoundingClientRect().top -
-        Number.parseFloat(getComputedStyle(owner).borderTopWidth),
+      inBar: bar.contains(button),
+      clearOfCode: box.bottom <=
+        owner.querySelector(".block-preview")!.getBoundingClientRect().top + 1,
       height: box.height,
       control: Number.parseFloat(
         getComputedStyle(document.documentElement).getPropertyValue("--control-size"),
       ) * 16,
     };
   });
-  expect(inBar.offset).toBeLessThan(1);
+  expect(inBar.inBar).toBe(true);
+  expect(inBar.clearOfCode).toBe(true);
   expect(inBar.height).toBeGreaterThanOrEqual(inBar.control - 1);
+
+  const bar = block.locator("> div").first();
+  await expect(bar.locator("> *").first()).toHaveText("button.css");
+  await expect(bar.locator("> *")).toHaveCount(2);
+  expect(await block.evaluate((el) => getComputedStyle(el, "::before").content)).toBe("none");
 
   await block.getByRole("tab", { name: "Source" }).click();
   const editor = block.locator("textarea");
@@ -158,9 +153,8 @@ test("code and diagram blocks pair a rendered view with an editable source", {
   await editor.fill(`${authored}\n// tried`);
   const reset = block.getByRole("button", { name: "Reset" });
   await expect(reset).toBeVisible();
-  // Copy takes what the reader typed, and so does the rendered view.
   await copy.click();
-  await expect(copy).toHaveText("Copied");
+  await expect(copy.locator("svg")).toHaveAttribute("data-glyph", "copied");
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("// tried");
   await block.getByRole("tab", { name: "Preview" }).click();
   await expect(block.locator("pre[aria-label$='（編集中）']")).toBeVisible();
@@ -169,12 +163,10 @@ test("code and diagram blocks pair a rendered view with an editable source", {
   await expect(reset).toBeHidden();
   expect(await editor.inputValue()).toBe(authored);
 
-  // A diagram is the same pairing, and its rendered view replaces the source it was authored as.
   const diagram = page.locator(".diagram-block").first();
   const drawing = diagram.locator(".mermaid-diagram svg");
   await expect(drawing).toBeVisible({ timeout: 15_000 });
   await expect(page.locator(".mermaid-source")).toBeHidden();
-  // Motion is off, and the authored aspect ratio survives: a wide flow never arrives as a column.
   const geometry = await drawing.evaluate((svg: SVGSVGElement) => ({
     width: svg.getBoundingClientRect().width,
     height: svg.getBoundingClientRect().height,
@@ -186,7 +178,6 @@ test("code and diagram blocks pair a rendered view with an editable source", {
   expect(geometry.height).toBeLessThan(160);
   expect(geometry.ratio).toBeGreaterThan(5);
   expect(geometry.animation).toBe("none");
-  // It is rasterised per theme, so switching has to produce a new drawing.
   const lightDrawing = await drawing.getAttribute("id");
   await (await themeToggle(page)).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -206,27 +197,24 @@ test("anonymous praise and share stay available", { tag: ["@desktop"] }, async (
   await page.goto(REACTION_ARTICLE);
   const praise = page.locator("button.praise");
   await expect(praise).toHaveAccessibleName("称賛する");
-  // The first development request may include route compilation while the API initializes KV.
+  // 開発時の初回リクエストはルートのコンパイルと KV 初期化を含むことがある。
   await expect(praise).toBeEnabled(HYDRATED);
   const idle = await praise.evaluate((element) => getComputedStyle(element).backgroundColor);
   await praise.hover();
   expect((await praise.locator(".heart-glyph").boundingBox())?.width ?? 0).toBeGreaterThan(32);
-  // Hover scales the heart through a transition rather than a permanent animation.
   await expect(praise.locator(".heart-glyph")).toHaveCSS("transition-property", /scale/);
 
   await praise.click();
-  await expect(praise).toHaveAttribute("aria-pressed", "true");
-  // The control never changes colour; the filled glyph carries the selection.
-  await expect(praise).toHaveCSS("background-color", idle);
-  await expect(praise.locator(".heart-glyph")).toHaveAttribute("data-filled", "true");
-  // The acknowledgement is one ring around the control: it never covers the page, and it goes.
+  // 祝いは 900ms で消える。先に永続する状態を確かめると、測る前に居なくなる。
   const celebration = page.locator("[data-praise-celebration]");
   await expect(celebration).toHaveCSS("animation-name", /praise-liquid/u);
   expect((await celebration.boundingBox())?.width ?? 999).toBeLessThan(120);
+  await expect(praise).toHaveAttribute("aria-pressed", "true");
+  await expect(praise).toHaveCSS("background-color", idle);
+  await expect(praise.locator(".heart-glyph")).toHaveAttribute("data-filled", "true");
   await expect(celebration).toHaveCount(0, { timeout: 5_000 });
 
   await page.reload();
-  // The stored selection arrives with the first reaction read, not with the document.
   await expect(page.getByRole("button", { name: "称賛を取り消す" }))
     .toHaveAttribute("aria-pressed", "true", HYDRATED);
   await expect(page.getByRole("button", { name: "Share" })).toBeVisible();

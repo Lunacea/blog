@@ -12,7 +12,7 @@
   }: {
     action?: string;
     value?: string;
-    /** `static` is the always-expanded form used where the control region is unavailable. */
+    /** `static` は常に開いた形。操作領域が使えない場所で用いる。 */
     variant?: "control" | "static";
   } = $props();
 
@@ -59,7 +59,7 @@
     <label class="sr-only" for={id}>記事を検索</label>
     <Input
       bind:ref={field}
-      class="min-h-control rounded-sharp border-r-0 border-rule px-3 text-(length:--text-small) focus-visible:border-ink focus-visible:shadow-none focus-visible:outline-1 focus-visible:outline-offset-0 focus-visible:outline-ink"
+      class="peer min-h-control rounded-sharp border-r-0 border-rule px-3 text-(length:--text-small) focus-visible:border-ink focus-visible:shadow-none focus-visible:outline-1 focus-visible:outline-offset-0 focus-visible:outline-ink"
       {id}
       type="search"
       name="q"
@@ -69,8 +69,9 @@
       enterkeyhint="search"
     />
     <input type="hidden" name="view" value="list" />
+    <!-- フォーカスリングをボタンまで閉じるため、入力欄の右端には罫線を引かない。 -->
     <button
-      class="grid size-control cursor-pointer place-items-center border border-rule bg-canvas p-0 text-small text-ink pressable [--press-scale:0.94] hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas focus-visible:shadow-none focus-visible:outline-1 focus-visible:outline-offset-0"
+      class="grid size-control cursor-pointer place-items-center border border-rule bg-canvas p-0 text-small text-ink pressable [--press-scale:0.94] peer-focus-visible:border-ink peer-focus-visible:outline-1 peer-focus-visible:outline-offset-0 peer-focus-visible:outline-ink hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas focus-visible:shadow-none focus-visible:outline-1 focus-visible:outline-offset-0"
       type="submit"
       aria-label="記事を検索"
     >

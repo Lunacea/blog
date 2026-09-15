@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  // Home has only two snap sections. This threshold is intentionally below a typical mouse-wheel
-  // notch while still filtering trackpad noise; it is not a reusable design-system dimension.
+  // ホイール1ノッチより小さく、トラックパッドのノイズより大きい閾値。デザイントークンではない。
   const wheelThreshold = 36;
   const gestureResetMs = 180;
   const boundaryTolerance = 24;
