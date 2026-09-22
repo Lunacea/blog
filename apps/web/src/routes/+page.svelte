@@ -83,14 +83,6 @@
   <section class="pb-(--home-section-space)" aria-labelledby="latest-heading">
     <h2 class="sr-only" id="latest-heading">最新の記事</h2>
 
-    <nav class="mx-auto mb-(--space-8) flex w-full max-w-content flex-wrap items-baseline gap-x-(--space-8) gap-y-(--space-2) px-(--layout-gutter) home-opening:animate-opening-rise" aria-label="カテゴリ">
-      {#each data.categories as category}
-        <a class="group/category inline-flex min-h-control items-center font-stretch-88% text-h3 leading-none font-strong tracking-heading uppercase no-underline pressable [--press-scale:0.97] hover:no-underline" href={`/articles?${new URLSearchParams({ category })}`}>
-          <span class="border-b-2 border-transparent pb-[.12em] transition-colors duration-(--motion-duration-base) ease-signature group-hover/category:border-ink group-focus-visible/category:border-ink group-active/category:border-ink">{category}</span>
-        </a>
-      {/each}
-    </nav>
-
     <IndexList entries={data.latest} label="最新の記事" bleed />
 
     <div class="mx-auto mt-(--space-12) flex w-full max-w-content justify-center px-(--layout-gutter)">

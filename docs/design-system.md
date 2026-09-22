@@ -119,12 +119,12 @@ Home carries no header. The masthead is the identity: LUNACEA is set at 20.4vw s
 both gutters, centred by a flex container inside `overflow-x-clip` so the overflow is symmetric and
 the document never scrolls sideways. The C is replaced by the theme control at
 `--masthead-disc-size`, which draws the shared sun and moon glyph at display scale in the accent
-gold. Below it sit a business-card introduction at the printed 91×55 proportion, a left-aligned
-category navigation, six latest articles in the shared numbered index, and a full-index link. Every
-other route gets one hairline sticky bar holding the wordmark, two navigation links and the theme
-control. A site-wide footer closes every page with a contact block, social marks, the copyright line
-and the motion control. There is no fullscreen noise, glass profile, point-cloud centerpiece, custom
-cursor, scroll snap or mobile menu disclosure.
+gold. Below it sit a business-card introduction at the printed 91×55 proportion, six latest articles
+in the shared numbered index, and a full-index link. Every other route gets one hairline sticky bar
+holding the wordmark, two navigation links and the theme control. A site-wide footer closes every
+page with a contact block, social marks, the copyright line and the motion control. There is no
+fullscreen noise, glass profile, point-cloud centerpiece, custom cursor, scroll snap or mobile menu
+disclosure.
 
 Hover and selection underlines are one behavior across the site. The `ink-underline` utility draws a
 hairline that grows from the left on hover or focus and stays drawn while the element carries
