@@ -184,7 +184,7 @@ describe("article catalog", () => {
     expect(view.getByRole("navigation", { name: "カテゴリ" })).toBeTruthy();
     expect(view.getByRole("searchbox")).toBeTruthy();
     expect(view.getByRole("link", { name: /天候を環境情報にする/ })).toBeTruthy();
-    expect(view.getByRole("link", { name: "Clear" })).toBeTruthy();
+    expect(view.getByRole("link", { name: "条件を解除" })).toBeTruthy();
     expect(view.getByRole("link", { name: "#Weather" })).toBeTruthy();
   });
 
@@ -212,7 +212,7 @@ describe("article catalog", () => {
     expect(rows).toHaveLength(7);
     expect(rows[0]?.querySelector("h3")?.textContent).toBe("記事a");
     expect(rows[0]?.querySelector("time")?.textContent).toBe("2026.01.01");
-    expect(view.queryByRole("link", { name: "Clear" })).toBeNull();
+    expect(view.queryByRole("link", { name: "条件を解除" })).toBeNull();
   });
 });
 

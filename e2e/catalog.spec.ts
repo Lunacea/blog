@@ -8,7 +8,7 @@ test("the catalog filters, searches and clears through GET, and rows open by key
   const index = page.getByRole("list", CATALOG);
   const all = await index.locator("> li").count();
   expect(all).toBeGreaterThan(1);
-  const clear = page.getByRole("link", { name: "Clear", exact: true });
+  const clear = page.getByRole("link", { name: "条件を解除", exact: true });
 
   const categories = page.getByRole("navigation", { name: "カテゴリ", exact: true });
   if (info.project.name === "mobile") {
