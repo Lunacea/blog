@@ -46,7 +46,7 @@
     <nav class="flex flex-wrap items-center gap-x-(--space-5) font-stretch-84% text-folio xs:text-caption tracking-folio uppercase" aria-label="主要ナビゲーション">
       {#each navigation as item}
         <a
-          class="relative inline-flex min-h-control items-center text-quiet no-underline pressable [--press-scale:0.96] before:absolute before:inset-y-0 before:-inset-x-(--space-2) before:content-[''] after:absolute after:inset-x-0 after:bottom-[calc(50%-.85em)] after:h-px after:origin-left after:scale-x-0 after:bg-ink after:transition-[scale] after:duration-(--motion-duration-base) after:ease-signature hover:text-ink hover:no-underline hover:after:scale-x-100 focus-visible:text-ink focus-visible:after:scale-x-100 aria-[current=page]:text-ink aria-[current=page]:after:scale-x-100 motion-off:after:duration-(--motion-duration-immediate)"
+          class="ink-underline inline-flex min-h-control items-center text-quiet no-underline pressable [--press-scale:0.96] before:absolute before:inset-y-0 before:-inset-x-(--space-2) before:content-[''] hover:text-ink hover:no-underline focus-visible:text-ink aria-[current=page]:text-ink"
           href={item.href}
           aria-current={isCurrent(item.href) ? "page" : undefined}
         >{item.label}</a>
