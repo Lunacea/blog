@@ -24,17 +24,15 @@ The light and dark themes retain the same semantic roles. System preference is u
 preference is `auto`. Archivo followed by Zen Kaku Gothic New is the sans role and carries the whole
 system, including every heading. Archivo is variable on both weight (100–900) and width (62–125%),
 so the masthead is set wide and heavy while folio labels are set narrow and tracked;
-`font-stretch-*` utilities address the width axis. Instrument Serif is a Latin-only decorative
-accent and is never used for Japanese or for body text. Fira Code followed by system monospace is
-limited to fenced/inline code, keyboard input, and technical identifiers. Dates, navigation, tags,
-and ordinary status text use the sans role with tabular numerals where alignment is useful.
-Interface text is 550, article reading copy is a lighter 400, component and editorial emphasis is
-700, and strong labels use 800 where the selected face supports it. Archivo is variable, so it
-renders each of those literally. Zen Kaku Gothic New is not: it has only Regular and Bold, and with
-nothing authored between them 400 lands on Regular while 550, 700 and 800 all land on Bold. The
-interface weight is therefore chosen above 500 deliberately — it keeps ordinary Japanese text on the
-same face the headings already need. Faces capped below a requested value use their heaviest
-authored weight.
+`font-stretch-*` utilities address the width axis. Fira Code followed by system monospace is limited
+to fenced/inline code, keyboard input, and technical identifiers. Dates, navigation, tags, and
+ordinary status text use the sans role with tabular numerals where alignment is useful. Interface
+text is 550, article reading copy is a lighter 400, component and editorial emphasis is 700, and
+strong labels use 800 where the selected face supports it. Archivo is variable, so it renders each
+of those literally. Zen Kaku Gothic New is not: it has only Regular and Bold, and with nothing
+authored between them 400 lands on Regular while 550, 700 and 800 all land on Bold. The interface
+weight is therefore chosen above 500 deliberately — it keeps ordinary Japanese text on the same face
+the headings already need. Faces capped below a requested value use their heaviest authored weight.
 
 The hairline bar is sticky, so `scroll-padding-top` on the root reserves its height and every anchor
 lands clear of it.
@@ -106,16 +104,16 @@ and transparency need.
 
 Cold Logic, Warm UX uses near-white paper, near-black ink and grayscale interaction states, with a
 muted vintage red reserved for the praise control. Shared semantic tokens retain their roles in both
-themes. Archivo sets the oversized masthead and every label; Instrument Serif provides Latin-only
-decorative contrast. Article reading copy is set in Zen Kaku Gothic New for Latin as well as
-Japanese, so a Latin word inside a sentence keeps the weight of the kana around it; headings and the
-interface keep Archivo. It is 17–18px equivalent (16px on a phone, a step lighter than the interface
-around it), line-height 1.9, tracked open 0.03em, paragraphs separated by a full space step, and
-held to a maximum width of 38em — about 37 full-width characters a line. The tracking is reading
-copy only: monospace is set on a grid and diagrams to their own metrics, so both reset it. Inline
-code is set at 0.9em on a faint tint with room on either side, so a run of it reads as an object in
-the sentence rather than a change of font. Code highlighting may retain semantic syntax colors. Text
-colour is never animated; state is carried by rules, position, width axis and reveal instead.
+themes. Archivo sets the oversized masthead and every label. Article reading copy is set in Zen Kaku
+Gothic New for Latin as well as Japanese, so a Latin word inside a sentence keeps the weight of the
+kana around it; headings and the interface keep Archivo. It is 17–18px equivalent (16px on a phone,
+a step lighter than the interface around it), line-height 1.9, tracked open 0.03em, paragraphs
+separated by a full space step, and held to a maximum width of 38em — about 37 full-width characters
+a line. The tracking is reading copy only: monospace is set on a grid and diagrams to their own
+metrics, so both reset it. Inline code is set at 0.9em on a faint tint with room on either side, so
+a run of it reads as an object in the sentence rather than a change of font. Code highlighting may
+retain semantic syntax colors. Text colour is never animated; state is carried by rules, position,
+width axis and reveal instead.
 
 Home carries no header. The masthead is the identity: LUNACEA is set at 20.4vw so it bleeds past
 both gutters, centred by a flex container inside `overflow-x-clip` so the overflow is symmetric and

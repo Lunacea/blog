@@ -54,16 +54,7 @@ function codeText(value: string): string {
   return [...fenced, ...inline].join(" ").replace(/https?:\/\/\S+/gu, " ");
 }
 
-function editorialText(value: string): string {
-  const markdown = [...value.matchAll(/^(?:#{1,2}|>)\s+(.+)$/gmu)].map((match) => match[1] ?? "");
-  const markup = [
-    ...value.matchAll(/<(?:h1|h2|blockquote)\b[^>]*>([\s\S]*?)<\/(?:h1|h2|blockquote)>/gu),
-  ]
-    .map((match) => displayText(match[1] ?? ""));
-  return [...markdown, ...markup].join(" ");
-}
-
-async function corpora(): Promise<{ full: string; editorial: string; code: string }> {
+async function corpora(): Promise<{ full: string; code: string }> {
   const roots = [
     new URL("packages/content/entries/", root),
     new URL("packages/ui/src/", root),
@@ -75,16 +66,11 @@ async function corpora(): Promise<{ full: string; editorial: string; code: strin
   files.push(new URL("packages/config/mod.ts", root));
   const sources = await Promise.all(files.map((file) => Deno.readTextFile(file)));
   const full = sources.map((text) => displayText(text) + " " + stringLiterals(text)).join("\n");
-  const editorial = sources.map(editorialText).join("\n");
   const code = sources.map(codeText).join("\n");
   return {
     full: uniqueCharacters(
       full +
         " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz、。・！？「」『』（）—…/:#&",
-    ),
-    editorial: uniqueCharacters(
-      editorial +
-        " Quiet structures growing records Lunacea 静かな記録技術は内容を残すために使う、。！？「」—…",
     ),
     code: uniqueCharacters(
       code +
@@ -132,10 +118,7 @@ const fonts = [
 ] as const;
 
 export async function generateFontSubsets(): Promise<void> {
-  const { full: fullCorpus, editorial: editorialCorpus, code: codeCorpus } = await corpora();
-  const accentCorpus = uniqueCharacters(
-    "Lunacea Archive System quiet Sample Published 0123456789/:.-",
-  );
+  const { full: fullCorpus, code: codeCorpus } = await corpora();
   await Deno.mkdir(output, { recursive: true });
 
   type GeneratedFont =
@@ -144,13 +127,7 @@ export async function generateFontSubsets(): Promise<void> {
   const generated: GeneratedFont[] = [];
   for (const font of fonts) {
     const input = await Deno.readFile(new URL(font.file, source));
-    const text = font.role === "accent"
-      ? accentCorpus
-      : font.role === "editorial" || font.role === "editorial-latin"
-      ? editorialCorpus
-      : font.role === "code"
-      ? codeCorpus
-      : fullCorpus;
+    const text = font.role === "code" ? codeCorpus : fullCorpus;
     const result = await subsetFont(Buffer.from(input), text, { targetFormat: "woff2" });
     const hash = createHash("sha256").update(result).digest("hex").slice(0, 12);
     const filename = `${font.key}.${hash}.woff2`;
