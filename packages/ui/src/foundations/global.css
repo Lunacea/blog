@@ -122,6 +122,7 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   }
 }
 
+/* 開閉は指への返事なので、他の面の動きではなく response の対で動かす。 */
 @utility rail-disclosure {
   interpolate-size: allow-keywords;
 
@@ -129,8 +130,8 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
     overflow: hidden;
     block-size: 0;
     transition:
-      block-size var(--motion-duration-micro) var(--motion-ease-enter),
-      content-visibility var(--motion-duration-micro) allow-discrete;
+      block-size var(--motion-duration-response) var(--motion-ease-response),
+      content-visibility var(--motion-duration-response) allow-discrete;
   }
 
   &[open]::details-content {
@@ -189,11 +190,12 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   ホバーや色の変化もここを通るので、サイト中の操作子が同じ立ち上がり方をする。
   Tailwind 4 は `translate` と `scale` を独立したプロパティとして書くため、両方を transition に挙げる。
   ホバーで既に transform を動かす操作子は、これに頼らず自前の `active:` を宣言する。
+  即座の返事が要る操作子は `--press-duration` と `--press-ease` に response の対を入れる。
 */
 @utility pressable {
   transition-property: translate, scale, color, background-color, border-color, box-shadow, opacity;
-  transition-duration: var(--motion-duration-base);
-  transition-timing-function: var(--motion-ease-signature);
+  transition-duration: var(--press-duration, var(--motion-duration-base));
+  transition-timing-function: var(--press-ease, var(--motion-ease-signature));
 
   &:active:not(:disabled):not([aria-disabled="true"]) {
     translate: 0 var(--press-shift);

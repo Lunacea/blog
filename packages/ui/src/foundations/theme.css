@@ -116,6 +116,7 @@
   --text-shadow-ui-mask: var(--shadow-text-mask);
   --blur-glass: var(--glass-blur);
   --ease-signature: var(--motion-ease-signature);
+  --ease-response: var(--motion-ease-response);
   --ease-standard: var(--motion-ease-standard);
   --ease-enter: var(--motion-ease-enter);
   --ease-exit: var(--motion-ease-exit);
@@ -369,6 +370,7 @@
     ホバー専用の時間は置かない。役割ごとに速さを変えると一度の操作が分かれて着地する。
   */
   --motion-duration-immediate: 1ms;
+  --motion-duration-response: 120ms;
   --motion-duration-fast: 140ms;
   --motion-duration-micro: 240ms;
   --motion-duration-exit: 280ms;
@@ -386,6 +388,13 @@
     押下の沈み込みだけは即時のままにする（pressable の :active を参照）。
   */
   --motion-ease-signature: cubic-bezier(0.7, 0, 0.3, 1);
+  /*
+    押されたことへの返事。署名カーブが 10% 地点で 0.8% しか進まないのに対し、
+    これは同じ地点で 53% まで進み、残りを静かに置く。触れた側から結果が出るので、
+    取り消しや折り畳みのように「効いたか」を即座に知りたい操作子はこちらを使う。
+    --motion-duration-response と対で、単独では使わない。
+  */
+  --motion-ease-response: cubic-bezier(0.1, 0.75, 0.2, 1);
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
