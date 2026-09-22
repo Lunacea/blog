@@ -232,7 +232,10 @@
       >
     {:else}
       <span
-        class="inline-block motion-full:data-[liquid=wet]:filter-(--liquid-ink) forced-colors:filter-none print:filter-none"
+        class={cn(
+          "inline-block motion-full:data-[liquid=wet]:filter-(--liquid-ink) forced-colors:filter-none print:filter-none",
+          marked && glyph.index === slotIndex + 1 && "relative z-(--z-content)",
+        )}
         style={`--liquid-ink:url(#${glyph.ink})`}
         data-liquid="dry"
         aria-hidden="true"
