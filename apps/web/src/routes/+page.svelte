@@ -68,7 +68,7 @@
   <section id="about" class="scroll-mt-(--space-16) pt-(--space-16) pb-(--home-section-space)" aria-label="プロフィール">
     <div class="mx-auto flex w-full max-w-content justify-center px-(--layout-gutter)">
       <ProfileCard
-        class="max-w-(--profile-card-print)"
+        class="max-w-(--profile-card-print) max-sm:w-[calc(100%_-_var(--space-4))]"
         name={siteConfig.name}
         role="UI / UX Design — Web Engineering"
         bio={siteConfig.author.bio}
