@@ -92,11 +92,11 @@ runtime.
 
 UI icons resolve through `icons/Icon.svelte`. General UI uses Solar linear; official technology and
 service marks use Simple Icons. The site's own glyphs - Display motion, Theme, Search, the contents
-index, the paper mark, the praise heart and the scroll indicator - are drawn locally in one stroke
-language instead: a 24 unit box, a 1.75 non-scaling stroke, round caps and joins, and one short
-state transition. `icons/glyph.ts` holds that contract. Semantic resolvers cover interface actions,
-weather state, and tags; unknown tags use the common tag icon. Icon data is bundled so the server
-renders SVG without a browser request to an icon service.
+index, the disclosure sign, the paper mark, the praise heart and the scroll indicator - are drawn
+locally in one stroke language instead: a 24 unit box, a 1.75 non-scaling stroke, round caps and
+joins, and one short state transition. `icons/glyph.ts` holds that contract. Semantic resolvers
+cover interface actions, weather state, and tags; unknown tags use the common tag icon. Icon data is
+bundled so the server renders SVG without a browser request to an icon service.
 
 Authored organic imagery is supplied through `config.visualAssets` and `MediaSlot`. Missing assets
 use `AssetPlaceholder` with a stable ID, role, aspect ratio, file type, accessibility description,
@@ -128,16 +128,33 @@ control. A site-wide footer closes every page with a contact block, social marks
 and the motion control. There is no fullscreen noise, glass profile, point-cloud centerpiece, custom
 cursor, scroll snap or mobile menu disclosure.
 
+Hover and selection underlines are one behavior across the site. The `ink-underline` utility draws a
+hairline that grows from the left on hover or focus and stays drawn while the element carries
+`aria-current`; the bar's navigation, the catalog's category rail, its sort control, the tag lists
+and the category folio all share it, so nothing fades a color where something else draws a rule.
+Where a row carries a count as well as a label, the rule runs the whole row and ends at the number,
+so a two-letter category still gets a rule long enough to read. Its distance from the text never
+changes, because it is placed from the centre of the line rather than from the edge of the box. It
+is revealed by its width and not by a transform, against the usual preference for transform and
+opacity: a hairline handed to the compositor changes weight when the layer is handed back at the
+end, and the line has to look the same while it is drawing as it does once drawn. Selection is
+carried by the rule and by ink against quiet, never by a change of weight that would move the line.
+
 Motion is ON/OFF and is switched from the footer. Existing full means ON and reduced/off mean OFF.
-OS reduced motion, forced colors and save-data force static rendering. The motion system has three
-curves: `--ease-standard` for state, `--ease-enter` for arrivals and `--ease-spring`, which
-overshoots, for objects that should feel physical — the lunar disc, the card, buttons and the row
-rules. The first eligible Home visit per tab clears the grain over roughly 1.2 seconds while the
-masthead sharpens from blur to its resting tracking, the disc swings in and the card settles into
-its tilt, each on its own delay so the sequence has a rhythm; content is visible and navigable from
-the first frame and there is no loading overlay. HTML remains the finished design when motion is
-absent. Shared glyphs keep their stroke contract, state feedback and accessible names. Theme changes
-are immediate when motion is disabled.
+OS reduced motion, forced colors and save-data force static rendering. The motion system has four
+curves: `--ease-standard` for state, `--ease-enter` for arrivals, `--ease-spring`, which overshoots,
+for objects that should feel physical — the lunar disc, the card, buttons and the row rules — and
+`--ease-response`, paired with a 120ms duration, for a control that has to answer the finger: it is
+53% done a tenth of the way in, where the signature curve is 0.8%, so the result is there before the
+motion is. The catalog disclosure and its plus-minus sign are on it. A hover is not a press: the
+clear chip fades its fill over the micro step on the standard curve, because a fill that arrives in
+the first twelve milliseconds is not seen to arrive at all. `pressable` takes `--press-duration` and
+`--press-ease` to switch any control over. The first eligible Home visit per tab clears the grain
+over roughly 1.2 seconds while the masthead sharpens from blur to its resting tracking, the disc
+swings in and the card settles into its tilt, each on its own delay so the sequence has a rhythm;
+content is visible and navigable from the first frame and there is no loading overlay. HTML remains
+the finished design when motion is absent. Shared glyphs keep their stroke contract, state feedback
+and accessible names. Theme changes are immediate when motion is disabled.
 
 `StaticLight` draws the site's light, shadow and grain in SVG with no JavaScript, and every route
 mounts it. Home layers a dynamically imported Three.js field between the light and the grain: one
@@ -220,15 +237,28 @@ fallbacks, missing WebGL2, and context-loss cleanup.
 
 ## Catalog and reading surfaces (2026-09)
 
-Articles opens with a modest ARTICLES heading. A sticky rail owns the two ordering controls: All
-plus every category with its count, and the sort order. The records themselves are one index shared
-with Home (`patterns/IndexList`): date, title, tags and category on one row, the date and category
+Articles opens with a modest ARTICLES heading. A sticky rail on the right owns the filter: All plus
+every category with its count. Below the rail's width the column order is the heading, the rail,
+then the index, so the title is always read first. The records themselves are one index shared with
+Home (`patterns/IndexList`): date, title, tags and category on one row, the date and category
 sitting on the title's first baseline so they hold still, plus a summary that opens on hover or
-focus on desktop and is always open on small screens. On the articles index the glass pane fades to
-transparent toward both outer edges, so it ends on no hard edge beside the date or the category; the
-rule under the row comes up in place rather than travelling. Sort sits in the rail beneath the
-categories; search and tags close the page in a low-emphasis panel. There is no oversized page
-title, view toggle, lead story, Pick Up box or ranking rail.
+focus on desktop and is always open on small screens; the title and that summary are given the width
+the row can spare, held at about forty-four full-width characters a line. On the articles index the
+glass pane fades to transparent toward both outer edges, so it ends on no hard edge beside the date
+or the category; the rule under the row comes up in place rather than travelling. Sort is not a
+filter, so it does not join the filter line: it sits directly above the index as that block's own
+control, its folio label set beside the three orders it switches. Filtered results name what is
+filtering them — the query, the category and the tag — with the label set as a folio and the values
+in ink, and close the line with the one control on the page that is a surface rather than a word: a
+compact chip on the same glass as the All articles link, which fills with ink under the pointer, so
+clearing is never mistaken for another choice. It clears the filters and leaves the order alone.
+That line holds its place while nothing is filtering, so choosing a category never drops the index
+by a step. The filter line, the sort and the index are each one step apart, so the three read as one
+block and the eye is not asked which of them belongs to which. Below the rail's width the rail's
+disclosure is the plus-minus sign on its own glass square rather than a word. Every other control
+here is the same object: quiet text at control height, ink and a rule when current, no box and no
+padding of its own. Search and tags close the page in a low-emphasis panel. There is no oversized
+page title, view toggle, lead story, Pick Up box or ranking rail.
 
 Desktop TOC has a decorative vertical minimap: short lines represent prose, accent-colored
 rectangles represent technical and media blocks in source order. Existing TOC links and active
