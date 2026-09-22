@@ -37,7 +37,7 @@
         aria-hidden="true"
       ></span>
       <div class={cn(
-        "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-(--space-4) md:items-baseline gap-y-(--space-3) py-(--index-row-space) md:grid-cols-[minmax(0,7rem)_minmax(0,1fr)_minmax(0,9rem)] md:gap-x-(--space-8)",
+        "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-(--space-4) md:items-baseline gap-y-(--space-3) py-(--index-row-space) md:grid-cols-[minmax(0,5.5rem)_minmax(0,1fr)_minmax(0,7rem)] md:gap-x-(--space-6)",
         inner,
       )}>
         <span class="col-span-2 col-start-1 row-start-1 truncate font-stretch-84% text-folio leading-none tracking-folio text-ink uppercase sm:col-span-1 md:col-start-3 md:text-right md:text-quiet">{entry.category ?? ""}</span>
@@ -55,7 +55,8 @@
           {#if entry.summary}
             <div class="index-summary hidden grid-rows-[1fr] transition-[grid-template-rows] duration-(--motion-duration-base) ease-signature sm:grid md:grid-rows-[0fr] md:group-hover:grid-rows-[1fr] md:group-focus-within:grid-rows-[1fr] motion-off:duration-(--motion-duration-immediate)">
               <div class="overflow-hidden">
-                <p class="mt-(--space-3) mb-0 max-w-prose text-small leading-copy text-quiet">{entry.summary}</p>
+                <!-- 本文より一段広い測り。全角でおよそ44字、2行で言い切れる長さに収まる。 -->
+                <p class="mt-(--space-3) mb-0 max-w-[44em] text-small leading-copy text-quiet">{entry.summary}</p>
               </div>
             </div>
           {/if}
