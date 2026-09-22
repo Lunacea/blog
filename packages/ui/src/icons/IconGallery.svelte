@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon, { type ApprovedIconName } from "./Icon.svelte";
   import BackGlyph from "./BackGlyph.svelte";
+  import DisclosureGlyph from "./DisclosureGlyph.svelte";
   import ForwardGlyph from "./ForwardGlyph.svelte";
   import HeartGlyph from "./HeartGlyph.svelte";
   import IndexGlyph from "./IndexGlyph.svelte";
@@ -33,6 +34,8 @@
     <ul class={grid}>
       <li class={cell}><a href="#back" aria-label="Back"><BackGlyph /></a><span class={caption}>BackGlyph</span></li>
       <li class={cell}><a href="#forward" aria-label="Forward"><ForwardGlyph /></a><span class={caption}>ForwardGlyph</span></li>
+      <li class={cell}><DisclosureGlyph /><span class={caption}>DisclosureGlyph closed</span></li>
+      <li class={cell}><div data-state="open"><DisclosureGlyph /></div><span class={caption}>DisclosureGlyph open</span></li>
       <li class={cell}><HeartGlyph /><span class={caption}>HeartGlyph</span></li>
       <li class={cell}><HeartGlyph filled /><span class={caption}>HeartGlyph filled</span></li>
       <li class={cell}><IndexGlyph /><span class={caption}>IndexGlyph</span></li>
