@@ -425,9 +425,8 @@
   --press-scale: 0.985;
 
   /*
-    テーマの切り替えは light と dark を行き来する状態変化なので、署名イージングで動かす。
-    地も文字もグリフも同じ長さにする。役割ごとに時間を変えると、押した一度の操作が
-    いくつもの速さに分かれて着地する。
+    OS の設定変更と View Transition 非対応環境では色を補間する。
+    トグル操作中は下の data-theme-transition で止め、画面のクロスフェードへ任せる。
   */
   transition:
     --color-background var(--motion-duration-base) var(--motion-ease-signature),
@@ -442,6 +441,10 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
+}
+
+:root[data-theme-transition="active"] {
+  transition: none;
 }
 
 :root[data-theme="dark"] {

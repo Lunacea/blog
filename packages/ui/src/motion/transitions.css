@@ -259,6 +259,28 @@ html[data-motion="off"]::view-transition-group(*) {
   animation-duration: var(--motion-duration-immediate);
 }
 
+/* テーマ切り替えは画面を一度だけ描き、旧画面を同じ署名イージングで薄くする。 */
+html[data-theme-transition="active"]::view-transition-group(*) {
+  animation-duration: var(--motion-duration-base);
+  animation-timing-function: var(--motion-ease-signature);
+}
+
+html[data-theme-transition="active"]::view-transition-old(*) {
+  z-index: var(--z-content);
+  animation: theme-fade-out var(--motion-duration-base) var(--motion-ease-signature) both;
+}
+
+html[data-theme-transition="active"]::view-transition-new(*) {
+  z-index: var(--z-base);
+  animation: none;
+}
+
+@keyframes theme-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
 /* 目次などからの移動だけを滑らかにする。常時 smooth にはしない。 */
 html[data-smooth-anchor="true"] {
   scroll-behavior: smooth;

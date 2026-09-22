@@ -1,5 +1,11 @@
+<script module lang="ts">
+  let activeThemeTransition: ViewTransition | undefined;
+  let activeThemeTarget: "light" | "dark" | undefined;
+  let themeTransitionId = 0;
+</script>
+
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import ThemeGlyph from "../icons/ThemeGlyph.svelte";
   import {
     applyThemePreference,
@@ -20,7 +26,38 @@
   }
 
   function toggle() {
-    theme = setThemePreference(theme === "dark" ? "light" : "dark").theme;
+    const next = (activeThemeTarget ?? theme) === "dark" ? "light" : "dark";
+    const root = document.documentElement;
+    if (root.dataset.motion !== "full" || !document.startViewTransition) {
+      themeTransitionId++;
+      activeThemeTransition?.skipTransition();
+      activeThemeTransition = undefined;
+      activeThemeTarget = undefined;
+      delete root.dataset.themeTransition;
+      theme = setThemePreference(next).theme;
+      return;
+    }
+
+    // 色の継承を毎フレーム再計算せず、画面のスナップショットを同じ長さで溶暗する。
+    const id = ++themeTransitionId;
+    activeThemeTarget = next;
+    activeThemeTransition?.skipTransition();
+    root.dataset.themeTransition = "active";
+    const transition = document.startViewTransition(async () => {
+      if (id !== themeTransitionId) return;
+      theme = setThemePreference(next).theme;
+      await tick();
+    });
+    activeThemeTransition = transition;
+    // 連打で省略した遷移の ready は AbortError で reject する。
+    void transition.ready.catch(() => {});
+    const cleanup = () => {
+      if (activeThemeTransition !== transition) return;
+      activeThemeTransition = undefined;
+      activeThemeTarget = undefined;
+      delete root.dataset.themeTransition;
+    };
+    void transition.finished.then(cleanup, cleanup);
   }
 
   onMount(() => {

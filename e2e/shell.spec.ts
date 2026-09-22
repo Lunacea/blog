@@ -59,6 +59,25 @@ test("theme and motion answer the keyboard, cycle and survive navigation", {
   await page.keyboard.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
   await expect(display).toHaveAttribute("aria-label", /アニメーション: ON/);
+  const themeTransition = await disc.evaluate((button) => {
+    button.click();
+    const root = document.documentElement;
+    return {
+      active: root.dataset.themeTransition,
+      properties: getComputedStyle(root).transitionProperty,
+    };
+  });
+  expect(themeTransition).toEqual({ active: "active", properties: "none" });
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator("html")).not.toHaveAttribute("data-theme-transition", "active");
+  await disc.evaluate((button) => {
+    button.click();
+    button.click();
+  });
+  await expect(page.locator("html")).not.toHaveAttribute("data-theme-transition", "active");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await disc.click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await display.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
   await page.goto("/articles");
