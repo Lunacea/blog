@@ -63,6 +63,14 @@ function withProbe<T>(scheme: DiagramScheme, host: Element, read: (probe: HTMLEl
   probe.hidden = true;
   for (const [name, value] of readRootDeclarations()) probe.style.setProperty(name, value);
   probe.style.colorScheme = scheme;
+  /*
+   * 本番の CSS は古いブラウザ向けに light-dark() を --lightningcss-light / --lightningcss-dark の
+   * 切り替えへ書き換える。color-scheme だけでは切り替わらないので、その2つも合わせて置く。
+   * 空の値は setProperty では置けないため cssText に書き足す。
+   */
+  const light = scheme === "light" ? "initial" : " ";
+  const dark = scheme === "dark" ? "initial" : " ";
+  probe.style.cssText += `--lightningcss-light:${light};--lightningcss-dark:${dark};`;
   host.append(probe);
   try {
     return read(probe);
