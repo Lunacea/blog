@@ -32,9 +32,6 @@
 @theme {
   --color-paper: var(--color-surface);
   --color-card: var(--color-card-stock);
-  --shadow-paper:
-    0 1px 0 var(--color-rule),
-    0 4px 12px light-dark(rgb(16 47 35 / 12%), rgb(0 0 0 / 46%));
   --animate-opening-resolve: opening-resolve 1250ms var(--ease-enter) both;
   --animate-disc-arrive: disc-arrive 1000ms var(--ease-spring) 220ms both;
   --animate-card-arrive: card-arrive 900ms var(--ease-spring) 480ms backwards;

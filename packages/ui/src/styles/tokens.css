@@ -83,7 +83,6 @@
   --container-content: var(--content-width);
   --container-prose: var(--prose-width);
   --radius-sharp: var(--radius-none);
-  --radius-subtle: var(--radius-small);
   --radius-ui-card: var(--radius-card);
   --radius-ui-large: var(--radius-large);
   --shadow-ui-overlay: var(--shadow-overlay);
@@ -92,17 +91,14 @@
   --ease-response: var(--motion-ease-response);
   --ease-standard: var(--motion-ease-standard);
   --ease-enter: var(--motion-ease-enter);
-  --ease-exit: var(--motion-ease-exit);
   --ease-spring: var(--motion-ease-spring);
   --breakpoint-xs: 34rem;
   --breakpoint-sm: 44rem;
   --breakpoint-md: 52rem;
-  --breakpoint-lg: 60rem;
 }
 
 @custom-variant theme-dark (&:where(html[data-theme="dark"] *));
 @custom-variant motion-full (&:where(html[data-motion="full"] *));
-@custom-variant motion-reduced (&:where(html[data-motion="reduced"] *));
 @custom-variant motion-off (&:where(html[data-motion="off"] *));
 
 :root {

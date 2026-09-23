@@ -7,7 +7,7 @@
 </script>
 
 <svg
-  class={cn(glyphFrame, glyphStroke, glyphResponse, "disclosure-glyph", className)}
+  class={cn(glyphFrame, glyphStroke, glyphResponse, "", className)}
   viewBox="0 0 24 24"
   aria-hidden="true"
   focusable="false"

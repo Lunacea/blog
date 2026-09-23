@@ -1,7 +1,5 @@
 import type { DayPhase, WeatherCondition } from "./weather_types.ts";
 
-export type { DayPhase, WeatherCondition } from "./weather_types.ts";
-
 export function weatherConditionFromCode(code: number): WeatherCondition {
   // 0 は快晴、1 はおおむね晴れ。どちらも clear として扱う。
   if (code === 0 || code === 1) return "clear";

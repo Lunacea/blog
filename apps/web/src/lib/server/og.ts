@@ -52,7 +52,7 @@ const margin = 72;
 const chipHeight = 46;
 const titleBaseline = 326;
 
-export function escapeXml(value: string): string {
+function escapeXml(value: string): string {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 

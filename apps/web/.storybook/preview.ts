@@ -49,7 +49,6 @@ const preview: Preview = {
         icon: "timer",
         items: [
           { value: "full", title: "Full" },
-          { value: "reduced", title: "Reduced" },
           { value: "off", title: "Off" },
         ],
         dynamicTitle: true,
@@ -58,7 +57,7 @@ const preview: Preview = {
   },
   initialGlobals: {
     theme: "light",
-    motion: "reduced",
+    motion: "off",
     viewport: { value: "desktop", isRotated: false },
   },
   parameters: {
@@ -82,21 +81,15 @@ const preview: Preview = {
   decorators: [
     (Story, context) => {
       const theme = context.globals.theme === "dark" ? "dark" : "light";
-      const requestedMotion = ["full", "reduced", "off"].includes(context.globals.motion)
-        ? context.globals.motion
-        : "reduced";
+      const requestedMotion = context.globals.motion === "full" ? "full" : "off";
       const platformLimited = matchMedia("(prefers-reduced-motion: reduce)").matches ||
         matchMedia("(forced-colors: active)").matches ||
         (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
-      const motion = requestedMotion === "off"
-        ? "off"
-        : (requestedMotion === "reduced" || platformLimited ? "reduced" : "full");
+      const motion = requestedMotion === "off" || platformLimited ? "off" : "full";
 
       localStorage.setItem("lunacea-theme", theme);
       localStorage.setItem("lunacea-motion", requestedMotion);
-      document.documentElement.dataset.themePreference = theme;
       document.documentElement.dataset.theme = theme;
-      document.documentElement.dataset.motionPreference = requestedMotion;
       document.documentElement.dataset.motion = motion;
       document.documentElement.style.colorScheme = theme;
       dispatchEvent(new CustomEvent("lunacea:theme"));

@@ -191,7 +191,6 @@ html[data-route-kind="catalog"]::view-transition-group(*) {
   }
 }
 
-html[data-motion="reduced"]::view-transition-group(*),
 html[data-motion="off"]::view-transition-group(*) {
   animation-duration: var(--motion-duration-immediate);
 }

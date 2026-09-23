@@ -2,7 +2,6 @@
   import Iconify from "@iconify/svelte";
   import deno from "@iconify-icons/simple-icons/deno.js";
   import github from "@iconify-icons/simple-icons/github.js";
-  import tailwindcss from "@iconify-icons/simple-icons/tailwindcss.js";
   import x from "@iconify-icons/simple-icons/x.js";
   import svelte from "@iconify-icons/simple-icons/svelte.js";
   import threedotjs from "@iconify-icons/simple-icons/threedotjs.js";
@@ -42,7 +41,6 @@
     | "solar:widget-4-linear"
     | "simple-icons:deno"
     | "simple-icons:github"
-    | "simple-icons:tailwindcss"
     | "simple-icons:x"
     | "simple-icons:svelte"
     | "simple-icons:threedotjs"
@@ -67,7 +65,6 @@
     "solar:widget-4-linear": widget,
     "simple-icons:deno": deno,
     "simple-icons:github": github,
-    "simple-icons:tailwindcss": tailwindcss,
     "simple-icons:x": x,
     "simple-icons:svelte": svelte,
     "simple-icons:threedotjs": threedotjs,
@@ -75,27 +72,8 @@
     "simple-icons:webgl": webgl,
   } as const;
 
-  let {
-    name,
-    decorative = true,
-    label,
-    class: className = "",
-    dataIcon,
-  }: {
-    name: ApprovedIconName;
-    decorative?: boolean;
-    label?: string;
-    class?: string;
-    dataIcon?: "inline-start" | "inline-end";
-  } = $props();
+  /** 図像は常に装飾。名前は隣の文字か、それを包む操作子のアクセシブルネームが持つ。 */
+  let { name, class: className = "" }: { name: ApprovedIconName; class?: string } = $props();
 </script>
 
-<Iconify
-  icon={icons[name]}
-  class={className}
-  data-icon={dataIcon ?? ""}
-  data-icon-name={name}
-  aria-hidden={decorative ? "true" : undefined}
-  aria-label={decorative ? undefined : label}
-  role={decorative ? undefined : "img"}
-/>
+<Iconify icon={icons[name]} class={className} aria-hidden="true" />

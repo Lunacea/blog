@@ -47,7 +47,6 @@
       <li class={cell}><SearchGlyph /><span class={caption}>SearchGlyph</span></li>
       <li class={cell}><ThemeGlyph /><span class={caption}>ThemeGlyph</span></li>
       <li class={cell}><MotionGlyph mode="full" /><span class={caption}>MotionGlyph full</span></li>
-      <li class={cell}><MotionGlyph mode="reduced" /><span class={caption}>MotionGlyph reduced</span></li>
       <li class={cell}><MotionGlyph mode="off" /><span class={caption}>MotionGlyph off</span></li>
     </ul>
   </section>

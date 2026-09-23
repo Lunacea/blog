@@ -7,15 +7,3 @@ export function emptyReactionSummary(contentId: string): ReactionSummary {
     selected: false,
   };
 }
-
-export function toggleReaction(
-  summary: ReactionSummary,
-  active: boolean,
-): ReactionSummary {
-  const delta = Number(active) - Number(summary.selected);
-  return {
-    ...summary,
-    selected: active,
-    count: Math.max(0, summary.count + delta),
-  };
-}

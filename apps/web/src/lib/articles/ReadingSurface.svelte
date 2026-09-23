@@ -44,12 +44,12 @@
     </filter>
     <rect width="100%" height="100%" filter="url(#paper-fibre)" />
   </svg>
-  <span class="reading-start absolute top-0" data-reading-start aria-hidden="true"></span>
+  <span class="absolute top-0" data-reading-start aria-hidden="true"></span>
   {#key component}
-    <div class="article-grid shell grid grid-cols-[minmax(0,var(--prose-width))_minmax(var(--space-12),1fr)] justify-between gap-(--space-8) read-wide:grid-cols-[minmax(0,var(--prose-width))_minmax(var(--layout-grid-compact),1fr)] read-wide:gap-[clamp(var(--space-8),8vw,var(--space-32))] max-read:grid-cols-1 max-read:gap-8 max-read-wide:gap-y-0">
+    <div class="shell grid grid-cols-[minmax(0,var(--prose-width))_minmax(var(--space-12),1fr)] justify-between gap-(--space-8) read-wide:grid-cols-[minmax(0,var(--prose-width))_minmax(var(--layout-grid-compact),1fr)] read-wide:gap-[clamp(var(--space-8),8vw,var(--space-32))] max-read:grid-cols-1 max-read:gap-8 max-read-wide:gap-y-0">
       <div class="prose" bind:this={prose}><ContentComponent /></div>
       <ReadingEnhancements root={prose} {headings} {composition} {tools} />
     </div>
   {/key}
-  {#if after}<div class="reading-after shell">{@render after()}</div>{/if}
+  {#if after}<div class="shell">{@render after()}</div>{/if}
 </div>

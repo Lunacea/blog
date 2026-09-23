@@ -5,7 +5,6 @@
 
 <script lang="ts">
   import { onMount, tick, type Snippet } from "svelte";
-  import { announceHeaderDisclosure, listenForHeaderDisclosure } from "$lib/shell/header-disclosures.ts";
   import { IndexGlyph } from "@lunacea/ui/icons";
   import { Collapsible } from "@lunacea/ui/primitives";
   import { cn } from "@lunacea/ui/utils";
@@ -117,11 +116,6 @@
     void updateTocMarker();
   });
 
-  // ヘッダと同じ開閉チャンネルを共有し、同時に開くパネルを1つに保つ。
-  $effect(() => {
-    if (tocOpen) announceHeaderDisclosure("toc");
-  });
-
   function dismissToc(event: KeyboardEvent) {
     if (event.key !== "Escape" || !tocOpen) return;
     event.preventDefault();
@@ -143,9 +137,8 @@
 
   onMount(() => {
     enhancementsReady = true;
-    const stopDisclosure = listenForHeaderDisclosure("toc", () => (tocOpen = false));
     const prose = root ?? document.querySelector<HTMLElement>(".prose");
-    if (!prose) return stopDisclosure;
+    if (!prose) return;
     const headingElements = [
       ...prose.querySelectorAll<HTMLElement>("h2[id], h3[id]"),
     ];
@@ -537,7 +530,6 @@
     if (desktopTocList) tocResizeObserver.observe(desktopTocList);
 
     return () => {
-      stopDisclosure();
       mermaidGeneration += 1;
       mermaidDisposed = true;
       if (spareTask !== undefined) cancelIdle(spareTask);
@@ -634,7 +626,7 @@
         <span class="pointer-events-none absolute top-0 bottom-0 left-0 z-(--z-base) w-12"><ArticleCompositionGraph composition={shownComposition} spans={tocSpans} id="detail-toc" /></span>
       {/if}
       <ol
-        class="toc-list relative m-0 grid list-none grid-rows-(--toc-rows) pl-(--space-16) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-reduced:after:duration-(--motion-duration-immediate) motion-off:after:duration-(--motion-duration-immediate)"
+        class="toc-list relative m-0 grid list-none grid-rows-(--toc-rows) pl-(--space-16) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-off:after:duration-(--motion-duration-immediate)"
         bind:this={desktopTocList}
         style={`--toc-marker-y:${tocMarkerY}px;--toc-marker-height:${tocMarkerHeight}px;--toc-rows:${tocRows}`}
       >
@@ -664,10 +656,10 @@
       <Collapsible.Trigger class={tocTriggerClass}>
         {@render tocGlyph()}<span>目次</span>
       </Collapsible.Trigger>
-      <Collapsible.Content class="mobile-toc-content absolute top-full left-0 z-(--z-overlay) w-full origin-top-left overflow-hidden rounded-b-ui-large border border-t-0 border-rule bg-(--color-glass) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-toc-open data-[state=closed]:animate-toc-close motion-reduced:animate-none motion-off:animate-none">
+      <Collapsible.Content class="mobile-toc-content absolute top-full left-0 z-(--z-overlay) w-full origin-top-left overflow-hidden rounded-b-ui-large border border-t-0 border-rule bg-(--color-glass) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-toc-open data-[state=closed]:animate-toc-close motion-off:animate-none">
         <nav class="p-(--space-3) pb-(--radius-large)" aria-label="目次">
           <ol
-            class="toc-list relative m-0 list-none pl-(--space-3) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-reduced:after:duration-(--motion-duration-immediate) motion-off:after:duration-(--motion-duration-immediate)"
+            class="toc-list relative m-0 list-none pl-(--space-3) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-off:after:duration-(--motion-duration-immediate)"
             bind:this={mobileTocList}
             style={`--toc-marker-y:${mobileMarkerY}px;--toc-marker-height:${mobileMarkerHeight}px`}
           >{@render tocItems()}</ol>

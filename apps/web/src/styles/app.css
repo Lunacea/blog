@@ -10,8 +10,7 @@
 
 /* Mermaid owns its generated SVG timing; the containing utility disables it without disturbing layout. */
 html[data-motion="off"],
-html[data-motion="off"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *),
-html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
+html[data-motion="off"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   scroll-behavior: auto !important;
   animation-duration: var(--motion-duration-immediate) !important;
   animation-iteration-count: 1 !important;
@@ -34,8 +33,7 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
     block-size: auto;
   }
 
-  html[data-motion="off"] &::details-content,
-  html[data-motion="reduced"] &::details-content {
+  html[data-motion="off"] &::details-content {
     transition-duration: var(--motion-duration-immediate);
   }
 }
@@ -85,8 +83,6 @@ pre:focus-visible,
     height: auto;
   }
 
-  html[data-motion="reduced"] &,
-  html[data-motion="reduced"] & *,
   html[data-motion="off"] &,
   html[data-motion="off"] & * {
     animation: none !important;
@@ -208,11 +204,6 @@ footer .tooltip > span {
 .has-tooltip:has(:focus-visible) .tooltip {
   opacity: 1;
   translate: 0 0;
-}
-
-/* 操作子が開いたパネルを持つ間は、パネルそのものが答えなので出さない。 */
-.has-tooltip .tooltip[data-open="true"] {
-  opacity: 0;
 }
 
 @media (forced-colors: active) {

@@ -10,7 +10,6 @@
   },
   "imports": {
     "@iconify-icons/simple-icons/github.js": "npm:@iconify-icons/simple-icons@1.2.74/github.js",
-    "@iconify-icons/simple-icons/tailwindcss.js": "npm:@iconify-icons/simple-icons@1.2.74/tailwindcss.js",
     "@iconify-icons/simple-icons/x.js": "npm:@iconify-icons/simple-icons@1.2.74/x.js",
     "@iconify-icons/simple-icons/deno.js": "npm:@iconify-icons/simple-icons@1.2.74/deno.js",
     "@iconify-icons/simple-icons/svelte.js": "npm:@iconify-icons/simple-icons@1.2.74/svelte.js",
@@ -32,6 +31,8 @@
     "@iconify-icons/solar/tag-linear.js": "npm:@iconify-icons/solar@1.2.3/tag-linear.js",
     "@iconify-icons/solar/list-outline.js": "npm:@iconify-icons/solar@1.2.3/list-outline.js",
     "@iconify-icons/solar/widget-4-linear.js": "npm:@iconify-icons/solar@1.2.3/widget-4-linear.js",
+    "@iconify-icons/solar/full-screen-linear.js": "npm:@iconify-icons/solar@1.2.3/full-screen-linear.js",
+    "@iconify-icons/solar/close-circle-linear.js": "npm:@iconify-icons/solar@1.2.3/close-circle-linear.js",
     "@iconify/svelte": "npm:@iconify/svelte@5.2.2",
     "@sveltejs/vite-plugin-svelte": "npm:@sveltejs/vite-plugin-svelte@7.1.2",
     "bits-ui": "npm:bits-ui@2.18.1",

@@ -350,7 +350,7 @@ async function checkMotionStories(
   await page.getByRole("button", { name: "Navigate" }).click();
   await page.getByText("View transitions: 2").waitFor();
 
-  await openStory(page, baseUrl, "visuals-page-transitions--reduced");
+  await openStory(page, baseUrl, "visuals-page-transitions--off");
   await page.getByRole("button", { name: "Navigate" }).click();
   await page.getByText("View transitions: 0").waitFor();
 

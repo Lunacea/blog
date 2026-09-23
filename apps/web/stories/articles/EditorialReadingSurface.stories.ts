@@ -18,5 +18,5 @@ export const Dark: Story = {
 };
 
 export const MobileTableOfContents: Story = {
-  globals: { viewport: { value: "mobile", isRotated: false }, motion: "reduced" },
+  globals: { viewport: { value: "mobile", isRotated: false }, motion: "off" },
 };

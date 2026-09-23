@@ -6,8 +6,6 @@ import { metadataModules } from "./.generated/metadata.ts";
 import { generatedArticleCompositions } from "./.generated/composition.ts";
 import type { ArticleComposition } from "./composition.ts";
 
-export type { ArticleComposition, CompositionBlock, CompositionSection } from "./composition.ts";
-
 export type ContentModule = {
   default: Component;
   metadata: unknown;

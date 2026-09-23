@@ -53,7 +53,7 @@
           <time class="mt-(--space-3) block font-stretch-84% text-folio leading-none tracking-folio text-quiet tabular-nums sm:hidden" datetime={entry.publishedAt}>{entry.publishedAt.replaceAll("-", ".")}</time>
 
           {#if entry.summary}
-            <div class="index-summary hidden grid-rows-[1fr] transition-[grid-template-rows] duration-(--motion-duration-base) ease-signature sm:grid md:grid-rows-[0fr] md:group-hover:grid-rows-[1fr] md:group-focus-within:grid-rows-[1fr] motion-off:duration-(--motion-duration-immediate)">
+            <div class="hidden grid-rows-[1fr] transition-[grid-template-rows] duration-(--motion-duration-base) ease-signature sm:grid md:grid-rows-[0fr] md:group-hover:grid-rows-[1fr] md:group-focus-within:grid-rows-[1fr] motion-off:duration-(--motion-duration-immediate)">
               <div class="overflow-hidden">
                 <!-- 本文より一段広い測り。全角でおよそ44字、2行で言い切れる長さに収まる。 -->
                 <p class="mt-(--space-3) mb-0 max-w-[44em] text-small leading-copy text-quiet">{entry.summary}</p>

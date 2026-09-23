@@ -10,4 +10,4 @@
   {#snippet theme()}<ThemeToggle />{/snippet}
   {#snippet display()}<SettingsPanel />{/snippet}
 </SiteHeader>
-<main class="min-h-[120vh] px-gutter py-section"><p>Header controls follow document scrolling without becoming a horizontal bar.</p></main>
+<main class="min-h-[120vh] px-(--layout-gutter) py-section"><p>Header controls follow document scrolling without becoming a horizontal bar.</p></main>

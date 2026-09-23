@@ -33,8 +33,7 @@
   }
 
   /* `*` は擬似要素に届かないので、motion の停止はここで受ける。 */
-  html[data-motion="off"] &::after,
-  html[data-motion="reduced"] &::after {
+  html[data-motion="off"] &::after {
     transition-duration: var(--motion-duration-immediate);
   }
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import PageHead from "$lib/PageHead.svelte";
-  import HeaderSearch from "$lib/shell/HeaderSearch.svelte";
+  import SearchForm from "$lib/articles/SearchForm.svelte";
   import { DisclosureGlyph } from "@lunacea/ui/icons";
   import IndexList from "$lib/articles/IndexList.svelte";
   import { cn } from "@lunacea/ui/utils";
@@ -185,7 +185,7 @@
     <div>
       <p class="flex items-center gap-x-(--space-3)"><span class={legend}>Search</span><span class="h-px flex-1 bg-rule" aria-hidden="true"></span></p>
       <h2 class="sr-only">記事を検索</h2>
-      <div class="mt-(--space-4)"><HeaderSearch value={data.query} variant="static" /></div>
+      <div class="mt-(--space-4)"><SearchForm value={data.query} /></div>
     </div>
 
     {#if tags.length}

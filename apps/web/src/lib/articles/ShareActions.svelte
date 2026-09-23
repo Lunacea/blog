@@ -74,7 +74,7 @@
   </span>
 {/snippet}
 
-<nav class={cn("share-actions flex flex-wrap items-center gap-(--space-2)", rail && "share-rail max-read-wide:flex-col max-read-wide:items-stretch max-read-wide:flex-nowrap", className)} aria-label="この記事を共有">
+<nav class={cn("share-actions flex flex-wrap items-center gap-(--space-2)", rail && "max-read-wide:flex-col max-read-wide:items-stretch max-read-wide:flex-nowrap", className)} aria-label="この記事を共有">
   <button class={cn(action, rail && "@max-[96px]:justify-center @max-[96px]:px-0", "cursor-pointer bg-transparent")} type="button" onclick={shareLink}>
     <Icon name={interfaceIcons.externalLink} />
     <span class={label}>{@render slot("Share")}</span>

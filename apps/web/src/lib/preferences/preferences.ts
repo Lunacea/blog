@@ -1,8 +1,8 @@
-export type ThemePreference = "auto" | "light" | "dark";
+type ThemePreference = "auto" | "light" | "dark";
 export type MotionPreference = "full" | "off";
-export type EffectiveMotion = MotionPreference;
+type EffectiveMotion = MotionPreference;
 export type EffectiveTheme = "light" | "dark";
-export type MotionState = {
+type MotionState = {
   motionPreference: MotionPreference;
   motion: EffectiveMotion;
 };
@@ -24,12 +24,13 @@ export function readThemePreference(): ThemePreference {
   return storedValue(themeKey, ["auto", "light", "dark"] as const, "auto");
 }
 
-export function readMotionPreference(): MotionPreference {
+function readMotionPreference(): MotionPreference {
+  // 以前の「reduced」を保存している読者もいるので、off として読む。
   const stored = storedValue(motionKey, ["full", "reduced", "off"] as const, "full");
   return stored === "full" ? "full" : "off";
 }
 
-export function resolveEffectiveMotion(preference: MotionPreference): EffectiveMotion {
+function resolveEffectiveMotion(preference: MotionPreference): EffectiveMotion {
   if (preference === "off") return "off";
   const connection = (navigator as Navigator & { connection?: Connection }).connection;
   const capabilityLimit = matchMedia("(prefers-reduced-motion: reduce)").matches ||
@@ -43,7 +44,7 @@ export function hasRenderingHeadroom() {
     (navigator.hardwareConcurrency || 4) > 2;
 }
 
-export function resolveEffectiveTheme(preference: ThemePreference): EffectiveTheme {
+function resolveEffectiveTheme(preference: ThemePreference): EffectiveTheme {
   return preference === "auto"
     ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
     : preference;
@@ -51,17 +52,13 @@ export function resolveEffectiveTheme(preference: ThemePreference): EffectiveThe
 
 export function applyThemePreference(themePreference = readThemePreference()) {
   const theme = resolveEffectiveTheme(themePreference);
-  const root = document.documentElement;
-  root.dataset.themePreference = themePreference;
-  root.dataset.theme = theme;
+  document.documentElement.dataset.theme = theme;
   return { themePreference, theme };
 }
 
-export function applyMotionPreference(motionPreference = readMotionPreference()) {
+function applyMotionPreference(motionPreference = readMotionPreference()) {
   const motion = resolveEffectiveMotion(motionPreference);
-  const root = document.documentElement;
-  root.dataset.motionPreference = motionPreference;
-  root.dataset.motion = motion;
+  document.documentElement.dataset.motion = motion;
   return { motionPreference, motion };
 }
 

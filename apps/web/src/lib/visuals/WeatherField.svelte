@@ -17,17 +17,6 @@
     (dev ? parseWeatherVisualIntensityOverride(page.url.searchParams.get("intensity")) : null) ??
       $weather.intensity,
   );
-
-  // 開発時の上書きも初回描画後の地色へ反映する。
-  $effect(() => {
-    if (!dev) return;
-    const visualOverride = parseWeatherVisualOverride(page.url.searchParams.get("weather"));
-    const intensityOverride = parseWeatherVisualIntensityOverride(
-      page.url.searchParams.get("intensity"),
-    );
-    if (visualOverride) document.documentElement.dataset.weather = visualOverride;
-    if (intensityOverride) document.documentElement.dataset.intensity = intensityOverride;
-  });
 </script>
 
 <EditorialLight {condition} {intensity} />

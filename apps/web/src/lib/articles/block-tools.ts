@@ -7,7 +7,7 @@
 
 import { blockToolIcons } from "@lunacea/ui/icons";
 
-export type BlockPanel = "preview" | "source";
+type BlockPanel = "preview" | "source";
 
 export type BlockShell = {
   /** 描画ビューの置き場所（ハイライト済みコード、または図）。 */
