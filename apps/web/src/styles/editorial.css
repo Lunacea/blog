@@ -50,12 +50,12 @@
 /*
   読み幅が画面に制限されている幅では、帯を左端まで伸ばす。
   閾値は「100% - gutter×2 が --prose-width を下回る」点、つまり 38em + gutter×2 = 40.25rem。
-  文字の位置は動かしたくないので、外へ出したぶんだけ左の padding で戻す。
+  外へ出したぶんだけ左の padding で戻し、見出しの文字を本文の左端に揃える。
 */
 @media (width < 40.25rem) {
   .prose h2 {
     margin-left: calc(var(--layout-gutter) * -1);
-    padding-left: calc(var(--layout-gutter) + var(--space-4));
+    padding-left: var(--layout-gutter);
   }
 }
 
