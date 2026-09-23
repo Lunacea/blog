@@ -6,8 +6,42 @@ import rehypeKatex from "rehype-katex";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
-import { codeToHtml } from "shiki";
+import { codeToHtml, createCssVariablesTheme } from "shiki";
 import GithubSlugger from "github-slugger";
+
+// Token colours are CSS variables so the palette lives in tokens.css (`--code-token-*`).
+const codeTheme = createCssVariablesTheme({
+  name: "lunacea-code",
+  variablePrefix: "--code-",
+  variableDefaults: {},
+  fontStyle: true,
+});
+// The stock mapping gives CSS property names the same colour as their values. Structure (property
+// names, selectors, tags) reads in the blue family; values and units stay yellow to amber.
+codeTheme.tokenColors.push(
+  {
+    scope: [
+      "support.type.property-name",
+      "meta.property-name",
+      "support.type.vendored.property-name",
+    ],
+    settings: { foreground: "var(--code-token-keyword)" },
+  },
+  {
+    scope: [
+      "entity.name.tag",
+      "entity.other.attribute-name.class",
+      "entity.other.attribute-name.id",
+      "entity.other.attribute-name.pseudo-class",
+      "entity.other.attribute-name.pseudo-element",
+    ],
+    settings: { foreground: "var(--code-token-function)" },
+  },
+  {
+    scope: ["keyword.other.unit", "support.constant.property-value", "meta.property-value"],
+    settings: { foreground: "var(--code-token-constant)" },
+  },
+);
 
 function escapeHtml(value) {
   return value
@@ -97,17 +131,12 @@ export function createEditorialPreprocessor() {
             (title ? ' data-title="' + escapeHtml(title) + '"' : "") +
             "><code>" + escapeHtml(code) + "</code></pre>";
         }
-        const html = await codeToHtml(code, {
+        const opaque = await codeToHtml(code, {
           lang: language || "text",
-          // A muted, low-chroma palette: code sits inside a monochrome page.
-          themes: { light: "github-light", dark: "vitesse-dark" },
+          theme: codeTheme,
           meta: { __raw: metadata },
           transformers: [transformerMetaHighlight()],
         });
-        // The dark theme states some tokens — comments above all — as 8-digit hex with alpha.
-        // Composited over the block's own dark surface those land near 3.8:1, under the 4.5:1
-        // AA floor, so the same hue is kept and only the transparency is dropped.
-        const opaque = html.replace(/(#[0-9a-fA-F]{6})[0-9a-fA-F]{2}\b/gu, "$1");
         const wrapped = '<div class="code-block"' +
           (title ? ' data-title="' + escapeHtml(title) + '"' : "") +
           ' data-language="' + escapeHtml(language || "text") + '"' +

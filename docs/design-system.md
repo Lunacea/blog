@@ -109,9 +109,11 @@ a step lighter than the interface around it), line-height 1.9, tracked open 0.03
 separated by a full space step, and held to a maximum width of 38em — about 37 full-width characters
 a line. The tracking is reading copy only: monospace is set on a grid and diagrams to their own
 metrics, so both reset it. Inline code is set at 0.9em on a faint tint with room on either side, so
-a run of it reads as an object in the sentence rather than a change of font. Code highlighting may
-retain semantic syntax colors. Text colour is never animated; state is carried by rules, position,
-width axis and reveal instead.
+a run of it reads as an object in the sentence rather than a change of font. Code highlighting uses
+the `--code-token-*` tokens, emitted by Shiki as CSS variables: structure (keywords, property names)
+in blue, selectors and functions in cyan, strings in yellow, numbers and units in orange, all
+saturated enough to separate on the dark block and at least 4.9:1 against it. Text colour is never
+animated; state is carried by rules, position, width axis and reveal instead.
 
 Home carries no header. The masthead is the identity: LUNACEA is set at 20.4vw so it bleeds past
 both gutters, centred by a flex container inside `overflow-x-clip` so the overflow is symmetric and

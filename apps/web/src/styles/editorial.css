@@ -149,11 +149,7 @@
 .code-block pre,
 .code-block pre.shiki {
   background: transparent !important;
-  color: var(--shiki-dark, var(--color-code-foreground)) !important;
-}
-
-.code-block span {
-  color: var(--shiki-dark, inherit) !important;
+  color: var(--code-foreground) !important;
 }
 
 .code-block code,

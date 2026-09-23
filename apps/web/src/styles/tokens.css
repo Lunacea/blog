@@ -45,6 +45,25 @@
   --color-praise: light-dark(#9b3a34, #c96a61);
   --color-code-background: #161616;
   --color-code-foreground: #eeeeec;
+  /*
+    コードの配色は青と黄を主にする。構文の骨組み（キーワード・プロパティ）を青、選択子と関数を
+    水色、値（文字列）を黄、数値と単位を橙に置く。淡い色どうしは暗い地で溶け合うため、彩度を
+    保って明度と色相で区分を分け、地の文字はわずかに落として眩しさを抑える。どれも 4.9:1 以上。
+  */
+  --code-foreground: #d5d9df;
+  --code-background: transparent;
+  --code-token-keyword: #5e9bff;
+  --code-token-function: #4fc1e9;
+  --code-token-link: #5e9bff;
+  --code-token-string: #f5c542;
+  --code-token-string-expression: #e8b13a;
+  --code-token-constant: #ff9d4d;
+  --code-token-parameter: #b7c3d4;
+  --code-token-punctuation: #8b919a;
+  --code-token-comment: #80868f;
+  --code-token-inserted: #4fc1e9;
+  --code-token-deleted: #ff9d4d;
+  --code-token-changed: #f5c542;
   --color-print-background: #fff;
   --color-print-foreground: #000;
 
