@@ -72,7 +72,7 @@ function motionToken(name: string) {
  * 紙面は記事全体の高さを持つため、そのまま行へ補間すると画面外の下端が一気に上がってくる。
  * 補間の始まりを見えていた範囲に切り詰め、旧紙面の画像もその範囲が見える位置へずらす。
  */
-function foldPaperIntoRow(paper: DOMRect, row: DOMRect) {
+function foldPaperIntoRow(paper: DOMRect, row: DOMRect): Animation[] {
   const top = Math.max(paper.top, 0);
   const bottom = Math.min(paper.bottom, innerHeight);
   const height = Math.max(bottom - top, row.height);
@@ -85,7 +85,7 @@ function foldPaperIntoRow(paper: DOMRect, row: DOMRect) {
     fill: "both" as const,
   };
   const root = document.documentElement;
-  root.animate([
+  const group = root.animate([
     {
       transform: `translate(${paper.left}px, ${top}px)`,
       width: `${paper.width}px`,
@@ -97,10 +97,21 @@ function foldPaperIntoRow(paper: DOMRect, row: DOMRect) {
       height: `${row.height}px`,
     },
   ], { ...timing, pseudoElement: "::view-transition-group(article-paper)" });
-  root.animate([
+  const image = root.animate([
     { top: `${-offset}px` },
     { top: `${-offset * scale}px` },
   ], { ...timing, pseudoElement: "::view-transition-old(article-paper)" });
+  return [group, image];
+}
+
+/*
+ * 畳む動きは遷移の間だけ持たせる。fill を残すと、次の遷移で作られる同名の擬似要素に最後の
+ * 形（行の大きさ）が当たり、一覧から記事へせり上がる紙面が小さく始まってしまう。
+ */
+let foldAnimations: Animation[] = [];
+function releaseFold() {
+  for (const animation of foldAnimations) animation.cancel();
+  foldAnimations = [];
 }
 
 export function installPageTransitions() {
@@ -116,6 +127,7 @@ export function installPageTransitions() {
     });
   });
   onNavigate((navigation) => {
+    releaseFold();
     delete document.documentElement.dataset.paperHandoff;
     delete document.documentElement.dataset.paperReturn;
     document.querySelector("[data-paper-return-row]")?.removeAttribute("data-paper-return-row");
@@ -182,7 +194,7 @@ export function installPageTransitions() {
         }, 1200);
       });
       void transition.ready.then(() => {
-        if (fold) foldPaperIntoRow(fold.paper, fold.row);
+        if (fold) foldAnimations = foldPaperIntoRow(fold.paper, fold.row);
       }, () => {});
       if (catalogTransition) {
         void transition.finished.finally(() => {
@@ -202,6 +214,7 @@ export function installPageTransitions() {
       void transition.finished.finally(() => {
         clearTimeout(fallback);
         clearMarks();
+        releaseFold();
       });
     });
   });

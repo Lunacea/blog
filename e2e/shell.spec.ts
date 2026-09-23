@@ -237,6 +237,14 @@ test("returning from an article folds the paper into its row and leaves nothing 
   ).toBe(href);
   await expect(page.locator("html")).not.toHaveAttribute("data-paper-return");
   await expect(page.locator("[data-paper-return-row]")).toHaveCount(0);
+  // 畳む動きが残ると、次に記事へ進むときの紙面がその形から始まってしまう。
+  await expect.poll(() =>
+    page.evaluate(() =>
+      document.getAnimations().filter((animation) =>
+        ((animation.effect as KeyframeEffect).pseudoElement ?? "").includes("article-paper")
+      ).length
+    )
+  ).toBe(0);
   expect(
     await page.locator(".index-list > li").nth(1).evaluate((row) =>
       getComputedStyle(row).viewTransitionName
