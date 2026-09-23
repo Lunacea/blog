@@ -2,6 +2,7 @@
 
 import { AxeBuilder } from "@axe-core/playwright";
 import { chromium, type ConsoleMessage, type Page } from "playwright";
+import { headlessBrowserEnv } from "./browser-env.ts";
 
 const browserHeadless = Deno.env.get("STORYBOOK_HEADED") !== "true";
 
@@ -397,7 +398,10 @@ try {
   }
   if (!docs.length) throw new Error("Storybook autodocs entries were not generated");
 
-  const browser = await chromium.launch({ headless: browserHeadless });
+  const browser = await chromium.launch({
+    headless: browserHeadless,
+    env: browserHeadless ? headlessBrowserEnv() : undefined,
+  });
   try {
     let context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     let page = await context.newPage();
