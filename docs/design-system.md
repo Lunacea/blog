@@ -2,15 +2,16 @@
 
 Status: Accepted
 
-The design system is owned by `packages/ui`. Its implementation follows the package instructions in
-`packages/ui/AGENTS.md` and the nested motion and visual instructions.
+The reusable foundation is owned by `packages/ui`; site-specific composition is owned by `apps/web`.
+The package contract follows `packages/ui/AGENTS.md`.
 
 ## Foundations
 
-`packages/ui/src/foundations/theme.css` is the only source of reusable design values. It defines
-semantic color, typography, spacing, layout, shape, depth, motion, breakpoint, and stacking tokens.
-`global.css` owns selectors, resets, scrollbars, forced-color behavior, and browser fallbacks, and
-must consume those tokens rather than define a second scale.
+`packages/ui/src/styles/tokens.css` is the source of reusable scales and semantic roles. It defines
+color, typography, spacing, layout, shape, depth, motion, breakpoints, and stacking. `base.css` owns
+reset, focus, reduced-motion, forced-color behavior, and browser fallbacks; `utilities.css` contains
+only the shared `pressable` and `ink-underline` behaviors. Site tokens live in
+`apps/web/src/styles/tokens.css` and may not add a second common scale.
 
 Tailwind CSS 4のCSS-first構成を使用し、JavaScriptの`tailwind.config`は持たない。Svelteファイルの
 `<style>`は0件を契約とし、通常の見た目はutility class、状態は`data-*`・group・peer・custom variant、
@@ -50,9 +51,9 @@ on Home or Articles force either.
 The palette is monochrome throughout, including the theme control. The only colour on the site comes
 from the author's own identity artwork on the profile card.
 
-The library carries only what the site renders; a component the site stops using is removed with its
-tests and its story. Storybook documents what remains, and `storybook:check` holds it to the groups,
-the accessibility sweep and the 200% text rule.
+The foundation carries only what the site renders; an unused primitive, icon, token, or utility is
+removed with its tests and story. Storybook documents both foundation and Web features, and
+`storybook:check` holds them to the accessibility sweep and the 200% text rule.
 
 These fonts are self-hosted from repository-pinned OFL sources. The build derives hashed WOFF2
 subsets from public content, UI strings, and configuration, emits the same generated CSS for Web and
@@ -67,24 +68,22 @@ Low-level controls live in `primitives` and use Bits UI or local shadcn-svelte s
 selection, disclosure, or ARIA behavior is non-trivial. Native controls remain preferred when they
 provide the required behavior and progressive enhancement, including the GET search form.
 
-Application routes consume the package's public exports rather than Bits UI or icon libraries
-directly. Semantic components may depend on public schemas and configuration but do not own external
-repositories.
+Application routes consume only `@lunacea/ui/primitives`, `icons`, `utils`, `fonts`, and
+`styles.css`. The package has no root export or unrestricted deep import. `Input`, `Badge`,
+`Separator`, `Collapsible`, and the existing action variants are the complete primitive layer; a new
+Button hierarchy or general variant framework is added only when repeated use establishes a clear
+API.
 
-Button/ActionLink、Input、Badge、Separatorは共通variant基盤でcontrol height、角形、罫線、focus、
-active、disabled、文字組みを共有する。catalogのtext/icon切替は`LinkSelector`へ統合する。
-`CatalogControls`と`ContentDetailView`はpatterns、`ResponsivePicture`、controlled
-`ReactionControl`、`ShareActions`はcomponentsが所有する。リアクションのfetch/Zod検証と生成画像registry
-解決はWeb adapterに残し、UI componentはnetworkへ直接依存しない。
+Feature components live under `apps/web/src/lib/articles`, `home`, `shell`, `preferences`,
+`navigation`, and `visuals`. Web has no feature barrel: routes and features import concrete files.
+`ReactionControl`, `ShareActions`, `ResponsiveImage`, and `ContentDetail` therefore remain close to
+their schemas, network adapter, generated image registry, and route behavior without pushing those
+dependencies into UI.
 
-Spatial composition uses the public `Container`, `Section`, `Stack`, `Cluster`, `Grid`, `Split`, and
-`Bleed` primitives. They add layout only; spacing and responsive values resolve to foundation
-tokens.
-
-Editorial SVX compilation is shared by Web and Storybook through the UI-owned mdsvex configuration.
-`ReadingSurface` owns prose composition, table of contents, code copying, and lazy Mermaid
-rendering. Inline and display math are converted to KaTeX HTML at build time without a client math
-runtime.
+Editorial SVX compilation is shared by Web and Storybook through `apps/web/mdsvex.config.js`.
+`ReadingSurface` and `ReadingEnhancements` own prose composition, table of contents, code copying,
+and lazy Mermaid rendering. Inline and display math are converted to KaTeX HTML at build time
+without a client math runtime.
 
 ## Icons and authored media
 
@@ -96,9 +95,8 @@ joins, and one short state transition. `icons/glyph.ts` holds that contract. Sem
 cover interface actions, weather state, and tags; unknown tags use the common tag icon. Icon data is
 bundled so the server renders SVG without a browser request to an icon service.
 
-Authored organic imagery is supplied through `config.visualAssets` and `MediaSlot`. Missing assets
-use `AssetPlaceholder` with a stable ID, role, aspect ratio, file type, accessibility description,
-and transparency need.
+Authored organic imagery is supplied by Web through `config.visualAssets`; the UI foundation does
+not own site media or placeholders.
 
 ## Motion and resilience
 
@@ -154,21 +152,21 @@ content is visible and navigable from the first frame and there is no loading ov
 the finished design when motion is absent. Shared glyphs keep their stroke contract, state feedback
 and accessible names. Theme changes are immediate when motion is disabled.
 
-`StaticLight` draws the site's light, shadow and grain in SVG with no JavaScript, and every route
-mounts it. Home layers a dynamically imported Three.js field between the light and the grain: one
+`StaticLight` draws the site's light and grain in SVG with no JavaScript. Home, the article catalog,
+and article details layer a dynamically imported Three.js field between the light and the grain: one
 soft key light that follows a fine pointer, drifting cloud cover, and per-pixel grain. The renderer
 pauses offscreen and in hidden tabs and is disposed on unmount, Off or failure; the static
 composition underneath is the fallback in every case. Article initial dependencies exclude this
 graph.
 
-Weather is fetched on Home and on the article catalog, and every route renders it through the shared
-static field; reading routes inherit the last known condition rather than making a request. It is
-expressed solely as light. Clear opens the key light into daylight; cloudy lays a flat veil that
-reads darker on paper; rain closes the light down into shade; snow lifts the whole field into a
-bright, low-contrast whiteout. The static fallback tells the same four stories, using a light wash
-rather than a dark one for snow. There are no falling particles, weather labels or location UI.
-Unavailable weather remains neutral; static weather shading works with motion Off. Article pages
-have no weather decoration.
+Weather is fetched on Home, the article catalog, and article details, which render it through their
+shared static field. The article's paper-colored reading surface covers the field, leaving it
+visible around the header, revisions, and related records. It is expressed solely as light. Clear
+opens the key light into daylight; cloudy lays a flat veil that reads darker on paper; rain closes
+the light down into shade; snow lifts the whole field into a bright, low-contrast whiteout. The
+static fallback tells the same four stories, using a light wash rather than a dark one for snow.
+There are no falling particles, weather labels or location UI. Unavailable weather remains neutral;
+static weather shading works with motion Off.
 
 Tailwind 4 writes `rotate`, `scale` and `translate` as independent properties, so any transition
 that animates them must name those properties: `transition-transform` silently does nothing. Every
@@ -186,14 +184,14 @@ invitation, ahead of the revisions and the related index, and the acknowledgemen
 squash-and-stretch of the heart itself; nothing covers the page. Code blocks that scroll sideways
 are focusable regions so the keyboard can reach them at enlarged text.
 
-Home and the article catalog both mount the animated field; reading routes keep the grain alone,
-because a fixed gradient behind running text reads as a stray light source. The static gradient is
-an even vignette rather than a spotlight, and it steps back once the animated field is running.
-`opacity` takes no `light-dark()`, so the field's light and dark values are set per theme instead.
-On paper a white highlight is invisible, so light mode reads the pointer as a clearing in a lightly
-shaded field; in the dark the same field is held back so it never swallows secondary text. Where no
-pointer hovers — every touch device — the light drifts along a slow, uneven figure instead of
-standing still, and a fine pointer takes it back the moment it moves.
+Home, the article catalog, and article details mount the animated field. The article's opaque paper
+keeps the fixed gradient out of running text. The static gradient is an even vignette rather than a
+spotlight, and it steps back once the animated field is running. `opacity` takes no `light-dark()`,
+so the field's light and dark values are set per theme instead. On paper a white highlight is
+invisible, so light mode reads the pointer as a clearing in a lightly shaded field; in the dark the
+same field is held back so it never swallows secondary text. Where no pointer hovers — every touch
+device — the light drifts along a slow, uneven figure instead of standing still, and a fine pointer
+takes it back the moment it moves.
 
 Hovering a row in the index slides a pane of liquid glass under it: a thin saturated fill over an
 18px blur with a lit inset edge, behind the type and never touching it. It is dropped under forced
@@ -221,42 +219,41 @@ bottom edge, showing the half that carries the identity. It carries no tagline.
 
 ## Storybook
 
-Storybook imports the same `foundations/global.css` used by Web. Its toolbar exposes the semantic
-theme, effective motion request, and project viewport presets without defining a second token
-system. Stories are grouped by the design-system ownership boundaries: Foundations, Primitives,
-Components, Layout, Motion, Patterns, and Visuals. The editorial pattern uses a non-public SVX
-fixture that exercises headings and TOC, annotation, quote, highlighted code, Mermaid, and KaTeX.
+Storybook is hosted in `apps/web` and imports the same `src/styles/app.css` used by Web. Its toolbar
+exposes the semantic theme, effective motion request, and project viewport presets without defining
+a second token system. Stories are grouped as UI, Articles, Home, Shell, and Visuals. The editorial
+story uses a non-public SVX fixture that exercises headings and TOC, annotation, quote, highlighted
+code, Mermaid, and KaTeX.
 
 `deno task storybook:check` builds Storybook and validates every story for runtime errors, axe
 violations, horizontal overflow at narrow mobile, tablet, desktop, and wide desktop widths, and 200%
-text at narrow and tablet widths. It also checks editorial output, page-transition and reveal
-behavior, mobile-menu keyboard dismissal, motion and forced-color caps, save-data and low-capability
-fallbacks, missing WebGL2, and context-loss cleanup.
+text at narrow and tablet widths. It also checks editorial output, page transitions, header keyboard
+operation, motion, and the static fallback when WebGL cannot start.
 
 ## Catalog and reading surfaces (2026-09)
 
 Articles opens with a modest ARTICLES heading. A sticky rail on the right owns the filter: All plus
 every category with its count. Below the rail's width the column order is the heading, the rail,
 then the index, so the title is always read first. The records themselves are one index shared with
-Home (`patterns/IndexList`): date, title, tags and category on one row, the date and category
-sitting on the title's first baseline so they hold still, plus a summary that opens on hover or
-focus on desktop and is always open on small screens; the title and that summary are given the width
-the row can spare, held at about forty-four full-width characters a line. On the articles index the
-glass pane fades to transparent toward both outer edges, so it ends on no hard edge beside the date
-or the category; the rule under the row comes up in place rather than travelling. Sort is not a
-filter, so it does not join the filter line: it sits directly above the index as that block's own
-control, its folio label set beside the three orders it switches. Filtered results name what is
-filtering them — the query, the category and the tag — with the label set as a folio and the values
-in ink, and close the line with the one control on the page that is a surface rather than a word: a
-compact chip on the same glass as the All articles link, which fills with ink under the pointer, so
-clearing is never mistaken for another choice. It clears the filters and leaves the order alone.
-That line holds its place while nothing is filtering, so choosing a category never drops the index
-by a step. The filter line, the sort and the index are each one step apart, so the three read as one
-block and the eye is not asked which of them belongs to which. Below the rail's width the rail's
-disclosure is the plus-minus sign on its own glass square rather than a word. Every other control
-here is the same object: quiet text at control height, ink and a rule when current, no box and no
-padding of its own. Search and tags close the page in a low-emphasis panel. There is no oversized
-page title, view toggle, lead story, Pick Up box or ranking rail.
+Home (`apps/web/src/lib/articles/IndexList.svelte`): date, title, tags and category on one row, the
+date and category sitting on the title's first baseline so they hold still, plus a summary that
+opens on hover or focus on desktop and is always open on small screens; the title and that summary
+are given the width the row can spare, held at about forty-four full-width characters a line. On the
+articles index the glass pane fades to transparent toward both outer edges, so it ends on no hard
+edge beside the date or the category; the rule under the row comes up in place rather than
+travelling. Sort is not a filter, so it does not join the filter line: it sits directly above the
+index as that block's own control, its folio label set beside the three orders it switches. Filtered
+results name what is filtering them — the query, the category and the tag — with the label set as a
+folio and the values in ink, and close the line with the one control on the page that is a surface
+rather than a word: a compact chip on the same glass as the All articles link, which fills with ink
+under the pointer, so clearing is never mistaken for another choice. It clears the filters and
+leaves the order alone. That line holds its place while nothing is filtering, so choosing a category
+never drops the index by a step. The filter line, the sort and the index are each one step apart, so
+the three read as one block and the eye is not asked which of them belongs to which. Below the
+rail's width the rail's disclosure is the plus-minus sign on its own glass square rather than a
+word. Every other control here is the same object: quiet text at control height, ink and a rule when
+current, no box and no padding of its own. Search and tags close the page in a low-emphasis panel.
+There is no oversized page title, view toggle, lead story, Pick Up box or ranking rail.
 
 Desktop TOC has a decorative vertical minimap: short lines represent prose, accent-colored
 rectangles represent technical and media blocks in source order. Existing TOC links and active
@@ -270,13 +267,14 @@ the measure — background, never a rule — so a new section is a change of gro
 drawn across the column. `h3` carries the hairline rule. `h4` and below carry neither: the sans role
 and the weight are the whole of the step down.
 
-Code and diagram blocks share one shell (`patterns/block-tools`): a bar carrying the block's own
-identity, a Preview/Source pair of tabs, Copy and — once the source has been changed — Reset. The
-source view is an editable textarea; editing a diagram re-renders it after a pause in the typing,
-and editing code shows the reader's own text in the preview rather than the highlighted original.
-Both tabs stay in the tab order, and the whole shell is an enhancement: without it the block still
-renders, still names itself through its CSS bar, and still reads correctly. Each frame declares its
-own ink in `--block-ink`, so one set of controls serves the code palette and the page surface.
+Code and diagram blocks share one shell (`apps/web/src/lib/articles/block-tools.ts`): a bar carrying
+the block's own identity, a Preview/Source pair of tabs, Copy and — once the source has been changed
+— Reset. The source view is an editable textarea; editing a diagram re-renders it after a pause in
+the typing, and editing code shows the reader's own text in the preview rather than the highlighted
+original. Both tabs stay in the tab order, and the whole shell is an enhancement: without it the
+block still renders, still names itself through its CSS bar, and still reads correctly. Each frame
+declares its own ink in `--block-ink`, so one set of controls serves the code palette and the page
+surface.
 
 Every control answers a press through the `pressable` utility: it sinks `--press-shift` and gives
 `--press-scale`, immediately on the way down and eased on the way back. Controls that already
