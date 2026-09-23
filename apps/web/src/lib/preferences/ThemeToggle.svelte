@@ -89,7 +89,7 @@
   class={cn(
     "theme-toggle group cursor-pointer border-0 bg-transparent p-0",
     placement === "header" &&
-      "inline-grid size-control min-h-control place-items-center text-xl text-quiet pressable [--press-scale:0.9] hover:text-ink focus-visible:text-ink",
+      "has-tooltip inline-grid size-control min-h-control place-items-center text-xl text-quiet pressable [--press-scale:0.9] hover:text-ink focus-visible:text-ink",
     placement === "masthead" &&
       "block size-full min-h-0 text-ink [&_.theme-glyph]:size-full [&_.theme-glyph]:align-baseline transition-[scale,rotate] duration-(--motion-duration-base) ease-spring motion-full:hover:scale-[1.14] motion-full:hover:rotate-[-10deg] motion-full:focus-visible:scale-[1.14] motion-full:focus-visible:rotate-[-10deg] active:scale-[0.96] motion-full:hover:active:scale-[1.04] motion-full:hover:active:rotate-[-4deg] motion-off:duration-(--motion-duration-immediate)",
   )}
@@ -101,4 +101,8 @@
 >
   <ThemeGlyph />
   <span class="sr-only">{theme === "dark" ? "Dark theme" : "Light theme"}</span>
+  {#if placement === "header"}
+    <!-- 題字の C は題字の一部なので吹き出しを付けない。ボタンが同じ名前を持つので読ませない。 -->
+    <span class="tooltip" aria-hidden="true"><span>{theme === "dark" ? "ライトにする" : "ダークにする"}</span></span>
+  {/if}
 </button>

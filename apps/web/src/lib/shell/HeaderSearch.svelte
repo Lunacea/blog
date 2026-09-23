@@ -85,7 +85,7 @@
 {#if variant === "static"}
   <div class="w-full max-w-(--container-grid-wide)">{@render form(fieldId)}</div>
 {:else}
-  <Collapsible.Root class="header-search group/search relative block" bind:open>
+  <Collapsible.Root class="header-search has-tooltip group/search relative block" bind:open>
     <Collapsible.Trigger
       bind:ref={trigger}
       class="grid size-control min-h-control cursor-pointer place-items-center border-0 bg-transparent p-0 text-quiet pressable [--press-scale:0.9] hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas data-[state=open]:bg-ink data-[state=open]:text-canvas"
@@ -95,12 +95,7 @@
     >
       <SearchGlyph />
     </Collapsible.Trigger>
-    <span
-      class="search-tooltip pointer-events-none absolute top-[calc(100%+var(--space-1))] right-0 z-(--z-overlay) w-max border border-rule bg-paper px-(--space-2) py-(--space-1) text-caption leading-ui whitespace-nowrap text-ink opacity-0 shadow-paper transition-opacity duration-(--motion-duration-fast) ease-standard group-hover/search:opacity-100 group-focus-within/search:opacity-100 data-[open=true]:opacity-0! motion-reduced:transition-none motion-off:transition-none forced-colors:shadow-none"
-      id="header-search-tooltip"
-      role="tooltip"
-      data-open={open}
-    >記事を検索</span>
+    <span class="tooltip" id="header-search-tooltip" role="tooltip" data-open={open}><span>記事を検索</span></span>
     <Collapsible.Content
       id="header-search-panel"
       class="search-panel absolute top-[calc(100%+var(--space-2))] right-0 z-(--z-overlay) w-88 max-w-[calc(100vw-2*var(--layout-gutter))] origin-top-right border border-rule bg-(--color-glass) p-(--space-3) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-disclosure-in data-[state=closed]:animate-disclosure-out"

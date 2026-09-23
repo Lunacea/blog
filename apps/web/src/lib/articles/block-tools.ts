@@ -28,34 +28,17 @@ const label = "inline-flex min-h-control items-center border-0 bg-transparent px
 
 const rule = "border-[color-mix(in_srgb,var(--block-ink)_22%,transparent)]";
 
-/*
- * ボタンの下中央に出る、枠線のない角丸の吹き出し。ブロックのインクを地にして反転させるので、
- * 暗いコードの上でも明るい図の上でも浮いて見える。少し待ってからわずかに浮かせて出し、
- * 離れたらすぐ引く。ボタン自身が同じ名前を持つので、支援技術には読ませない。
- */
-const tip = "pointer-events-none absolute top-[calc(100%+var(--space-2))] left-1/2 " +
-  "z-(--z-overlay) w-max -translate-x-1/2 rounded-ui-card bg-(--block-ink) " +
-  "px-(--space-3) py-(--space-2) font-sans font-stretch-100% text-small leading-none " +
-  "font-component tracking-ui whitespace-nowrap normal-case text-(--block-ground) opacity-0 " +
-  "shadow-ui-overlay -translate-y-(--space-1) transition-[opacity,translate] " +
-  "duration-(--motion-duration-fast) ease-standard " +
-  "before:absolute before:bottom-full before:left-1/2 before:size-(--space-2) " +
-  "before:-translate-x-1/2 before:translate-y-1/2 before:rotate-45 before:bg-(--block-ink) " +
-  "before:content-[''] " +
-  "group-hover/tool:translate-y-0 group-hover/tool:opacity-100 " +
-  "group-hover/tool:delay-(--motion-duration-micro) " +
-  "group-focus-visible/tool:translate-y-0 group-focus-visible/tool:opacity-100 " +
-  "motion-reduced:transition-none motion-off:transition-none " +
-  "forced-colors:border forced-colors:shadow-none";
-
+/** 吹き出しは app.css の .tooltip。ボタン自身が同じ名前を持つので、支援技術には読ませない。 */
 function withTooltip(button: HTMLButtonElement, text: string) {
-  button.classList.add("group/tool", "relative");
+  button.classList.add("has-tooltip");
   const hint = document.createElement("span");
-  hint.className = tip;
+  hint.className = "tooltip";
   hint.setAttribute("aria-hidden", "true");
-  hint.textContent = text;
+  const bubble = document.createElement("span");
+  bubble.textContent = text;
+  hint.append(bubble);
   button.append(hint);
-  return hint;
+  return bubble;
 }
 
 export function createBlockShell({

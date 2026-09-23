@@ -42,7 +42,7 @@
   }
 </script>
 
-<div class="settings group/display relative grid size-control place-items-center">
+<div class="settings has-tooltip group/display relative grid size-control place-items-center">
   <button
     class="settings-trigger motion-preference-feedback group/display grid size-control min-h-control cursor-pointer place-items-center border-0 bg-transparent p-0 text-quiet pressable [--press-scale:0.9] transition-[translate,scale,color,background-color,border-color] duration-(--motion-duration-base) ease-signature hover:bg-ink hover:text-canvas focus-visible:bg-ink focus-visible:text-canvas motion-full:data-[mode=full]:data-[motion-feedback=true]:hover:[&_.motion-glyph_path]:animate-motion-wave"
     type="button"
@@ -55,9 +55,5 @@
   >
     <MotionGlyph mode={preference} />
   </button>
-  <span
-    class="display-tooltip pointer-events-none absolute top-[calc(100%+var(--space-1))] right-0 z-(--z-overlay) w-max border border-rule bg-paper px-(--space-2) py-(--space-1) text-caption leading-ui whitespace-nowrap text-ink opacity-0 shadow-paper transition-opacity duration-(--motion-duration-fast) ease-standard group-hover/display:opacity-100 group-focus-within/display:opacity-100 motion-reduced:transition-none motion-off:transition-none forced-colors:shadow-none"
-    id={tooltipId}
-    role="tooltip"
-  >アニメーション: {modeLabels[preference]}</span>
+  <span class="tooltip" id={tooltipId} role="tooltip"><span>{preference === "full" ? "動きを止める" : "動きをつける"}</span></span>
 </div>

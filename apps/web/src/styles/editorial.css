@@ -138,6 +138,8 @@
 .code-block {
   --block-ink: var(--color-code-foreground);
   --block-ground: var(--color-code-background);
+  --tooltip-ground: var(--block-ink);
+  --tooltip-ink: var(--block-ground);
   position: relative;
   z-index: calc(var(--z-controls) + 1);
   margin-block: var(--space-8);
@@ -181,6 +183,8 @@
 .diagram-block {
   --block-ink: var(--color-foreground);
   --block-ground: var(--color-surface);
+  --tooltip-ground: var(--block-ink);
+  --tooltip-ink: var(--block-ground);
   position: relative;
   z-index: calc(var(--z-controls) + 1);
   margin-block: var(--space-8);
