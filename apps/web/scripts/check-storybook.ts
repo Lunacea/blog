@@ -72,11 +72,7 @@ async function serveStatic(request: Request): Promise<Response> {
   }
 }
 
-async function assertStory(
-  page: Page,
-  baseUrl: string,
-  story: StoryEntry,
-): Promise<void> {
+async function assertStory(page: Page, story: StoryEntry): Promise<void> {
   const runtimeErrors: string[] = [];
   const onPageError = (error: Error) => runtimeErrors.push(error.message);
   const onConsole = (message: ConsoleMessage) => {
@@ -99,10 +95,7 @@ async function assertStory(
   page.on("console", onConsole);
 
   try {
-    const response = await page.goto(`${baseUrl}/iframe.html?id=${story.id}&viewMode=story`, {
-      waitUntil: "networkidle",
-    });
-    if (!response?.ok()) throw new Error(`${story.id}: HTTP ${response?.status() ?? "unknown"}`);
+    await showStory(page, story.id);
     if (!(await page.locator("#storybook-root > *").count())) {
       throw new Error(`${story.id}: empty body`);
     }
@@ -120,9 +113,7 @@ async function assertStory(
       );
     }
 
-    const overflow = await page.evaluate(() =>
-      document.documentElement.scrollWidth - document.documentElement.clientWidth
-    );
+    const overflow = await horizontalOverflow(page);
     if (overflow > 1) throw new Error(`${story.id}: horizontal overflow ${overflow}px`);
   } finally {
     page.off("pageerror", onPageError);
@@ -137,7 +128,7 @@ async function checkWeatherFallback(
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await context.addInitScript(() => {
     const getContext = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+    HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type, ...args) {
       if (type === "webgl" || type === "webgl2") return null;
       return getContext.call(this, type, ...args);
     } as typeof HTMLCanvasElement.prototype.getContext;
@@ -159,64 +150,100 @@ async function openStory(page: Page, baseUrl: string, id: string) {
   await page.goto(`${baseUrl}/iframe.html?id=${id}&viewMode=story`, { waitUntil: "networkidle" });
 }
 
-async function checkResponsiveContexts(
-  baseUrl: string,
-  browser: Awaited<ReturnType<typeof chromium.launch>>,
-  stories: StoryEntry[],
-) {
-  const contexts: Array<{ name: string; width: number; height: number }> = [
-    { name: "narrow mobile", width: 320, height: 720 },
-    { name: "tablet", width: 768, height: 1024 },
-    { name: "desktop", width: 1280, height: 900 },
-    { name: "wide desktop", width: 1600, height: 1000 },
-  ];
+/**
+ * 読み込み直さずに story を切り替える。プレビューの JavaScript を毎回読み直すのが検査時間の
+ * ほとんどを占めていたため、Storybook のチャネルで描画し直させ、描き終わりを待つ。
+ */
+const shown = new WeakMap<Page, string>();
 
-  for (const { name, width, height } of contexts) {
-    const context = await browser.newContext({ viewport: { width, height } });
-    const page = await context.newPage();
-    for (const story of stories) {
-      await page.goto(`${baseUrl}/iframe.html?id=${story.id}&viewMode=story`, {
-        waitUntil: "load",
+async function showStory(page: Page, id: string) {
+  // 表示中の story を指定しても描き直されず、描き終わりの知らせも来ない。
+  if (shown.get(page) === id) return;
+  await page.evaluate((storyId) =>
+    new Promise<void>((resolve, reject) => {
+      type Channel = {
+        on(event: string, handler: (payload?: { storyId?: string }) => void): void;
+        off(event: string, handler: (payload?: { storyId?: string }) => void): void;
+        emit(event: string, payload: unknown): void;
+      };
+      const channel = (globalThis as typeof globalThis & { __STORYBOOK_ADDONS_CHANNEL__: Channel })
+        .__STORYBOOK_ADDONS_CHANNEL__;
+      const outcomes = ["storyRendered", "storyErrored", "storyThrewException", "storyMissing"];
+      const handlers = outcomes.map((event) => {
+        const handler = () => {
+          cleanup();
+          if (event === "storyRendered") resolve();
+          else reject(new Error(`${storyId}: ${event}`));
+        };
+        channel.on(event, handler);
+        return [event, handler] as const;
       });
-      await page.locator("#storybook-root > *").first().waitFor({ state: "attached" });
-      const overflow = await page.evaluate(() =>
-        document.documentElement.scrollWidth - document.documentElement.clientWidth
-      );
-      if (overflow > 1) {
-        throw new Error(`${story.id} at ${name}: horizontal overflow ${overflow}px`);
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error(`${storyId}: did not render`));
+      }, 15000);
+      function cleanup() {
+        clearTimeout(timer);
+        for (const [event, handler] of handlers) channel.off(event, handler);
       }
-    }
-    await context.close();
-  }
+      channel.emit("setCurrentStory", { storyId, viewMode: "story" });
+    }), id);
+  shown.set(page, id);
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
 }
 
-async function checkIncreasedText(
+/** 最初の1件だけ読み込み、以降はチャネルで切り替える。 */
+async function openPreview(page: Page, baseUrl: string, first: StoryEntry) {
+  await page.goto(`${baseUrl}/iframe.html?id=${first.id}&viewMode=story`, {
+    waitUntil: "networkidle",
+  });
+  shown.set(page, first.id);
+}
+
+const horizontalOverflow = (page: Page) =>
+  page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+
+/**
+ * 1280px は assertStory が見ているので、それ以外の幅で横にはみ出さないかを見る。狭い2つの幅では
+ * 同じ描画のまま文字を 200% にしても測る。幅ごとのページは並行して回す。
+ */
+async function checkLayouts(
   baseUrl: string,
   browser: Awaited<ReturnType<typeof chromium.launch>>,
   stories: StoryEntry[],
 ) {
-  const failures: string[] = [];
-  for (const viewport of [{ width: 320, height: 720 }, { width: 768, height: 1024 }]) {
-    const context = await browser.newContext({ viewport });
+  const layouts = [
+    { name: "narrow mobile", width: 320, height: 720, enlargeText: true },
+    { name: "tablet", width: 768, height: 1024, enlargeText: true },
+    { name: "wide desktop", width: 1600, height: 1000, enlargeText: false },
+  ];
+  const failures = (await Promise.all(layouts.map(async (layout) => {
+    const context = await browser.newContext({
+      viewport: { width: layout.width, height: layout.height },
+    });
     const page = await context.newPage();
-    for (const story of stories) {
-      await openStory(page, baseUrl, story.id);
-      await page.evaluate(() => {
-        document.documentElement.style.fontSize = "200%";
-      });
-      await page.waitForTimeout(50);
-      const overflow = await page.evaluate(() =>
-        document.documentElement.scrollWidth - document.documentElement.clientWidth
-      );
-      if (overflow > 1) {
-        failures.push(`${story.id} at ${viewport.width}px/200% text: ${overflow}px`);
+    const found: string[] = [];
+    try {
+      await openPreview(page, baseUrl, stories[0]);
+      for (const story of stories) {
+        await showStory(page, story.id);
+        const overflow = await horizontalOverflow(page);
+        if (overflow > 1) found.push(`${story.id} at ${layout.name}: ${overflow}px`);
+        if (!layout.enlargeText) continue;
+        await page.evaluate(() => {
+          document.documentElement.style.fontSize = "200%";
+          return new Promise(requestAnimationFrame);
+        });
+        const enlarged = await horizontalOverflow(page);
+        if (enlarged > 1) found.push(`${story.id} at ${layout.width}px/200% text: ${enlarged}px`);
+        await page.evaluate(() => document.documentElement.style.removeProperty("font-size"));
       }
+    } finally {
+      await context.close();
     }
-    await context.close();
-  }
-  if (failures.length) {
-    throw new Error(`200% text horizontal overflow:\n${failures.join("\n")}`);
-  }
+    return found;
+  }))).flat();
+  if (failures.length) throw new Error(`Horizontal overflow:\n${failures.join("\n")}`);
 }
 
 async function checkHeaderKeyboard(
@@ -403,17 +430,29 @@ try {
     env: browserHeadless ? headlessBrowserEnv() : undefined,
   });
   try {
-    let context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    let page = await context.newPage();
-    for (const [index, story] of stories.entries()) {
-      await assertStory(page, baseUrl, story);
-      // Storybook は遷移をまたいで状態を保持するため、定期的にページを作り直してメモリを抑える。
-      if ((index + 1) % 12 === 0 && index + 1 < stories.length) {
-        await context.close();
-        context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-        page = await context.newPage();
-      }
-    }
+    // 実行時エラーと axe は 1280px で見る。axe は1ページで同時に走らせられないので、story を
+    // 2つのページに振り分けて並行させる。
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    const lanes = [
+      stories.filter((_, index) => index % 2 === 0),
+      stories.filter((_, index) => index % 2 === 1),
+    ];
+    const auditing = Promise.all(lanes.map(async (lane) => {
+      const lanePage = await context.newPage();
+      await openPreview(lanePage, baseUrl, lane[0]);
+      for (const story of lane) await assertStory(lanePage, story);
+      await lanePage.close();
+    }));
+    const others = Promise.all([
+      checkLayouts(baseUrl, browser, stories),
+      checkHeaderKeyboard(baseUrl, browser),
+      checkHomePatternInteractions(baseUrl, browser),
+      checkEditorialRendering(baseUrl, browser),
+      checkMotionStories(baseUrl, browser),
+      checkWeatherFallback(baseUrl, browser),
+    ]);
+    await Promise.all([auditing, others]);
+    const page = await context.newPage();
     const docsErrors: string[] = [];
     page.on("pageerror", (error) => docsErrors.push(error.message));
     page.on("console", (message) => {
@@ -422,13 +461,6 @@ try {
     await page.goto(`${baseUrl}/?path=/docs/${docs[0].id}`, { waitUntil: "networkidle" });
     if (docsErrors.length) throw new Error(`Storybook Docs: ${docsErrors.join(" | ")}`);
     await context.close();
-    await checkHeaderKeyboard(baseUrl, browser);
-    await checkHomePatternInteractions(baseUrl, browser);
-    await checkResponsiveContexts(baseUrl, browser, stories);
-    await checkIncreasedText(baseUrl, browser, stories);
-    await checkEditorialRendering(baseUrl, browser);
-    await checkMotionStories(baseUrl, browser);
-    await checkWeatherFallback(baseUrl, browser);
   } finally {
     await browser.close();
   }
