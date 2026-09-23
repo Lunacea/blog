@@ -80,8 +80,10 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
   routes. Scrolling is native and continuous; there is no snap controller or draggable profile.
 - `StaticLight` draws the light and grain in SVG with no JavaScript. The root layout mounts one
   site-wide field and dynamically imports `editorial-light.ts` when motion is Full and device
-  capabilities permit it. Text and the C theme control remain HTML and usable before fonts/WebGL
-  resolve. No point-cloud hero or custom cursor is mounted. DPR is capped at 1.2/1.5.
+  capabilities permit it. That module only drives the renderer; where the light goes
+  (`light-path.ts`), the idle events (`ambient-pulses.ts`) and the hour's light (`sunlight.ts`) are
+  plain state with unit tests. Text and the C theme control remain HTML and usable before
+  fonts/WebGL resolve. No point-cloud hero or custom cursor is mounted. DPR is capped at 1.2/1.5.
   Offscreen/hidden rendering pauses; unmount, Off and context loss dispose the renderer and leave
   the static composition.
 - Theme and motion controls both live in the site footer; Home additionally exposes the theme as the
