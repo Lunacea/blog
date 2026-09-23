@@ -6,7 +6,7 @@
 </script>
 
 <svg
-  class={cn(glyphFrame, glyphStroke, glyphTransition, "forward-glyph size-(--space-5)", className)}
+  class={cn(glyphFrame, glyphStroke, glyphTransition, "size-(--space-5)", className)}
   viewBox="0 0 24 24"
   aria-hidden="true"
   focusable="false"

@@ -7,7 +7,7 @@
 
 import { blockToolIcons } from "@lunacea/ui/icons";
 
-export type BlockPanel = "preview" | "source";
+type BlockPanel = "preview" | "source";
 
 export type BlockShell = {
   /** 描画ビューの置き場所（ハイライト済みコード、または図）。 */
@@ -28,6 +28,19 @@ const label = "inline-flex min-h-control items-center border-0 bg-transparent px
 
 const rule = "border-[color-mix(in_srgb,var(--block-ink)_22%,transparent)]";
 
+/** 吹き出しは app.css の .tooltip。ボタン自身が同じ名前を持つので、支援技術には読ませない。 */
+function withTooltip(button: HTMLButtonElement, text: string) {
+  button.classList.add("has-tooltip");
+  const hint = document.createElement("span");
+  hint.className = "tooltip";
+  hint.setAttribute("aria-hidden", "true");
+  const bubble = document.createElement("span");
+  bubble.textContent = text;
+  hint.append(bubble);
+  button.append(hint);
+  return bubble;
+}
+
 export function createBlockShell({
   block,
   id,
@@ -37,6 +50,7 @@ export function createBlockShell({
   previewName = "Preview",
   onEdit,
   onStatus,
+  onExpand,
 }: {
   /** ブロック要素。既存の子要素がそのまま描画ビューになる。 */
   block: HTMLElement;
@@ -50,6 +64,8 @@ export function createBlockShell({
   /** 読者が編集またはリセットしたときに現在のテキストで呼ばれる。 */
   onEdit?: (value: string) => void;
   onStatus?: (message: string) => void;
+  /** 渡すと描画ビューを大きく開くボタンを置く。押したボタンを受け取る。 */
+  onExpand?: (trigger: HTMLButtonElement) => void;
 }): BlockShell {
   const existing = [...block.childNodes];
 
@@ -118,34 +134,51 @@ export function createBlockShell({
   const previewTab = tabFor("preview", previewName);
   const sourceTab = tabFor("source", "Source");
 
-  const glyph = (icon: { body: string }, state: "copy" | "copied") =>
+  const glyph = (icon: { body: string }, state: "copy" | "copied" | "expand") =>
     `<svg viewBox="0 0 24 24" class="size-(--space-4)" data-glyph="${state}" aria-hidden="true" focusable="false">${icon.body}</svg>`;
   const copy = document.createElement("button");
   copy.type = "button";
   copy.className = `${label} border-l ${rule}`;
   copy.setAttribute("aria-label", `${name}をコピー`);
   copy.innerHTML = glyph(blockToolIcons.copy, "copy");
+  const copyHint = withTooltip(copy, "コピー");
 
   const reset = document.createElement("button");
   reset.type = "button";
   reset.className = `${label} border-l ${rule}`;
   reset.textContent = "Reset";
   reset.hidden = true;
-  actions.append(reset, copy);
+  actions.append(reset);
+  if (onExpand) {
+    const expand = document.createElement("button");
+    expand.type = "button";
+    expand.className = `${label} border-l ${rule}`;
+    expand.setAttribute("aria-label", `${name}を拡大`);
+    expand.setAttribute("aria-haspopup", "dialog");
+    expand.innerHTML = glyph(blockToolIcons.expand, "expand");
+    withTooltip(expand, "拡大");
+    expand.addEventListener("click", () => onExpand(expand));
+    actions.append(expand);
+  }
+  actions.append(copy);
 
   block.append(bar, preview, editorPanel);
 
   let statusTimer: ReturnType<typeof setTimeout> | undefined;
 
+  // 図像だけを差し替え、ツールチップは残して文言だけ変える。
+  const setGlyph = (icon: { body: string }, state: "copy" | "copied") => {
+    copy.querySelector("svg")?.remove();
+    copy.insertAdjacentHTML("afterbegin", glyph(icon, state));
+  };
   const rest = () => {
-    copy.innerHTML = glyph(blockToolIcons.copy, "copy");
+    setGlyph(blockToolIcons.copy, "copy");
+    copyHint.textContent = "コピー";
     copy.setAttribute("aria-label", `${name}をコピー`);
   };
   const announce = (message: string, copied: boolean) => {
-    copy.innerHTML = glyph(
-      copied ? blockToolIcons.copied : blockToolIcons.copy,
-      copied ? "copied" : "copy",
-    );
+    setGlyph(copied ? blockToolIcons.copied : blockToolIcons.copy, copied ? "copied" : "copy");
+    copyHint.textContent = copied ? "コピーしました" : "コピーできませんでした";
     copy.setAttribute("aria-label", message);
     onStatus?.(message);
     clearTimeout(statusTimer);

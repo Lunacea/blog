@@ -46,7 +46,8 @@ covers the same ground without reading as either overcast or a settled fall. How
 follows the location's own monthly rates, so summer showers and winter flurries are common and the
 reverse never occurs; it is rarer over a clear sky than over cloud. The choice is a hash of a
 twenty-minute bucket, so a shower holds still and then passes. In dev, `?weather=` and `?intensity=`
-on Home or Articles force either.
+force either, `?pulse=bloom|veil|clearing|ripple|gust` repeats one idle event every few seconds, and
+`?time=` (an ISO 8601 date-time) fixes the hour the light is drawn for.
 
 The palette is monochrome throughout, including the theme control. The only colour on the site comes
 from the author's own identity artwork on the profile card.
@@ -109,9 +110,13 @@ a step lighter than the interface around it), line-height 1.9, tracked open 0.03
 separated by a full space step, and held to a maximum width of 38em — about 37 full-width characters
 a line. The tracking is reading copy only: monospace is set on a grid and diagrams to their own
 metrics, so both reset it. Inline code is set at 0.9em on a faint tint with room on either side, so
-a run of it reads as an object in the sentence rather than a change of font. Code highlighting may
-retain semantic syntax colors. Text colour is never animated; state is carried by rules, position,
-width axis and reveal instead.
+a run of it reads as an object in the sentence rather than a change of font. Code highlighting uses
+the `--code-token-*` tokens, emitted by Shiki as CSS variables: structure (keywords, property names)
+in blue, selectors and functions in cyan, strings in yellow, numbers and units in orange, all
+saturated enough to separate on the dark block and at least 4.9:1 against it. Diagrams take the site
+palette and the shape of its parts: card-radius corners, hairline strokes, softly curved connectors
+and the interface face at small text size. Text colour is never animated; state is carried by rules,
+position, width axis and reveal instead.
 
 Home carries no header. The masthead is the identity: LUNACEA is set at 20.4vw so it bleeds past
 both gutters, centred by a flex container inside `overflow-x-clip` so the overflow is symmetric and
@@ -182,16 +187,41 @@ the first of them. Share offers the generic action first — the platform share 
 copying the link — with a single X post beside it. Praise follows the article body under a short
 invitation, ahead of the revisions and the related index, and the acknowledgement is a
 squash-and-stretch of the heart itself; nothing covers the page. Code blocks that scroll sideways
-are focusable regions so the keyboard can reach them at enlarged text.
+are focusable regions so the keyboard can reach them at enlarged text. Icon-only controls carry one
+shared tooltip (`.tooltip` in `app.css`): a borderless rounded bubble whose tail always points at
+the centre of its control. The bubble is right-aligned so edge controls never push it off the page
+or out of a block, and social marks centre it instead. It sits below controls in the header and
+above them in the footer, is inverted from its surroundings (a block's own ink inside code and
+diagrams), waits a moment before rising in and leaves at once. The copy describes what pressing does
+(「ダークにする」「動きを止める」), not the internal state. The footer's social links carry none. An
+expanded diagram opens in a modal card that always leaves the dimmed, slightly blurred article
+visible around it, so it reads as a layer over the page rather than a new page; its height follows
+the diagram.
 
 Home, the article catalog, and article details mount the animated field. The article's opaque paper
 keeps the fixed gradient out of running text. The static gradient is an even vignette rather than a
 spotlight, and it steps back once the animated field is running. `opacity` takes no `light-dark()`,
 so the field's light and dark values are set per theme instead. On paper a white highlight is
 invisible, so light mode reads the pointer as a clearing in a lightly shaded field; in the dark the
-same field is held back so it never swallows secondary text. Where no pointer hovers — every touch
-device — the light drifts along a slow, uneven figure instead of standing still, and a fine pointer
-takes it back the moment it moves.
+same field is held back so it never swallows secondary text. Where no pointer hovers, the light
+drifts along an uneven figure instead of standing still, and a fine pointer takes it back the moment
+it moves. On touch devices scrolling carries the light down the page; once reading pauses the same
+drift grows back in over a few seconds. While nothing guides the light, irregular soft events come
+and go on their own and never start while the reader is interacting. They follow the weather: clear
+skies mostly open the key light; cloud either sends a shadow of varying size across the field or
+thins to let dappled light through a gap; rain drops a single ripple on the water; snow carries a
+pale drift of powder across on the wind. Overcast skies move in two layers at different speeds so
+the cover never slides as one sheet. Events are drawn with the field's own noise and shading, never
+as particles or points.
+
+On paper a white highlight disappears, so in light mode the lit side is drawn as colour: warm in
+sunshine, a faint paper white under cloud, and cool over snow and water, with cloud shadows set a
+little deeper than in the dark.
+
+The animated field also follows the configured location's sky. The sun's elevation and bearing are
+computed in the browser from the location and the current time; low sun warms the light and brings
+it in from the east in the morning and the west in the evening, cloud mutes that warmth, and night
+cools the light and closes the direct sun. The static composition does not change with the hour.
 
 Hovering a row in the index slides a pane of liquid glass under it: a thin saturated fill over an
 18px blur with a lit inset edge, behind the type and never touching it. It is dropped under forced

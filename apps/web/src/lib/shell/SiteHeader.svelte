@@ -23,7 +23,6 @@
 
   onMount(() => {
     ready = true;
-    document.documentElement.dataset.js = "true";
   });
 </script>
 

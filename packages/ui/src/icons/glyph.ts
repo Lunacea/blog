@@ -4,6 +4,6 @@ export const glyphStroke =
   "[&_path]:fill-none [&_path]:stroke-current [&_path]:[stroke-linecap:round] [&_path]:[stroke-linejoin:round] [&_path]:[stroke-width:var(--glyph-stroke,1.75)] [&_path]:[vector-effect:non-scaling-stroke]";
 /** 押されたことへの返事として切り替わるグリフ。時間とカーブだけ response の対に差し替える。 */
 export const glyphResponse =
-  "[&_path]:transition-[translate,scale,opacity,fill] [&_path]:duration-(--motion-duration-response) [&_path]:ease-response motion-reduced:[&_path]:duration-(--motion-duration-immediate) motion-off:[&_path]:duration-(--motion-duration-immediate)";
+  "[&_path]:transition-[translate,scale,opacity,fill] [&_path]:duration-(--motion-duration-response) [&_path]:ease-response motion-off:[&_path]:duration-(--motion-duration-immediate)";
 export const glyphTransition =
-  "[&_path]:transition-[translate,scale,opacity,fill] [&_path]:duration-(--motion-duration-base) [&_path]:ease-signature motion-reduced:[&_path]:duration-(--motion-duration-immediate) motion-off:[&_path]:duration-(--motion-duration-immediate)";
+  "[&_path]:transition-[translate,scale,opacity,fill] [&_path]:duration-(--motion-duration-base) [&_path]:ease-signature motion-off:[&_path]:duration-(--motion-duration-immediate)";

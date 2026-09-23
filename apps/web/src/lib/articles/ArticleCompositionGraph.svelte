@@ -41,6 +41,22 @@
     );
   });
 
+  /**
+   * 断片は自分の節の中だけで射影する。節の境界の値は前後どちらの節にも属するため、値から節を
+   * 探すと次の節の先頭が前の節の末尾に引き寄せられ、節の間の余白をまたいで描かれてしまう。
+   */
+  const placed = $derived.by(() => {
+    const byId = new Map(spans.map((span) => [span.id, span]));
+    return (piece: (typeof pieces)[number], value: number) => {
+      const section = piece.section;
+      const span = section ? byId.get(section.id) : undefined;
+      if (!section || !span) return projected(value);
+      const range = section.end - section.start;
+      const ratio = range > 0 ? (value - section.start) / range : 0;
+      return span.start + Math.min(1, Math.max(0, ratio)) * (span.end - span.start);
+    };
+  });
+
   /** 記事内の進行度と一覧上の位置は尺度が異なるため、各断片を所属する節を通して射影する。 */
   const projected = $derived.by(() => {
     const pairs = composition.sections.flatMap((section) => {
@@ -66,8 +82,8 @@
 
 <svg class="pointer-events-none block size-full text-quiet" viewBox="0 0 48 480" preserveAspectRatio="none" aria-hidden="true" focusable="false" data-composition-graph data-map-id={id}>
   {#each pieces as piece}
-    {@const top = projected(piece.start) * 480}
-    {@const height = Math.max(1, (projected(piece.end) - projected(piece.start)) * 480 - 2)}
+    {@const top = placed(piece, piece.start) * 480}
+    {@const height = Math.max(1, (placed(piece, piece.end) - placed(piece, piece.start)) * 480 - 2)}
     {#if piece.kind === "text"}
       {@const written = Math.max(1, Math.round(piece.characters / charactersPerLine))}
       {@const lines = Math.max(1, Math.min(written, Math.floor(height / lineGap) || 1))}

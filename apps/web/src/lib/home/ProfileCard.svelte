@@ -238,12 +238,13 @@
   <nav class="col-start-1 row-start-3 flex h-(--space-5) flex-wrap items-center justify-center gap-x-(--space-4) gap-y-(--space-2)" aria-label="連絡先">
     {#each contacts as contact}
       <a
-        class="relative -top-(--space-3) inline-grid size-control place-items-center text-ink no-underline transition-[translate,scale] duration-(--motion-duration-fast) ease-spring hover:-translate-y-0.5 hover:no-underline focus-visible:-translate-y-0.5 active:translate-y-px active:scale-90 motion-off:transition-none [&_svg]:size-(--space-5)"
+        class="has-tooltip relative -top-(--space-3) inline-grid size-control place-items-center text-ink no-underline transition-[translate,scale] duration-(--motion-duration-fast) ease-spring hover:-translate-y-0.5 hover:no-underline focus-visible:-translate-y-0.5 active:translate-y-px active:scale-90 motion-off:transition-none [&_svg]:size-(--space-5)"
         href={contact.href}
         rel={contact.rel}
         aria-label={contact.label}
       >
         <Icon name={contact.icon} />
+        <span class="tooltip" data-align="center" aria-hidden="true"><span>{contact.label}</span></span>
       </a>
     {/each}
   </nav>

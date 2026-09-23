@@ -10,8 +10,7 @@
 
 /* Mermaid owns its generated SVG timing; the containing utility disables it without disturbing layout. */
 html[data-motion="off"],
-html[data-motion="off"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *),
-html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
+html[data-motion="off"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
   scroll-behavior: auto !important;
   animation-duration: var(--motion-duration-immediate) !important;
   animation-iteration-count: 1 !important;
@@ -34,8 +33,7 @@ html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
     block-size: auto;
   }
 
-  html[data-motion="off"] &::details-content,
-  html[data-motion="reduced"] &::details-content {
+  html[data-motion="off"] &::details-content {
     transition-duration: var(--motion-duration-immediate);
   }
 }
@@ -85,8 +83,6 @@ pre:focus-visible,
     height: auto;
   }
 
-  html[data-motion="reduced"] &,
-  html[data-motion="reduced"] & *,
   html[data-motion="off"] &,
   html[data-motion="off"] & * {
     animation: none !important;
@@ -112,5 +108,117 @@ pre:focus-visible,
   .share-actions,
   .reading-progress {
     display: none !important;
+  }
+}
+
+/*
+  吹き出しのツールチップ。操作子（.has-tooltip）の中に .tooltip > span を置く。
+  枠線のない角丸の面で、尻尾は常にボタンの中央を指す。面は既定で右揃えにし、画面や
+  ブロックの端にある操作子からはみ出さない。data-align="center" で中央に置く。
+  既定はボタンの下、フッターの中では上に出す。少し待ってからわずかに近づいて現れ、離れると
+  すぐ引く。地と文字は --tooltip-ground / --tooltip-ink で反転させる（ブロックは自分のインク）。
+*/
+.has-tooltip {
+  position: relative;
+}
+
+.tooltip {
+  --tooltip-gap: var(--space-2);
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  z-index: var(--z-overlay);
+  height: 0;
+  pointer-events: none;
+  opacity: 0;
+  translate: 0 calc(var(--space-1) * -1);
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    translate var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+/* 尻尾は面より後に描く。先に描くと面の影が重なり、暗い地では尻尾だけがくすんで見える。 */
+.tooltip::after {
+  position: absolute;
+  top: calc(var(--tooltip-gap) - var(--space-1));
+  left: 50%;
+  width: var(--space-2);
+  height: var(--space-2);
+  background: var(--tooltip-ground, var(--color-foreground));
+  content: "";
+  rotate: 45deg;
+  translate: -50% 0;
+}
+
+.tooltip > span {
+  position: absolute;
+  top: var(--tooltip-gap);
+  right: 0;
+  width: max-content;
+  border-radius: var(--radius-card);
+  padding: var(--space-2) var(--space-3);
+  background: var(--tooltip-ground, var(--color-foreground));
+  box-shadow: var(--shadow-overlay);
+  color: var(--tooltip-ink, var(--color-background));
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  font-stretch: 100%;
+  font-weight: var(--weight-component);
+  letter-spacing: normal;
+  line-height: var(--leading-none);
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.tooltip[data-align="center"] > span {
+  right: auto;
+  left: 50%;
+  translate: -50% 0;
+}
+
+footer .tooltip {
+  top: auto;
+  bottom: 100%;
+  translate: 0 var(--space-1);
+}
+
+footer .tooltip::after {
+  top: auto;
+  bottom: calc(var(--tooltip-gap) - var(--space-1));
+}
+
+footer .tooltip > span {
+  top: auto;
+  bottom: var(--tooltip-gap);
+}
+
+@media (hover: hover) {
+  .has-tooltip:hover .tooltip {
+    opacity: 1;
+    translate: 0 0;
+    transition-delay: var(--motion-duration-micro);
+  }
+}
+
+.has-tooltip:focus-visible .tooltip,
+.has-tooltip:has(:focus-visible) .tooltip {
+  opacity: 1;
+  translate: 0 0;
+}
+
+@media (forced-colors: active) {
+  .tooltip::after {
+    display: none;
+  }
+
+  .tooltip > span {
+    border: var(--border-width-rule) solid CanvasText;
+    box-shadow: none;
+  }
+}
+
+@media print {
+  .tooltip {
+    display: none;
   }
 }

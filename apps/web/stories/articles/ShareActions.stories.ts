@@ -18,7 +18,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Inline: Story = {};
 /**
- * The side rail is too narrow for the labels below `lg`, so they go to screen readers only.
+ * When the side rail is narrower than 96px the labels go to screen readers only.
  * Narrow the preview to see the icons alone.
  */
 export const Rail: Story = { args: { variant: "rail" } };

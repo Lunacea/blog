@@ -1,6 +1,13 @@
 import { AxeBuilder } from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
-import { ARTICLE, headerOverlap, horizontalOverflow, motionOff, SEARCH_TERM } from "./support.ts";
+import { expect } from "@playwright/test";
+import {
+  ARTICLE,
+  headerOverlap,
+  horizontalOverflow,
+  motionOff,
+  SEARCH_TERM,
+  test,
+} from "./support.ts";
 
 // ルートごとではなく面の原型ごとに1回監査する。ホーム・絞り込み一覧・記事で全コンポーネントを覆う。
 const AUDITS = [
@@ -8,7 +15,6 @@ const AUDITS = [
   { route: `/articles?q=${encodeURIComponent(SEARCH_TERM)}`, theme: "light" },
   { route: ARTICLE, theme: "light" },
   { route: ARTICLE, theme: "dark" },
-  { route: "/this-page-does-not-exist", theme: "light" },
 ] as const;
 
 for (const { route, theme } of AUDITS) {

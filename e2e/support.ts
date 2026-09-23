@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, test as base } from "@playwright/test";
 import type { WeatherState } from "../packages/schemas/mod.ts";
 
 /**
@@ -68,3 +68,27 @@ export async function themeToggle(page: Page) {
   await expect(control).toHaveAttribute("data-ready", "true", HYDRATED);
   return control;
 }
+
+/**
+ * ヘッドレスのブラウザでは WebGL が CPU で描かれ、全画面の背景が毎フレームほかのテストの CPU を
+ * 奪って全体を遅くする。背景そのものを確かめるテスト（@webgl）以外では WebGL を持たない端末として
+ * 振る舞わせる。背景は静的な構図へ退くだけなので、ほかの検査の対象は変わらない。
+ */
+export const test = base.extend({
+  page: async ({ page }, use, testInfo) => {
+    if (!testInfo.tags.includes("@webgl")) {
+      await page.addInitScript(() => {
+        const getContext = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function (
+          this: HTMLCanvasElement,
+          kind: string,
+          ...args: unknown[]
+        ) {
+          if (kind.includes("webgl")) return null;
+          return getContext.apply(this, [kind, ...args] as Parameters<typeof getContext>);
+        } as typeof getContext;
+      });
+    }
+    await use(page);
+  },
+});

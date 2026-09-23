@@ -12,6 +12,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Full: Story = { globals: { motion: "full" } };
-/** モーション低減時はビュー遷移を開始せずに遷移する。 */
-export const Reduced: Story = { globals: { motion: "reduced" } };
+/** モーションを止めるとビュー遷移を開始せずに遷移する。 */
 export const Off: Story = { globals: { motion: "off" } };

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
 import {
   capableDevice,
   type Condition,
@@ -6,6 +6,7 @@ import {
   HOME_LATEST_LIMIT,
   HYDRATED,
   motionOff,
+  test,
   weatherReading,
 } from "./support.ts";
 
@@ -57,15 +58,22 @@ test("the opening runs on every document load, clears itself and skips reduced m
   await page.addInitScript(() => {
     localStorage.setItem("lunacea-motion", "full");
     sessionStorage.clear();
+    // オープニングは 1.2 秒で終わるので、読み込みが遅いと load の時点ではもう印が消えている。
+    // 描画前スクリプトが宣言した値を、文書の組み立て直後に控えておく。
+    document.addEventListener("DOMContentLoaded", () => {
+      (globalThis as typeof globalThis & { __opening?: string }).__opening =
+        document.documentElement.dataset.homeOpening ?? "";
+    }, { once: true });
   });
+  const openedAtStart = () =>
+    page.evaluate(() => (globalThis as typeof globalThis & { __opening?: string }).__opening);
   await page.goto("/");
-  // インラインスクリプトが初回描画前にオープニングを宣言するため、この時点で既に有効。
-  await expect(page.locator("html")).toHaveAttribute("data-home-opening", "active");
+  expect(await openedAtStart()).toBe("active");
   await complete(page);
   await expect(page.locator("html")).not.toHaveAttribute("data-home-opening", /.+/u, HYDRATED);
   await expect(page.locator(".home-opening")).toHaveCount(0);
   await page.reload();
-  await expect(page.locator("html")).toHaveAttribute("data-home-opening", "active");
+  expect(await openedAtStart()).toBe("active");
   await expect(page.locator("html")).not.toHaveAttribute("data-home-opening", /.+/u, HYDRATED);
   await context.close();
 
@@ -82,7 +90,8 @@ test("OS restrictions, forced colours and a failing WebGL keep Home static and c
   await page.addInitScript(() => localStorage.setItem("lunacea-motion", "full"));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await expect(page.locator("html")).toHaveAttribute("data-motion-preference", "full");
+  // 保存された希望は ON のままでも、OS の設定が優先されて OFF で描く。
+  expect(await page.evaluate(() => localStorage.getItem("lunacea-motion"))).toBe("full");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
   await expect(page.locator("canvas")).toHaveCount(0);
 
@@ -109,7 +118,7 @@ test("OS restrictions, forced colours and a failing WebGL keep Home static and c
 });
 
 test("the ambient light renders on a capable desktop and is disposed when motion turns off", {
-  tag: ["@desktop"],
+  tag: ["@desktop", "@webgl"],
 }, async ({ page }) => {
   await page.addInitScript(capableDevice);
   test.skip(!await supportsWebgl(page), "The test browser has no WebGL context");
@@ -130,14 +139,14 @@ test("the ambient light renders on a capable desktop and is disposed when motion
   ).toBe(true);
   await expect(light.locator("[data-rendering]")).toHaveAttribute("data-rendering", "active");
   await page.mouse.move(600, 250);
-  await page.locator(".settings-trigger").click();
+  await page.locator(".header-display").getByRole("button").click();
   await expect(light.locator("canvas")).toHaveCount(0);
   await expect(light).toBeAttached();
-  await complete(page);
+  await expect(page.getByRole("heading", { level: 1, name: "Articles" })).toBeVisible();
 });
 
 test("the mobile light keeps its drawing buffer through scroll and recovers from context loss", {
-  tag: ["@mobile"],
+  tag: ["@mobile", "@webgl"],
 }, async ({ page }) => {
   const gpuErrors: string[] = [];
   page.on("console", (message) => {
@@ -205,7 +214,7 @@ test("the light follows each weather reading and adds no animated layer", {
     await expect
       .poll(() => page.locator("[data-editorial-light]").getAttribute("data-weather"))
       .toMatch(new RegExp(`^(${shown.join("|")})$`, "u"));
-    await expect(page.locator("canvas, .rainfall, .snowfall, .weather-backdrop")).toHaveCount(0);
+    await expect(page.locator("canvas")).toHaveCount(0);
     await expect(page.locator("#home-title")).toBeVisible();
   }
   await page.unroute("**/api/v1/weather?**");

@@ -167,7 +167,7 @@
             tags: entry.tags,
           }))}
         />
-        <div class="related-more mt-(--space-10) flex justify-center">
+        <div class="mt-(--space-10) flex justify-center">
           <AllArticlesLink />
         </div>
       </section>

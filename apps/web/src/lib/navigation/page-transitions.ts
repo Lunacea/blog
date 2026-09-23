@@ -1,182 +1,158 @@
 import { afterNavigate, onNavigate } from "$app/navigation";
+import { motionDuration, motionEasing } from "$lib/motion-tokens.ts";
+import { findFoldRow, foldPaperIntoRow } from "./paper-fold.ts";
+import { planRouteTransition, type RouteTransitionPlan } from "./route-transition.ts";
 
-export function isCatalogViewTransition(from?: URL | null, to?: URL | null): boolean {
-  if (!from || !to || from.pathname !== to.pathname || from.hash !== to.hash) return false;
-  const fromParams = new URLSearchParams(from.search);
-  const toParams = new URLSearchParams(to.search);
-  const fromView = fromParams.get("view");
-  const toView = toParams.get("view");
-  if (fromView === toView) return false;
-  fromParams.delete("view");
-  toParams.delete("view");
-  fromParams.sort();
-  toParams.sort();
-  return fromParams.toString() === toParams.toString();
+/**
+ * ページ遷移の実行。どの遷移にするかは route-transition.ts が決め、ここは View Transition を
+ * 起こして、遷移の間だけ付ける印と動きを1つの後片付けにまとめる。
+ *
+ * CSS（transitions.css）が見る印：
+ * - data-route-kind="catalog"   一覧の表示切り替え（短い遷移）
+ * - data-route-paper="rise|fold" 紙面の受け渡し
+ * - data-route-header="enter|leave" ヘッダーの出入り
+ * - data-route-exit              旧状態の撮影の間だけ。旧本文を snapshot にする
+ * - data-route-enter="page|catalog" 新しい本文の live DOM の入り（遷移より長く残る）
+ * - 行の data-route-fold-row     紙面を畳む先の行
+ */
+
+const root = () => document.documentElement;
+
+/** View Transition を使える状態か。遷移の種類ではなく、端末と設定だけを見る。 */
+export function canAnimateRoutes(): boolean {
+  return typeof document.startViewTransition === "function" &&
+    document.visibilityState === "visible" &&
+    root().dataset.motion === "full";
 }
 
-export function canUsePageTransition({
-  type,
-  from,
-  to,
-}: {
-  type?: string;
-  from?: URL | null;
-  to?: URL | null;
-}): boolean {
-  if (typeof document.startViewTransition !== "function") return false;
-  if (document.visibilityState !== "visible") return false;
-  if (document.documentElement.dataset.motion !== "full") return false;
-  if (type === "popstate") return false;
-  if (
-    from && to && from.pathname === to.pathname && from.search !== to.search &&
-    !isCatalogViewTransition(from, to)
-  ) return false;
-  if (
-    from && to && from.pathname === to.pathname && from.search === to.search &&
-    from.hash !== to.hash
-  ) {
-    return false;
-  }
-  return true;
+/** 遷移1回分の後片付け。終わり・保険のタイマー・次の遷移の始まりのどれからでも一度だけ走る。 */
+function createSession() {
+  const disposers: Array<() => void> = [];
+  let finished = false;
+  return {
+    add(dispose: () => void) {
+      if (finished) dispose();
+      else disposers.push(dispose);
+    },
+    finish() {
+      if (finished) return;
+      finished = true;
+      for (const dispose of disposers.splice(0).reverse()) dispose();
+    },
+  };
 }
 
-function headerChange(from?: URL, to?: URL): "enter" | "leave" | undefined {
-  if (!from || !to) return undefined;
-  const fromHome = from.pathname === "/";
-  const toHome = to.pathname === "/";
-  if (fromHome && !toHome) return "enter";
-  if (!fromHome && toHome) return "leave";
-  return undefined;
+type Session = ReturnType<typeof createSession>;
+
+function mark(session: Session, name: string, value: string) {
+  root().dataset[name] = value;
+  session.add(() => delete root().dataset[name]);
 }
 
-function isPaperHandoff(from?: URL, to?: URL): boolean {
-  if (!from || !to) return false;
-  const listing = from.pathname === "/" || from.pathname === "/articles";
-  return listing && /^\/articles\/[^/]+$/.test(to.pathname);
+/** 新しい本文の入りは遷移より長いので、入りの動きが終わるまで印を残す。 */
+function markEntering(kind: RouteTransitionPlan["kind"]) {
+  const content = document.querySelector<HTMLElement>(".route-content");
+  root().dataset.routeEnter = kind;
+  const settle = () => {
+    clearTimeout(fallback);
+    content?.removeEventListener("animationend", onEnd);
+    if (root().dataset.routeEnter === kind) delete root().dataset.routeEnter;
+  };
+  const onEnd = (event: AnimationEvent) => {
+    if (event.target === content) settle();
+  };
+  content?.addEventListener("animationend", onEnd);
+  const fallback = globalThis.setTimeout(settle, 1200);
+  return settle;
+}
+
+/**
+ * 絞り込み（同じ一覧で条件だけが変わる移動）は読み位置を保つ。履歴移動の位置は
+ * ブラウザと SvelteKit が戻すので触らない。
+ */
+function keepCatalogPosition() {
+  let position: { x: number; y: number } | undefined;
+  afterNavigate(() => {
+    if (!position) return;
+    const { x, y } = position;
+    position = undefined;
+    requestAnimationFrame(() => requestAnimationFrame(() => scrollTo(x, y)));
+  });
+  return (navigation: { type: string; from: URL | undefined; to: URL | undefined }) => {
+    if (
+      navigation.type !== "popstate" && navigation.from && navigation.to &&
+      navigation.from.pathname === navigation.to.pathname &&
+      navigation.from.search !== navigation.to.search
+    ) {
+      position = { x: scrollX, y: scrollY };
+    }
+  };
 }
 
 export function installPageTransitions() {
   if (typeof document === "undefined") return () => {};
-  let catalogPosition: { x: number; y: number } | undefined;
-  let pageEnterFallback: ReturnType<typeof globalThis.setTimeout> | undefined;
-  afterNavigate(() => {
-    if (!catalogPosition) return;
-    const position = catalogPosition;
-    catalogPosition = undefined;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => scrollTo(position.x, position.y));
-    });
-  });
+  const rememberCatalog = keepCatalogPosition();
+  let active: Session | undefined;
+  let settleEntering: (() => void) | undefined;
+
   onNavigate((navigation) => {
-    delete document.documentElement.dataset.paperHandoff;
-    delete document.documentElement.dataset.headerChange;
-    delete document.documentElement.dataset.pageEnter;
-    if (pageEnterFallback !== undefined) {
-      clearTimeout(pageEnterFallback);
-      pageEnterFallback = undefined;
-    }
-    const catalogTransition = isCatalogViewTransition(
-      navigation.from?.url,
-      navigation.to?.url,
-    );
-    const preserveCatalogPosition = navigation.type !== "popstate" &&
-      navigation.from?.url.pathname === navigation.to?.url.pathname &&
-      navigation.from?.url.search !== navigation.to?.url.search;
-    if (preserveCatalogPosition) {
-      catalogPosition = { x: scrollX, y: scrollY };
-    }
-    if (
-      !canUsePageTransition({
-        type: navigation.type,
-        from: navigation.from?.url,
-        to: navigation.to?.url,
-      })
-    ) {
-      return;
-    }
+    active?.finish();
+    active = undefined;
+    settleEntering?.();
+    settleEntering = undefined;
+    const from = navigation.from?.url;
+    const to = navigation.to?.url;
+    rememberCatalog({ type: navigation.type, from, to });
+
+    const plan = planRouteTransition(from, to);
+    if (!plan || !canAnimateRoutes()) return;
+
+    const session = createSession();
+    active = session;
+    if (plan.kind === "catalog") mark(session, "routeKind", "catalog");
+    if (plan.paper === "rise") mark(session, "routePaper", "rise");
+    if (plan.header) mark(session, "routeHeader", plan.header);
+    mark(session, "routeExit", "true");
+    // 畳む先が決まるのは新しい一覧が描かれた後なので、紙面の位置は旧状態のうちに測っておく。
+    const paper = plan.paper === "fold"
+      ? document.querySelector(".article-paper")?.getBoundingClientRect()
+      : undefined;
+    let fold: { paper: DOMRect; row: DOMRect } | undefined;
+
     return new Promise<void>((resolve) => {
-      if (catalogTransition) document.documentElement.dataset.catalogTransition = "true";
-      const handoff = isPaperHandoff(navigation.from?.url, navigation.to?.url);
-      if (handoff) document.documentElement.dataset.paperHandoff = "true";
-      const header = headerChange(navigation.from?.url, navigation.to?.url);
-      if (header) document.documentElement.dataset.headerChange = header;
       const transition = document.startViewTransition(async () => {
+        // 旧状態の撮影は済んでいる。新しい本文は live DOM で入るので名前を外す。
+        delete root().dataset.routeExit;
         resolve();
         await navigation.complete;
-        document.documentElement.dataset.pageEnter = "active";
-        pageEnterFallback = globalThis.setTimeout(() => {
-          delete document.documentElement.dataset.pageEnter;
-          pageEnterFallback = undefined;
-        }, 1200);
+        const target = paper && from ? findFoldRow(from.pathname) : undefined;
+        if (paper && target) {
+          target.row.dataset.routeFoldRow = "true";
+          session.add(() => delete target.row.dataset.routeFoldRow);
+          mark(session, "routePaper", "fold");
+          fold = { paper, row: target.bounds };
+        }
+        settleEntering = markEntering(plan.kind);
       });
-      if (catalogTransition) {
-        void transition.finished.finally(() => {
-          delete document.documentElement.dataset.catalogTransition;
+      void transition.ready.then(() => {
+        if (!fold) return;
+        const animations = foldPaperIntoRow(fold.paper, fold.row, {
+          duration: motionDuration("page"),
+          easing: motionEasing("signature"),
         });
-      }
-      const clearMarks = () => {
-        delete document.documentElement.dataset.paperHandoff;
-        delete document.documentElement.dataset.headerChange;
-      };
-      const fallback = globalThis.setTimeout(clearMarks, 1200);
+        session.add(() => animations.forEach((animation) => animation.cancel()));
+      }, () => {});
+      const fallback = globalThis.setTimeout(session.finish, 1500);
+      session.add(() => clearTimeout(fallback));
       void transition.finished.finally(() => {
-        clearTimeout(fallback);
-        clearMarks();
+        session.finish();
+        if (active === session) active = undefined;
       });
     });
   });
 
   return () => {
-    if (pageEnterFallback !== undefined) clearTimeout(pageEnterFallback);
-    delete document.documentElement.dataset.pageEnter;
-  };
-}
-
-export function installAnchorNavigation() {
-  if (typeof document === "undefined") return () => {};
-  let timeout: ReturnType<typeof globalThis.setTimeout> | undefined;
-  let jumpFrom: { x: number; y: number } | undefined;
-  // 時間で戻すと、止まったカーソルの下で同じことが遅れて起きるだけなので、
-  // ポインタが実際に動くまで解除しない。
-  const release = () => {
-    jumpFrom = undefined;
-    delete document.documentElement.dataset.anchorJump;
-  };
-  // クリック自身も pointermove を伴うので、実際に離れて動いたときだけ解除する。
-  const handlePointerMove = (event: PointerEvent) => {
-    if (!jumpFrom) return;
-    if (Math.hypot(event.clientX - jumpFrom.x, event.clientY - jumpFrom.y) < 8) return;
-    release();
-  };
-  const handleClick = (event: MouseEvent) => {
-    if (
-      event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey ||
-      event.shiftKey || event.altKey
-    ) return;
-    const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>("a[href]");
-    if (!anchor || anchor.target || anchor.origin !== location.origin) return;
-    if (
-      anchor.pathname !== location.pathname || anchor.search !== location.search || !anchor.hash
-    ) return;
-    // 内容がカーソルの下を通り過ぎることで起きるホバーの誤爆を、移動の間だけ抑える。
-    // モーション設定に関わらず起きるので、滑らかな移動とは別の印にする。
-    document.documentElement.dataset.anchorJump = "true";
-    jumpFrom = { x: event.clientX, y: event.clientY };
-    if (document.documentElement.dataset.motion !== "full") return;
-    document.documentElement.dataset.smoothAnchor = "true";
-    if (timeout !== undefined) clearTimeout(timeout);
-    timeout = globalThis.setTimeout(
-      () => delete document.documentElement.dataset.smoothAnchor,
-      1000,
-    );
-  };
-  document.addEventListener("click", handleClick, { capture: true });
-  document.addEventListener("pointermove", handlePointerMove, { passive: true });
-  return () => {
-    if (timeout !== undefined) clearTimeout(timeout);
-    delete document.documentElement.dataset.smoothAnchor;
-    delete document.documentElement.dataset.anchorJump;
-    document.removeEventListener("click", handleClick, { capture: true });
-    document.removeEventListener("pointermove", handlePointerMove);
+    active?.finish();
+    settleEntering?.();
   };
 }

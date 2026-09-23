@@ -178,7 +178,7 @@
     </defs>
     <rect class="opacity-[.035] theme-dark:opacity-[.06]" width="100%" height="100%" fill="var(--color-shadow-body)" />
     <rect class="opacity-[.08] mix-blend-multiply theme-dark:opacity-[.36] theme-dark:mix-blend-screen" width="100%" height="100%" filter="url(#footer-liquid)" />
-    <rect class="opacity-(--home-light-opacity) motion-reduced:opacity-0 motion-off:opacity-0" width="100%" height="100%" fill="url(#footer-glow)" />
+    <rect class="opacity-(--home-light-opacity) motion-off:opacity-0" width="100%" height="100%" fill="url(#footer-glow)" />
     <rect class="opacity-[.07] mix-blend-multiply theme-dark:opacity-[.13] theme-dark:mix-blend-screen" width="100%" height="100%" filter="url(#footer-spray)" />
   </svg>
 
@@ -213,7 +213,7 @@
     <div class="mt-(--space-12) flex flex-wrap items-center justify-between gap-x-(--space-6) gap-y-(--space-3) border-t border-rule pt-(--space-4)">
       <p class="m-0 font-stretch-74% text-folio leading-none tracking-folio text-quiet uppercase tabular-nums">&copy; {span} {name}.</p>
       <div class="flex items-center gap-x-(--space-1)">
-        {#if theme}<div class="footer-theme">{@render theme()}</div>{/if}
+        {#if theme}<div>{@render theme()}</div>{/if}
         {#if display}<div class="footer-display">{@render display()}</div>{/if}
       </div>
     </div>

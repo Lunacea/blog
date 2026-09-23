@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { HYDRATED } from "./support.ts";
+import { expect } from "@playwright/test";
+import { HYDRATED, test } from "./support.ts";
 
 test("the hairline bar carries the wordmark, the navigation and both controls", {
   tag: ["@desktop"],
@@ -14,7 +14,15 @@ test("the hairline bar carries the wordmark, the navigation and both controls", 
   await expect(header.locator("a button")).toHaveCount(0);
   await expect(header.locator(".header-theme button")).toBeVisible();
   await expect(header.locator(".header-display button")).toBeVisible();
-  await expect(page.getByRole("contentinfo").locator(".settings-trigger")).toHaveCount(1);
+  const footer = page.getByRole("contentinfo");
+  await expect(footer.locator(".settings-trigger")).toHaveCount(1);
+  expect(
+    await page.evaluate(() => {
+      const light = document.querySelector<HTMLElement>("[data-editorial-light]")!;
+      const footer = document.querySelector<HTMLElement>("footer")!;
+      return Number(getComputedStyle(light).zIndex) < Number(getComputedStyle(footer).zIndex);
+    }),
+  ).toBe(true);
   expect((await header.boundingBox())?.y ?? -1).toBeLessThanOrEqual(1);
   await page.evaluate(() => scrollTo(0, 600));
   expect((await header.boundingBox())?.y ?? -1).toBeLessThanOrEqual(1);
@@ -151,14 +159,14 @@ test("history navigation and page transitions keep the shell intact", {
   });
   await page.getByRole("banner").getByRole("link", { name: "Home" }).click();
   await expect(page).toHaveURL(/\/$/u);
-  await expect(page.locator("html")).toHaveAttribute("data-page-enter", "active");
+  await expect(page.locator("html")).toHaveAttribute("data-route-enter", "page");
   await expect(page.locator(".route-content")).toHaveCSS("animation-name", "page-enter");
   expect(
     await light.evaluate((node) =>
       node === (globalThis as typeof globalThis & { __weatherField?: Element }).__weatherField
     ),
   ).toBe(true);
-  await expect(page.locator("html")).not.toHaveAttribute("data-page-enter", "active");
+  await expect(page.locator("html")).not.toHaveAttribute("data-route-enter");
   await page.getByRole("link", { name: /All articles/i }).click();
   await expect(page).toHaveURL(/\/articles$/u);
   expect(
@@ -180,6 +188,7 @@ test("history navigation and page transitions keep the shell intact", {
       getComputedStyle(document.querySelector(selector)!).viewTransitionName;
     return {
       scroller: named("main"),
+      route: named(".route-content"),
       row: named(".index-list > li"),
       header: named("header"),
       weather: named("[data-editorial-light]"),
@@ -189,10 +198,80 @@ test("history navigation and page transitions keep the shell intact", {
     };
   });
   expect(timing.scroller).toBe("none");
+  expect(timing.route).toBe("none");
   expect(timing.row).toBe("none");
   expect(timing.header).toBe("site-header");
   expect(timing.weather).toBe("none");
   expect(timing.root).toBe("none");
   expect(timing.headerBackdrop).toBe("none");
+  expect(pageErrors).toEqual([]);
+});
+
+test("returning from an article folds the paper into its row and leaves nothing named", {
+  tag: ["@desktop"],
+}, async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.goto("/articles");
+  await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true", HYDRATED);
+  const record = page.locator(".index-list h3 a").nth(1);
+  const href = await record.getAttribute("href");
+  await record.click();
+  await expect(page).toHaveURL(new RegExp(`${href}$`, "u"), { timeout: 20_000 });
+  await expect(page.locator("html")).not.toHaveAttribute("data-route-enter");
+  await page.evaluate(() => {
+    const seen = globalThis as typeof globalThis & { __foldedInto?: string };
+    new MutationObserver((records) => {
+      for (const { target } of records) {
+        const row = target as HTMLElement;
+        if (row.dataset.routeFoldRow) {
+          seen.__foldedInto = row.querySelector("a")?.getAttribute("href") ?? "";
+        }
+      }
+    }).observe(document.body, { subtree: true, attributeFilter: ["data-route-fold-row"] });
+  });
+  await page.locator(".article-back").click();
+  await expect(page).toHaveURL(/\/articles$/u);
+  await expect.poll(() =>
+    page.evaluate(() => (globalThis as typeof globalThis & { __foldedInto?: string }).__foldedInto)
+  ).toBe(href);
+  await expect(page.locator("html")).not.toHaveAttribute("data-route-paper");
+  await expect(page.locator("[data-route-fold-row]")).toHaveCount(0);
+  // 畳む動きが残ると、次に記事へ進むときの紙面がその形から始まってしまう。
+  await expect.poll(() =>
+    page.evaluate(() =>
+      document.getAnimations().filter((animation) =>
+        ((animation.effect as KeyframeEffect).pseudoElement ?? "").includes("article-paper")
+      ).length
+    )
+  ).toBe(0);
+  expect(
+    await page.locator(".index-list > li").nth(1).evaluate((row) =>
+      getComputedStyle(row).viewTransitionName
+    ),
+  ).toBe("none");
+
+  // ブラウザの戻る操作でも同じように畳む。リンクで戻った分の履歴を1つ戻って記事へ入り直し、
+  // もう1つ戻って最初の一覧へ帰る。
+  await page.evaluate(() => {
+    delete (globalThis as typeof globalThis & { __foldedInto?: string }).__foldedInto;
+  });
+  const settled = () =>
+    page.waitForFunction(() =>
+      !document.getAnimations().some((animation) =>
+        ((animation.effect as KeyframeEffect).pseudoElement ?? "").startsWith("::view-transition")
+      ) && !document.documentElement.dataset.routeEnter
+    );
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(`${href}$`, "u"));
+  // URL は描画より先に変わる。紙面が描かれ、遷移が終わってから次の履歴移動へ進む。
+  await expect(page.locator(".article-paper")).toBeVisible();
+  await settled();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/articles$/u);
+  await expect.poll(() =>
+    page.evaluate(() => (globalThis as typeof globalThis & { __foldedInto?: string }).__foldedInto)
+  ).toBe(href);
+  await expect(page.locator("[data-route-fold-row]")).toHaveCount(0);
   expect(pageErrors).toEqual([]);
 });

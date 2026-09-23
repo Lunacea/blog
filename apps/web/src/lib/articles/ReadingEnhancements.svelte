@@ -1,28 +1,23 @@
-<script module lang="ts">
-  let sharedMermaidQueue: Promise<void> = Promise.resolve();
-  let mermaidRenderId = 0;
-</script>
-
 <script lang="ts">
   import { onMount, tick, type Snippet } from "svelte";
-  import { announceHeaderDisclosure, listenForHeaderDisclosure } from "$lib/shell/header-disclosures.ts";
   import { IndexGlyph } from "@lunacea/ui/icons";
   import { Collapsible } from "@lunacea/ui/primitives";
   import { cn } from "@lunacea/ui/utils";
+  import { motionDuration } from "$lib/motion-tokens.ts";
   import type { ArticleCompositionVisual } from "./article-composition-types.ts";
   import ArticleCompositionGraph from "./ArticleCompositionGraph.svelte";
-  import { createBlockShell, type BlockShell } from "./block-tools.ts";
+  import { enhanceCodeBlocks } from "./code-blocks.ts";
+  import { observeComposition } from "./composition-measure.ts";
+  import { trackReadingPosition } from "./reading-position.ts";
+  import { markerBounds, type TocSpan, tocSpans } from "./toc-geometry.ts";
+
+  /**
+   * 記事の読書用の拡張。目次（PC のレールと携帯の開閉）、読了進捗、読み上げ用の状態通知を描き、
+   * 本文の拡張（構成の測定、読んでいる位置、コードブロック、図）を各モジュールに任せて束ねる。
+   * JavaScript がなくても本文と目次は読める。
+   */
 
   type Heading = { id: string; text: string; level: number };
-  type DiagramRecord = {
-    source: HTMLElement;
-    /** 現在のグラフ。読者が編集するまでは元の記述。 */
-    graph: string;
-    title: string;
-    /** 描画された図の置き場所（シェルのプレビュー面）。 */
-    host: HTMLElement;
-    figure?: HTMLElement;
-  };
 
   let {
     tools,
@@ -36,83 +31,40 @@
     headings?: Heading[];
     composition?: ArticleCompositionVisual;
   } = $props();
+
   let discoveredHeadings = $state<Heading[]>([]);
-  const headings = $derived(
-    suppliedHeadings.length ? suppliedHeadings : discoveredHeadings,
-  );
-  // 初回は推定値を描き、本文レイアウト後に実測値へ差し替える。
+  const headings = $derived(suppliedHeadings.length ? suppliedHeadings : discoveredHeadings);
+  // 初回はビルド時の推定値を描き、本文のレイアウト後に実測値へ差し替える。
   let measured = $state<ArticleCompositionVisual | undefined>(undefined);
   const shownComposition = $derived(measured ?? composition);
-  const tocRows = $derived(
-    headings.map(() => "min-content").join(" "),
-  );
+  const tocRows = $derived(headings.map(() => "min-content").join(" "));
+
   let active = $state("");
   let progress = $state(0);
-  let copyStatus = $state("");
+  let status = $state("");
   let tocOpen = $state(false);
   let enhancementsReady = $state(false);
   let desktopTocList = $state<HTMLOListElement | null>(null);
   let mobileTocList = $state<HTMLOListElement | null>(null);
-  /** 各見出し行が一覧の高さに占める割合。ミニマップはこれに射影する。 */
-  let tocSpans = $state<Array<{ id: string; start: number; end: number }>>([]);
-  let tocMarkerY = $state(0);
-  let tocMarkerHeight = $state(0);
-  let mobileMarkerY = $state(0);
-  let mobileMarkerHeight = $state(0);
+  let spans = $state<TocSpan[]>([]);
+  let desktopMarker = $state({ y: 0, height: 0 });
+  let mobileMarker = $state({ y: 0, height: 0 });
+
+  /** 目次から選んだ見出しは、スクロールが追いつくまで現在地として保つ。 */
   let requestedHeading = "";
-  let requestedHeadingTimeout:
-    | ReturnType<typeof globalThis.setTimeout>
-    | undefined;
-  const markerBleed = 2;
+  let requestTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
 
-  function activeRow(list: HTMLOListElement | null): HTMLLIElement | null {
-    return list?.querySelector<HTMLAnchorElement>('a[aria-current="location"]')
-      ?.closest<HTMLLIElement>("li") ?? null;
-  }
-
-  async function updateTocMarker() {
+  async function updateToc() {
     await tick();
-    const list = desktopTocList;
-    if (list) {
-      const total = list.offsetHeight || 1;
-      const rows = [...list.children] as HTMLElement[];
-      tocSpans = headings.flatMap((heading, index) => {
-        const row = rows[index];
-        return row
-          ? [{
-            id: heading.id,
-            start: row.offsetTop / total,
-            end: (row.offsetTop + row.offsetHeight) / total,
-          }]
-          : [];
-      });
-    }
-    const desktopRow = activeRow(desktopTocList);
-    if (desktopRow && desktopTocList) {
-      const top = Math.max(0, desktopRow.offsetTop - markerBleed);
-      const bottom = Math.min(
-        desktopTocList.offsetHeight,
-        desktopRow.offsetTop + desktopRow.offsetHeight + markerBleed,
-      );
-      tocMarkerY = top;
-      tocMarkerHeight = bottom - top;
-    }
-    const mobileRow = activeRow(mobileTocList);
-    if (mobileRow) {
-      mobileMarkerY = mobileRow.offsetTop;
-      mobileMarkerHeight = mobileRow.offsetHeight;
-    }
+    if (desktopTocList) spans = tocSpans(desktopTocList, headings.map((heading) => heading.id));
+    desktopMarker = markerBounds(desktopTocList) ?? desktopMarker;
+    mobileMarker = markerBounds(mobileTocList, 0) ?? mobileMarker;
   }
 
   $effect(() => {
     active;
     tocOpen;
-    void updateTocMarker();
-  });
-
-  // ヘッダと同じ開閉チャンネルを共有し、同時に開くパネルを1つに保つ。
-  $effect(() => {
-    if (tocOpen) announceHeaderDisclosure("toc");
+    void updateToc();
   });
 
   function dismissToc(event: KeyboardEvent) {
@@ -121,28 +73,31 @@
     tocOpen = false;
   }
 
-  function statusDuration(): number {
-    const value = getComputedStyle(document.documentElement)
-      .getPropertyValue("--motion-duration-status")
-      .trim();
-    const duration = Number.parseFloat(value);
-    if (!Number.isFinite(duration)) return 0;
-    return value.endsWith("ms")
-      ? duration
-      : value.endsWith("s")
-        ? duration * 1000
-        : duration;
+  function selectHeading(heading: Heading) {
+    tocOpen = false;
+    active = heading.id;
+    requestedHeading = heading.id;
+    clearTimeout(requestTimer);
+    requestTimer = globalThis.setTimeout(() => (requestedHeading = ""), 1200);
+  }
+
+  /** 読み上げ用の状態はページで1つ。一定時間後に空にして、同じ文言も繰り返し伝わるようにする。 */
+  let statusTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+  function report(message: string) {
+    status = message;
+    clearTimeout(statusTimer);
+    statusTimer = globalThis.setTimeout(
+      () => (status = ""),
+      Math.max(2400, motionDuration("status")),
+    );
   }
 
   onMount(() => {
     enhancementsReady = true;
-    const stopDisclosure = listenForHeaderDisclosure("toc", () => (tocOpen = false));
     const prose = root ?? document.querySelector<HTMLElement>(".prose");
-    if (!prose) return stopDisclosure;
-    const headingElements = [
-      ...prose.querySelectorAll<HTMLElement>("h2[id], h3[id]"),
-    ];
-    if (!headings.length) {
+    if (!prose) return;
+    const headingElements = [...prose.querySelectorAll<HTMLElement>("h2[id], h3[id]")];
+    if (!suppliedHeadings.length) {
       discoveredHeadings = headingElements.map((heading) => ({
         id: heading.id,
         text: heading.textContent?.replace("#", "").trim() ?? "",
@@ -151,330 +106,42 @@
     }
     active = headingElements[0]?.id ?? "";
 
-    const measureComposition = () => {
-      const total = prose.getBoundingClientRect().height;
-      if (!total) return;
-      const base = prose.getBoundingClientRect().top + globalThis.scrollY;
-      const blocks: Array<{
-        kind: "text" | "technical" | "media";
-        start: number;
-        end: number;
-        units: number;
-        characters: number;
-      }> = [];
-      for (const child of [...prose.children] as HTMLElement[]) {
-        const rect = child.getBoundingClientRect();
-        if (child.hidden || rect.height <= 0) continue;
-        const kind = child.matches("figure, picture, img, .mermaid-diagram, .link-card")
-          ? "media"
-          : child.matches("pre, table, .code-block, .katex-display") ||
-              child.querySelector(".katex-display")
-          ? "technical"
-          : "text";
-        const start = rect.top + globalThis.scrollY - base;
-        const end = start + rect.height;
-        const previous = blocks.at(-1);
-        if (previous && previous.kind === kind) {
-          previous.end = end;
-          previous.characters += child.textContent?.length ?? 0;
-          continue;
-        }
-        blocks.push({ kind, start, end, units: 0, characters: child.textContent?.length ?? 0 });
-      }
-      const sections = headingElements.map((heading, index) => {
-        const start = heading.getBoundingClientRect().top + globalThis.scrollY - base;
-        const next = headingElements[index + 1];
-        return {
-          id: heading.id,
-          start,
-          end: next ? next.getBoundingClientRect().top + globalThis.scrollY - base : total,
-          units: 0,
-        };
-      });
-      const normalize = <T extends { start: number; end: number; units: number }>(item: T) => {
-        item.units = Math.max(0, item.end - item.start);
-        item.start = Math.min(1, Math.max(0, item.start / total));
-        item.end = Math.min(1, Math.max(0, item.end / total));
-        return item;
-      };
-      measured = {
-        estimatedMinutes: composition?.estimatedMinutes ?? 0,
-        textCharacters: composition?.textCharacters ?? 0,
-        paperLayers: composition?.paperLayers ?? 1,
-        blocks: blocks.map(normalize),
-        sections: sections.map(normalize),
-      };
-    };
-    let measureFrame = 0;
-    const scheduleMeasure = () => {
-      if (measureFrame) return;
-      measureFrame = requestAnimationFrame(() => {
-        measureFrame = 0;
-        measureComposition();
-      });
-    };
-    const proseResizeObserver = new ResizeObserver(scheduleMeasure);
-    proseResizeObserver.observe(prose);
-    scheduleMeasure();
-
-    // 横スクロールする要素はキーボードから到達できる必要がある。
-    prose.querySelectorAll<HTMLElement>("pre").forEach((scroller) => {
-      scroller.tabIndex = 0;
-      scroller.setAttribute("role", "region");
-      scroller.setAttribute(
-        "aria-label",
-        scroller.closest<HTMLElement>(".code-block")?.dataset.title ??
-          (scroller.classList.contains("mermaid-source") ? "図の定義" : "コード"),
-      );
-    });
-
-    /*
-     * コードブロックは「ハイライト済みの描画」と「編集可能なソース」の2ビューになる。
-     * 編集されたブロックはプレビューにも読者のテキストを出し、2つのビューが食い違わないようにする。
-     */
-    const shells: BlockShell[] = [];
-    /** ライブリージョンは全ブロックで1つ。一定時間後に自動で空にする。 */
-    let statusTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
-    const report = (message: string) => {
-      copyStatus = message;
-      clearTimeout(statusTimer);
-      statusTimer = globalThis.setTimeout(
-        () => (copyStatus = ""),
-        Math.max(2400, statusDuration()),
-      );
-    };
-    prose.querySelectorAll<HTMLElement>(".code-block").forEach((block, index) => {
-      const source = block.querySelector("code")?.textContent ?? "";
-      const name = block.dataset.title ?? block.dataset.language ?? "コード";
-      const original = block.querySelector("pre");
-      let plain: HTMLPreElement | null = null;
-      const shell = createBlockShell({
-        block,
-        id: `code-${index}`,
-        name,
-        caption: block.dataset.title,
-        source,
-        onStatus: report,
-        onEdit: (value) => {
-          if (value === source) {
-            plain?.remove();
-            plain = null;
-            if (original) original.hidden = false;
-            return;
-          }
-          if (!plain) {
-            plain = document.createElement("pre");
-            plain.className =
-              "m-0 overflow-x-auto p-(--space-4) font-mono text-small leading-copy";
-            plain.tabIndex = 0;
-            plain.setAttribute("role", "region");
-            plain.setAttribute("aria-label", `${name}（編集中）`);
-            shell.preview.append(plain);
-          }
-          plain.textContent = value;
-          if (original) original.hidden = true;
+    const stops = [
+      observeComposition(prose, headingElements, composition, (value) => (measured = value)),
+      enhanceCodeBlocks(prose, report),
+      trackReadingPosition(prose, headingElements, {
+        requested: () => requestedHeading,
+        onChange: (state) => {
+          progress = state.progress;
+          active = state.active;
         },
-      });
-      block.dataset.enhanced = "true";
-      shells.push(shell);
-    });
+      }),
+    ];
+    const tocObserver = new ResizeObserver(() => void updateToc());
+    if (desktopTocList) tocObserver.observe(desktopTocList);
+    stops.push(() => tocObserver.disconnect());
 
-    const diagrams: DiagramRecord[] = [
-      ...prose.querySelectorAll<HTMLElement>(".mermaid-source"),
-    ].map((source, index) => {
-      const graph = source.textContent ?? "";
-      const title = source.dataset.title ?? "Mermaid diagram";
-      const block = document.createElement("div");
-      block.className = "diagram-block";
-      block.dataset.enhanced = "true";
-      source.replaceWith(block);
-      block.append(source);
-      source.hidden = true;
-      const record: DiagramRecord = { source, graph, title, host: block };
-      const shell = createBlockShell({
-        block,
-        id: `diagram-${index}`,
-        name: title,
-        caption: source.dataset.title,
-        previewName: "Diagram",
-        source: graph,
-        onStatus: report,
-        onEdit: (value) => {
-          record.graph = value;
-          scheduleDiagram();
-        },
+    // 図の描画・配色・拡大表示は図のある記事でだけ読み込む。
+    let disposed = false;
+    if (prose.querySelector(".mermaid-source")) {
+      void import("./diagrams/mermaid-diagrams.ts").then(({ enhanceDiagrams }) => {
+        if (!disposed) stops.push(enhanceDiagrams(prose, report));
       });
-      record.host = shell.preview;
-      shells.push(shell);
-      return record;
-    });
-    let mermaidGeneration = 0;
-    const renderMermaid = async () => {
-      if (!diagrams.length) return;
-      const generation = ++mermaidGeneration;
-      const theme =
-        document.documentElement.dataset.theme === "dark" ? "dark" : "neutral";
-      sharedMermaidQueue = sharedMermaidQueue
-        .catch(() => undefined)
-        .then(async () => {
-          if (generation !== mermaidGeneration) return;
-          const { default: mermaid } = await import("mermaid");
-          if (generation !== mermaidGeneration) return;
-          mermaid.initialize({
-            startOnLoad: false,
-            securityLevel: "strict",
-            theme,
-          });
-          const rendered: Array<HTMLElement | null> = [];
-          for (const record of diagrams) {
-            try {
-              const { svg } = await mermaid.render(
-                `mermaid-${++mermaidRenderId}`,
-                record.graph,
-              );
-              const figure = document.createElement("figure");
-              figure.className = "mermaid-diagram";
-              figure.setAttribute("role", "img");
-              // 横スクロールするためキーボードから到達できるようにする。
-              figure.setAttribute("tabindex", "0");
-              figure.setAttribute("aria-label", record.title);
-              figure.innerHTML = svg;
-              const drawing = figure.querySelector("svg");
-              drawing?.setAttribute("aria-hidden", "true");
-              // 元幅の9割を下回るとラベルが読めなくなるため、以降は縮小せずスクロールさせる。
-              const authored = drawing?.viewBox?.baseVal?.width ?? 0;
-              if (authored) {
-                figure.style.setProperty(
-                  "--mermaid-legible-width",
-                  `${Math.round(authored * 0.9)}px`,
-                );
-              }
-              rendered.push(figure);
-            } catch {
-              rendered.push(null);
-            }
-          }
-          if (generation !== mermaidGeneration) return;
-          diagrams.forEach((record, index) => {
-            const figure = rendered[index];
-            if (figure) {
-              if (record.figure) record.figure.replaceWith(figure);
-              else record.host.append(figure);
-              record.figure = figure;
-              record.source.hidden = true;
-              record.source.removeAttribute("aria-label");
-              return;
-            }
-            if (record.figure) {
-              record.source.hidden = true;
-              return;
-            }
-            record.source.hidden = false;
-            record.source.setAttribute(
-              "aria-label",
-              `${record.title}を表示できませんでした`,
-            );
-          });
-        })
-        .catch(() => {
-          if (generation !== mermaidGeneration) return;
-          diagrams.forEach((record) => {
-            if (record.figure) return;
-            record.source.hidden = false;
-            record.source.setAttribute(
-              "aria-label",
-              `${record.title}を表示できませんでした`,
-            );
-          });
-        });
-      await sharedMermaidQueue;
-    };
-    /** 入力そのものではなく、入力が止まったことを再描画の契機にする。 */
-    let diagramTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
-    const scheduleDiagram = () => {
-      clearTimeout(diagramTimer);
-      diagramTimer = globalThis.setTimeout(() => void renderMermaid(), 420);
-    };
-    void renderMermaid();
-    const themeObserver = new MutationObserver((records) => {
-      if (records.some((record) => record.attributeName === "data-theme"))
-        void renderMermaid();
-    });
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
-
-    let frame = 0;
-    const updateReadingState = () => {
-      frame = 0;
-      const rect = prose.getBoundingClientRect();
-      const available = rect.height - window.innerHeight;
-      progress =
-        available <= 0
-          ? 100
-          : Math.min(100, Math.max(0, (-rect.top / available) * 100));
-      const offset = headingElements[0]
-        ? Number.parseFloat(
-            getComputedStyle(headingElements[0]).scrollMarginTop,
-          ) || 0
-        : 0;
-      if (requestedHeading) {
-        active = requestedHeading;
-        return;
-      }
-      // アンカー線から画面の1/4下。見出しが最上部に達する前に現在地として扱う。
-      const activation = offset + globalThis.innerHeight * 0.24;
-      let current = headingElements[0]?.id ?? "";
-      for (const heading of headingElements) {
-        if (heading.getBoundingClientRect().top <= activation)
-          current = heading.id;
-        else break;
-      }
-      active = current;
-    };
-    const scheduleReadingState = () => {
-      if (frame) return;
-      frame = requestAnimationFrame(updateReadingState);
-    };
-    updateReadingState();
-    addEventListener("scroll", scheduleReadingState, { passive: true });
-    addEventListener("resize", scheduleReadingState);
-    const tocResizeObserver = new ResizeObserver(() => void updateTocMarker());
-    if (desktopTocList) tocResizeObserver.observe(desktopTocList);
+    }
 
     return () => {
-      stopDisclosure();
-      mermaidGeneration += 1;
-      themeObserver.disconnect();
-      tocResizeObserver.disconnect();
-      proseResizeObserver.disconnect();
-      if (measureFrame) cancelAnimationFrame(measureFrame);
-      if (frame) cancelAnimationFrame(frame);
-      clearTimeout(diagramTimer);
+      disposed = true;
+      for (const stop of stops.reverse()) stop();
       clearTimeout(statusTimer);
-      diagrams.forEach((record) => record.figure?.remove());
-      shells.forEach((shell) => shell.destroy());
-      removeEventListener("scroll", scheduleReadingState);
-      removeEventListener("resize", scheduleReadingState);
-      if (requestedHeadingTimeout !== undefined)
-        clearTimeout(requestedHeadingTimeout);
+      clearTimeout(requestTimer);
     };
   });
 
   const tocTriggerClass =
     "mobile-toc-trigger group/toc flex w-full min-h-(--control-size) cursor-pointer list-none items-center justify-start gap-(--space-2) border border-t-0 border-rule bg-(--color-glass) px-(--space-4) font-sans text-small tracking-ui text-ink backdrop-blur-glass pressable [--press-scale:1] [--press-shift:0px] rounded-b-none transition-[border-radius] duration-(--motion-duration-fast) ease-signature data-[state=closed]:rounded-b-ui-large data-[state=closed]:duration-(--motion-duration-fast) data-[state=closed]:delay-(--motion-duration-base) [details:not([open])>&]:rounded-b-ui-large motion-off:transition-none [&::-webkit-details-marker]:hidden";
-
-  function selectHeading(heading: Heading) {
-    tocOpen = false;
-    active = heading.id;
-    requestedHeading = heading.id;
-    if (requestedHeadingTimeout !== undefined)
-      clearTimeout(requestedHeadingTimeout);
-    requestedHeadingTimeout = globalThis.setTimeout(() => {
-      requestedHeading = "";
-    }, 1200);
-  }
+  /** 目次の縦罫と、その上を動く追従バー。位置は --toc-marker-y / --toc-marker-height で渡す。 */
+  const markerRail =
+    "toc-list relative m-0 list-none before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-off:after:duration-(--motion-duration-immediate)";
 </script>
 
 {#snippet tocGlyph()}
@@ -521,11 +188,11 @@
   <span class="block h-full w-(--reading-progress) bg-signal" style={`--reading-progress:${progress}%`}></span>
 </div>
 
-<p class="copy-status absolute size-px overflow-hidden whitespace-nowrap [clip:rect(0,0,0,0)]" aria-live="polite">{copyStatus}</p>
+<p class="absolute size-px overflow-hidden whitespace-nowrap [clip:rect(0,0,0,0)]" aria-live="polite">{status}</p>
 
 {#if headings.length || tools}
 <div class={cn(
-  "reading-rail sticky top-[calc(var(--site-header-block)+var(--space-3))] grid gap-y-(--space-6) self-start max-read:static max-read:gap-y-0 read-wide:top-(--article-anchor-offset)",
+  "sticky top-[calc(var(--site-header-block)+var(--space-3))] grid gap-y-(--space-6) self-start max-read:static max-read:gap-y-0 read-wide:top-(--article-anchor-offset)",
   "read:max-read-wide:col-start-2 read:max-read-wide:row-start-1 read:max-read-wide:row-span-2",
   "read:max-h-[calc(100dvh-var(--site-header-block)-var(--space-6))] read-wide:max-h-[calc(100dvh-var(--article-anchor-offset)-var(--space-6))]",
   headings.length > 0 && "read-wide:grid-rows-[minmax(0,1fr)_auto]",
@@ -533,14 +200,14 @@
 {#if headings.length}
   <aside class="desktop-toc min-h-0 overflow-auto pl-(--space-2) max-read-wide:hidden" aria-label="目次" data-ready={enhancementsReady}>
     <p class="mb-(--space-4) border-b border-rule pb-(--space-2) font-sans text-caption tracking-label text-quiet">目次</p>
-    <div class="toc-composition relative">
+    <div class="relative">
       {#if shownComposition}
-        <span class="pointer-events-none absolute top-0 bottom-0 left-0 z-(--z-base) w-12"><ArticleCompositionGraph composition={shownComposition} spans={tocSpans} id="detail-toc" /></span>
+        <span class="pointer-events-none absolute top-0 bottom-0 left-0 z-(--z-base) w-12"><ArticleCompositionGraph composition={shownComposition} {spans} id="detail-toc" /></span>
       {/if}
       <ol
-        class="toc-list relative m-0 grid list-none grid-rows-(--toc-rows) pl-(--space-16) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-reduced:after:duration-(--motion-duration-immediate) motion-off:after:duration-(--motion-duration-immediate)"
+        class={cn(markerRail, "grid grid-rows-(--toc-rows) pl-(--space-16)")}
         bind:this={desktopTocList}
-        style={`--toc-marker-y:${tocMarkerY}px;--toc-marker-height:${tocMarkerHeight}px;--toc-rows:${tocRows}`}
+        style={`--toc-marker-y:${desktopMarker.y}px;--toc-marker-height:${desktopMarker.height}px;--toc-rows:${tocRows}`}
       >
         {@render tocItems()}
       </ol>
@@ -549,7 +216,7 @@
 {/if}
 
   {#if tools}
-    <div class="reading-tools @container max-read:hidden">{@render tools()}</div>
+    <div class="@container max-read:hidden">{@render tools()}</div>
   {/if}
 </div>
 {/if}
@@ -568,18 +235,18 @@
       <Collapsible.Trigger class={tocTriggerClass}>
         {@render tocGlyph()}<span>目次</span>
       </Collapsible.Trigger>
-      <Collapsible.Content class="mobile-toc-content absolute top-full left-0 z-(--z-overlay) w-full origin-top-left overflow-hidden rounded-b-ui-large border border-t-0 border-rule bg-(--color-glass) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-toc-open data-[state=closed]:animate-toc-close motion-reduced:animate-none motion-off:animate-none">
+      <Collapsible.Content class="mobile-toc-content absolute top-full left-0 z-(--z-overlay) w-full origin-top-left overflow-hidden rounded-b-ui-large border border-t-0 border-rule bg-(--color-glass) shadow-ui-overlay backdrop-blur-glass data-[state=open]:animate-toc-open data-[state=closed]:animate-toc-close motion-off:animate-none">
         <nav class="p-(--space-3) pb-(--radius-large)" aria-label="目次">
           <ol
-            class="toc-list relative m-0 list-none pl-(--space-3) before:absolute before:top-0 before:bottom-0 before:left-0 before:w-px before:bg-rule before:content-[''] after:absolute after:top-0 after:left-0 after:h-(--toc-marker-height) after:w-0.5 after:transform-[translateY(var(--toc-marker-y))] after:bg-ink after:content-[''] after:transition-[height,transform] after:duration-(--motion-duration-micro) after:ease-enter motion-reduced:after:duration-(--motion-duration-immediate) motion-off:after:duration-(--motion-duration-immediate)"
+            class={cn(markerRail, "pl-(--space-3)")}
             bind:this={mobileTocList}
-            style={`--toc-marker-y:${mobileMarkerY}px;--toc-marker-height:${mobileMarkerHeight}px`}
+            style={`--toc-marker-y:${mobileMarker.y}px;--toc-marker-height:${mobileMarker.height}px`}
           >{@render tocItems()}</ol>
         </nav>
       </Collapsible.Content>
     </Collapsible.Root>
 
-    <details class="mobile-toc mobile-toc-no-js hidden border-b border-rule in-data-[ready=false]:block">
+    <details class="mobile-toc hidden border-b border-rule in-data-[ready=false]:block">
       <summary class={tocTriggerClass}>
         {@render tocGlyph()}<span>目次</span>
       </summary>

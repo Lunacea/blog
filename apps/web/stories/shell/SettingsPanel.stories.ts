@@ -12,6 +12,6 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {};
 
-export const DarkReduced: Story = {
-  globals: { theme: "dark", motion: "reduced" },
+export const DarkOff: Story = {
+  globals: { theme: "dark", motion: "off" },
 };

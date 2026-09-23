@@ -50,12 +50,12 @@
 /*
   読み幅が画面に制限されている幅では、帯を左端まで伸ばす。
   閾値は「100% - gutter×2 が --prose-width を下回る」点、つまり 38em + gutter×2 = 40.25rem。
-  文字の位置は動かしたくないので、外へ出したぶんだけ左の padding で戻す。
+  外へ出したぶんだけ左の padding で戻し、見出しの文字を本文の左端に揃える。
 */
 @media (width < 40.25rem) {
   .prose h2 {
     margin-left: calc(var(--layout-gutter) * -1);
-    padding-left: calc(var(--layout-gutter) + var(--space-4));
+    padding-left: var(--layout-gutter);
   }
 }
 
@@ -134,11 +134,14 @@
   line-height: var(--leading-copy);
 }
 
+/* ツールチップが端のボタンから外へはみ出せるよう、ブロック自身では切り取らない。 */
 .code-block {
   --block-ink: var(--color-code-foreground);
+  --block-ground: var(--color-code-background);
+  --tooltip-ground: var(--block-ink);
+  --tooltip-ink: var(--block-ground);
   position: relative;
   z-index: calc(var(--z-controls) + 1);
-  overflow: hidden;
   margin-block: var(--space-8);
   border: var(--border-width-rule) solid var(--color-line);
   background: var(--color-code-background);
@@ -149,11 +152,7 @@
 .code-block pre,
 .code-block pre.shiki {
   background: transparent !important;
-  color: var(--shiki-dark, var(--color-code-foreground)) !important;
-}
-
-.code-block span {
-  color: var(--shiki-dark, inherit) !important;
+  color: var(--code-foreground) !important;
 }
 
 .code-block code,
@@ -183,6 +182,9 @@
 
 .diagram-block {
   --block-ink: var(--color-foreground);
+  --block-ground: var(--color-surface);
+  --tooltip-ground: var(--block-ink);
+  --tooltip-ink: var(--block-ground);
   position: relative;
   z-index: calc(var(--z-controls) + 1);
   margin-block: var(--space-8);
@@ -194,6 +196,60 @@
   z-index: auto;
   margin: 0;
   border: 0;
+}
+
+/* 図を開いている間は、背後の記事をスクロールさせない。html は scrollbar-gutter で幅を保つ。 */
+html:has(.diagram-dialog[open]) {
+  overflow: hidden;
+}
+
+/* 背景は面と同じ長さで溶かす。::backdrop は motion 設定の一括指定（*）に含まれないので個別に止める。 */
+.diagram-dialog[data-state="open"]::backdrop {
+  animation: backdrop-in var(--motion-duration-base) var(--motion-ease-enter) both;
+}
+
+.diagram-dialog[data-state="closed"]::backdrop {
+  animation: backdrop-out var(--motion-duration-exit) var(--motion-ease-exit) both;
+}
+
+html:not([data-motion="full"]) .diagram-dialog::backdrop {
+  animation: none;
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* 拡大表示では枠を外し、元の寸法を下限に、幅に余裕があれば2倍まで大きく描く。 */
+.diagram-dialog .mermaid-diagram {
+  overflow: visible;
+  /* 幅は面いっぱいに取り、縦は余白があれば中央に置く。はみ出すと auto margin が 0 になる。 */
+  width: 100%;
+  margin: auto 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.diagram-dialog .mermaid-diagram svg {
+  display: block;
+  width: clamp(
+    var(--mermaid-natural-width, 100%),
+    100%,
+    calc(var(--mermaid-natural-width, 100%) * 2)
+  );
+  min-width: var(--mermaid-natural-width, 0);
+  margin-inline: auto;
+  /* Mermaid が SVG に書く max-width の style 属性を、拡大表示の中でだけ外す。 */
+  max-width: none !important;
 }
 
 .code-block .highlighted {

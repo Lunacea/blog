@@ -10,6 +10,8 @@
   --color-weather-water-shadow: #152c3b;
   --color-weather-snow: #f4f7f8;
   --color-weather-light: #eedbb0;
+  --color-weather-dusk: #e8a66d;
+  --color-weather-moon: #a8bccf;
   --text-masthead: var(--type-size-masthead);
   --text-index: var(--type-size-index);
   --text-prose-h2: var(--type-size-prose-h2);
@@ -30,9 +32,6 @@
 @theme {
   --color-paper: var(--color-surface);
   --color-card: var(--color-card-stock);
-  --shadow-paper:
-    0 1px 0 var(--color-rule),
-    0 4px 12px light-dark(rgb(16 47 35 / 12%), rgb(0 0 0 / 46%));
   --animate-opening-resolve: opening-resolve 1250ms var(--ease-enter) both;
   --animate-disc-arrive: disc-arrive 1000ms var(--ease-spring) 220ms both;
   --animate-card-arrive: card-arrive 900ms var(--ease-spring) 480ms backwards;
@@ -41,8 +40,28 @@
 :root {
   --color-card-stock: light-dark(#ffffff, #080808);
   --color-praise: light-dark(#9b3a34, #c96a61);
-  --color-code-background: #161616;
+  /* 暗いテーマでは紙面（surface）とほぼ同じ明るさになるので、一段沈めてブロックとして読ませる。 */
+  --color-code-background: light-dark(#161616, #0c0c0c);
   --color-code-foreground: #eeeeec;
+  /*
+    コードの配色は青と黄を主にする。構文の骨組み（キーワード・プロパティ）を青、選択子と関数を
+    水色、値（文字列）を黄、数値と単位を橙に置く。淡い色どうしは暗い地で溶け合うため、彩度を
+    保って明度と色相で区分を分け、地の文字はわずかに落として眩しさを抑える。どれも 4.9:1 以上。
+  */
+  --code-foreground: #d5d9df;
+  --code-background: transparent;
+  --code-token-keyword: #5e9bff;
+  --code-token-function: #4fc1e9;
+  --code-token-link: #5e9bff;
+  --code-token-string: #f5c542;
+  --code-token-string-expression: #e8b13a;
+  --code-token-constant: #ff9d4d;
+  --code-token-parameter: #b7c3d4;
+  --code-token-punctuation: #8b919a;
+  --code-token-comment: #80868f;
+  --code-token-inserted: #4fc1e9;
+  --code-token-deleted: #ff9d4d;
+  --code-token-changed: #f5c542;
   --color-print-background: #fff;
   --color-print-foreground: #000;
 
@@ -98,7 +117,7 @@
     --color-praise var(--motion-duration-base) var(--motion-ease-signature);
 }
 
-:root[data-theme-transition="active"] {
+:root[data-theme-transition] {
   transition: none;
 }
 

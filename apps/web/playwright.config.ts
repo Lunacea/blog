@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { headlessBrowserEnv } from "./scripts/browser-env.ts";
 
 // 各テストは @desktop / @mobile / @nojs で対象面を宣言し、プロジェクト側が選択する。
 // 本文で skip せず選択することで、対象外のブラウザコンテキストを開かずに済む。
@@ -12,10 +13,13 @@ export default defineConfig({
   expect: { timeout: 8_000 },
   forbidOnly: Boolean(Deno.env.get("CI")),
   retries: Deno.env.get("CI") ? 2 : 0,
-  workers: 2,
+  // 背景の WebGL は @webgl のテストだけが使うので、並列を上げても CPU を奪い合わない。
+  // GitHub の標準ランナーも 4 コアある。
+  workers: 4,
   reporter: Deno.env.get("CI") ? [["html", { open: "never" }], ["github"]] : "list",
   use: {
     baseURL: Deno.env.get("E2E_BASE_URL") ?? "http://127.0.0.1:4173",
+    launchOptions: { env: headlessBrowserEnv() },
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

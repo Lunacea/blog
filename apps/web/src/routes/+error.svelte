@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import HeaderSearch from "$lib/shell/HeaderSearch.svelte";
+  import SearchForm from "$lib/articles/SearchForm.svelte";
   import LiquidDistortion from "$lib/visuals/LiquidDistortion.svelte";
   import { actionVariants } from "@lunacea/ui/primitives";
   import { siteConfig } from "@lunacea/config";
@@ -46,7 +46,7 @@
     <h2 class="sr-only">記事を検索</h2>
     <!-- 素の GET。スクリプトが届く前から動く。本文より一段狭くして、見出しの列に収める。 -->
     <div class="mt-(--space-10) flex w-full max-w-lg justify-center">
-      <HeaderSearch variant="static" />
+      <SearchForm />
     </div>
   </section>
 </div>

@@ -1,9 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
 import {
   ARTICLE,
   HYDRATED,
   motionOff,
   REACTION_ARTICLE,
+  test,
   themeToggle,
   weatherReading,
 } from "./support.ts";
@@ -206,6 +207,33 @@ test("code and diagram blocks pair a rendered view with an editable source", {
   await (await themeToggle(page)).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect.poll(() => drawing.getAttribute("id")).not.toBe(lightDrawing);
+  // 先に描いておいた暗いテーマの図も、暗いテーマのトークンで塗られている。
+  // ページの色トークンは切り替え直後に一瞬だけ補間されるので、落ち着くまで待って比べる。
+  await expect.poll(() =>
+    diagram.locator(".nodeLabel").first().evaluate((label) =>
+      getComputedStyle(label).color ===
+        getComputedStyle(document.documentElement).getPropertyValue("--color-foreground").trim()
+    )
+  ).toBe(true);
+  // 戻すときは描き直さず、控えておいた図へ差し替える。
+  await (await themeToggle(page)).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect.poll(() => drawing.getAttribute("id")).toBe(lightDrawing);
+
+  // 拡大は図そのものをモーダルへ移し、閉じると元の場所とフォーカスへ戻す。
+  const expand = diagram.getByRole("button", { name: /を拡大$/u });
+  await expand.click();
+  const zoom = page.getByRole("dialog", { name: "ボタンの状態遷移" });
+  await expect(zoom.locator(".mermaid-diagram svg")).toBeVisible();
+  await expect(drawing).toHaveCount(0);
+  // 開いている間は背後の記事が動かない。
+  const resting = await page.evaluate(() => scrollY);
+  await page.mouse.wheel(0, 600);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(resting);
+  await page.keyboard.press("Escape");
+  await expect(zoom).toBeHidden();
+  await expect(drawing).toBeVisible();
+  await expect(expand).toBeFocused();
 
   await diagram.getByRole("tab", { name: "Source" }).click();
   await diagram.locator("textarea").fill("graph LR\n  A[Alpha] --> B[Beta]");
@@ -228,15 +256,29 @@ test("anonymous praise and share stay available", { tag: ["@desktop"] }, async (
   expect((await praise.locator(".heart-glyph").boundingBox())?.width ?? 0).toBeGreaterThan(32);
   await expect(praise.locator(".heart-glyph")).toHaveCSS("transition-property", /scale/);
 
+  const celebration = praise.locator("span[data-celebrating]");
+  const animationStarted = celebration.evaluate((element) =>
+    new Promise<string>((resolve) => {
+      const read = () => {
+        if (element.dataset.celebrating !== "true") return false;
+        resolve(getComputedStyle(element).animationName);
+        return true;
+      };
+      if (read()) return;
+      const observer = new MutationObserver(() => {
+        if (!read()) return;
+        observer.disconnect();
+      });
+      observer.observe(element, { attributes: true, attributeFilter: ["data-celebrating"] });
+    })
+  );
   await praise.click();
-  // 祝いは 900ms で消える。先に永続する状態を確かめると、測る前に居なくなる。
-  const celebration = page.locator("[data-praise-celebration]");
-  await expect(celebration).toHaveCSS("animation-name", /praise-liquid/u);
+  expect(await animationStarted).toMatch(/praise-liquid/u);
   expect((await celebration.boundingBox())?.width ?? 999).toBeLessThan(120);
   await expect(praise).toHaveAttribute("aria-pressed", "true");
   await expect(praise).toHaveCSS("background-color", idle);
   await expect(praise.locator(".heart-glyph")).toHaveAttribute("data-filled", "true");
-  await expect(celebration).toHaveCount(0, { timeout: 5_000 });
+  await expect(celebration).toHaveAttribute("data-celebrating", "false", { timeout: 5_000 });
 
   await page.reload();
   await expect(page.getByRole("button", { name: "称賛を取り消す" }))

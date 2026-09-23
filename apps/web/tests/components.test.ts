@@ -57,7 +57,6 @@ describe("display preferences", () => {
     expect(companionDisplay.getAttribute("aria-label")).toContain("アニメーション: OFF");
     await fireEvent.click(companionDisplay);
     expect(display.getAttribute("aria-label")).toContain("アニメーション: ON");
-    expect(document.documentElement.dataset.motionPreference).toBe("full");
     expect(localStorage.getItem("lunacea-motion")).toBe("full");
     expect(display.getAttribute("aria-describedby")).not.toBe(
       companionDisplay.getAttribute("aria-describedby"),

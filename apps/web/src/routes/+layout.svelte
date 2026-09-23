@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { installAnchorNavigation, installPageTransitions } from "$lib/navigation/page-transitions.ts";
+  import { installAnchorNavigation } from "$lib/navigation/anchor-navigation.ts";
+  import { installPageTransitions } from "$lib/navigation/page-transitions.ts";
   import { installScrollInertia } from "$lib/navigation/scroll-inertia.ts";
   import SettingsPanel from "$lib/preferences/SettingsPanel.svelte";
   import ThemeToggle from "$lib/preferences/ThemeToggle.svelte";
@@ -33,6 +34,7 @@
 
 <a class="fixed top-(--space-2) left-(--space-2) z-(--z-skip-link) min-h-control-size translate-y-[-150%] bg-panel px-(--space-4) py-(--space-3) transition-transform duration-(--motion-duration-fast) ease-enter focus:translate-y-0" href="#main-content">本文へ移動</a>
 <FontPreloads />
+<WeatherField />
 {#if !masthead}
   <SiteHeader navigation={primaryNavigation} pathname={page.url.pathname}>
     {#snippet theme()}<ThemeToggle />{/snippet}
@@ -40,7 +42,6 @@
   </SiteHeader>
 {/if}
 <main class="relative z-(--z-visual)" id="main-content">
-  <WeatherField />
   <div class="route-content">
     {@render children()}
   </div>

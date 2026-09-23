@@ -45,7 +45,7 @@
   target="_blank"
 >
   {#if resolved.image}
-    <span class="preview-media grid size-full place-items-center bg-canvas p-2 max-xs:p-1">
+    <span class="grid size-full place-items-center bg-canvas p-2 max-xs:p-1">
       <img class="max-h-full max-w-full object-contain" src={resolved.image} alt={imageAlt} loading="lazy" />
     </span>
   {/if}

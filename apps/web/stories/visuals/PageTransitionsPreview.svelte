@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { canUsePageTransition } from "$lib/navigation/page-transitions.ts";
+  import { canAnimateRoutes } from "$lib/navigation/page-transitions.ts";
 
   let frame = $state<"index" | "detail">("index");
   let transitionRuns = $state(0);
@@ -24,7 +24,7 @@
     const update = () => {
       frame = frame === "index" ? "detail" : "index";
     };
-    if (!canUsePageTransition({ type: "goto" })) {
+    if (!canAnimateRoutes()) {
       update();
       return;
     }

@@ -11,7 +11,7 @@ const meta = {
     bio: "UIデザインとWeb開発を中心に、設計から実装までを手がけています。",
     github: "https://github.com/example",
     x: "https://x.com/example",
-    email: "mailto:hello@example.com",
+    email: "hello@example.com",
     class: "max-w-(--profile-card-print)",
   },
 } satisfies Meta<typeof ProfileCard>;

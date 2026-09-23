@@ -39,5 +39,13 @@ export default defineConfig({
     fs: {
       allow: ["../.."],
     },
+    // 開発時は最初の画面遷移で各ページのモジュールを変換するため数秒待たされる。起動時に済ませる。
+    warmup: {
+      clientFiles: [
+        "./src/routes/**/+{page,layout}.svelte",
+        "./src/lib/**/*.svelte",
+        "../../packages/content/entries/**/*.svx",
+      ],
+    },
   },
 });

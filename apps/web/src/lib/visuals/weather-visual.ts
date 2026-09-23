@@ -2,7 +2,7 @@ import type { WeatherState } from "@lunacea/schemas";
 
 export type WeatherVisualCondition = "clear" | "cloudy" | "rain" | "snow" | "neutral";
 export type WeatherVisualIntensity = "passing" | "steady";
-export type WeatherVisual = {
+type WeatherVisual = {
   condition: WeatherVisualCondition;
   intensity: WeatherVisualIntensity;
 };

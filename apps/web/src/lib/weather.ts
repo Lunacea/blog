@@ -15,22 +15,6 @@ export type WeatherContextState = {
   loaded: boolean;
 };
 
-/**
- * 事前描画されたページでも問い合わせの完了前から地色を決められるよう、読みをブラウザに残す。
- * app.html の描画前スクリプトは古すぎる読みを捨てる。
- */
-function publishSky(visual: WeatherVisualCondition, intensity: WeatherVisualIntensity) {
-  const root = document.documentElement;
-  root.dataset.weather = visual;
-  root.dataset.intensity = intensity;
-  try {
-    localStorage.setItem(
-      "lunacea-weather",
-      JSON.stringify({ v: visual, i: intensity, t: Date.now() }),
-    );
-  } catch { /* ストレージは任意。 */ }
-}
-
 function weatherUrl(): string {
   const location = siteConfig.defaultLocation;
   return "/api/v1/weather?" + new URLSearchParams({
@@ -69,7 +53,6 @@ export async function loadFixedLocationWeather(
     const weather = weatherStateSchema.parse(await response.json());
     const { condition, intensity } = applyPassingWeather(normalizeWeatherVisualCondition(weather));
     state.set({ visual: condition, intensity, loaded: true });
-    publishSky(condition, intensity);
   } catch {
     if (signal?.aborted) return;
     state.set({ visual: "neutral", intensity: "steady", loaded: true });

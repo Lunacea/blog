@@ -13,26 +13,18 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# 互いに依存しない検査を別のジョブで並行させる。以前は1つのジョブで順に回していた。
 jobs:
-  quality:
-    name: Format, lint, test, build, E2E
+  static:
+    name: Format, lint, types, unit tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set up Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
-          cache: true
-
-      - name: Generate content manifests
-        run: deno task content:generate
-
-      - name: Install locked dependencies
-        run: deno install --frozen --allow-scripts=npm:sharp
+      - name: Set up the workspace
+        uses: ./.github/actions/setup
 
       - name: Check formatting
         run: deno task fmt:check
@@ -40,26 +32,33 @@ jobs:
       - name: Lint
         run: deno task lint
 
-      - name: Validate content and Svelte types
-        run: deno task check
-
       - name: Check design system
         run: deno task design:check
 
+      - name: Validate Svelte types
+        run: deno task --cwd apps/web check
+
       - name: Run Deno and component tests
         run: deno task test
+
+  e2e:
+    name: Build, budget, E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up the workspace
+        uses: ./.github/actions/setup
+        with:
+          browser: "true"
 
       - name: Build application
         run: deno task --cwd apps/web build:prepared
 
       - name: Check article JavaScript budget
         run: deno task budget:check
-
-      - name: Install Chromium
-        run: deno run -A npm:playwright@1.61.1 install --with-deps chromium
-
-      - name: Check Storybook
-        run: deno task storybook:check
 
       - name: Run Playwright and axe
         env:
@@ -76,3 +75,19 @@ jobs:
             apps/web/test-results
           if-no-files-found: ignore
           retention-days: 7
+
+  storybook:
+    name: Storybook
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up the workspace
+        uses: ./.github/actions/setup
+        with:
+          browser: "true"
+
+      - name: Check Storybook
+        run: deno task storybook:check

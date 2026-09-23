@@ -1,12 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { subscribeMotionCapabilities } from "$lib/preferences/preferences.ts";
+  import { hasRenderingHeadroom, subscribeMotionCapabilities } from "$lib/preferences/preferences.ts";
+  import type { EditorialLightOptions } from "./editorial-light.ts";
   import StaticLight from "./StaticLight.svelte";
   import type { WeatherVisualCondition, WeatherVisualIntensity } from "./weather-visual.ts";
 
-  let { condition = "neutral", intensity = "steady" }: {
+  let { condition = "neutral", intensity = "steady", options }: {
     condition?: WeatherVisualCondition;
     intensity?: WeatherVisualIntensity;
+    /** 開発時の確認用の指定。本番では渡さない。 */
+    options?: EditorialLightOptions;
   } = $props();
   let host: HTMLDivElement;
   let enabled = $state(false);
@@ -26,8 +29,7 @@
       !matchMedia("(prefers-reduced-motion: reduce)").matches &&
       !matchMedia("(forced-colors: active)").matches &&
       !(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData &&
-      ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4) > 2 &&
-      (navigator.hardwareConcurrency || 4) > 2;
+      hasRenderingHeadroom();
     const stop = () => {
       generation++;
       destroy?.();
@@ -45,7 +47,7 @@
       try {
         const { mountEditorialLight } = await import("./editorial-light.ts");
         if (disposed || failed || ticket !== generation || !eligible() || !visible || document.hidden) return;
-        const scene = mountEditorialLight(host, () => { failed = true; stop(); });
+        const scene = mountEditorialLight(host, () => { failed = true; stop(); }, options);
         destroy = scene.destroy;
         resume = scene.resume;
         apply = scene.setCondition;
