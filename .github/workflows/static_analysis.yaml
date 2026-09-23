@@ -31,6 +31,9 @@ jobs:
       - name: Generate content manifests
         run: deno task content:generate
 
+      - name: Generate font subsets
+        run: deno task fonts:generate
+
       - name: Install locked dependencies
         run: deno install --frozen --allow-scripts=npm:sharp
 
@@ -55,8 +58,8 @@ jobs:
       - name: Check article JavaScript budget
         run: deno task budget:check
 
-      - name: Build Storybook
-        run: deno task --cwd packages/ui build:prepared
+      - name: Check Storybook
+        run: deno task storybook:check
 
       - name: Install Chromium
         run: deno run -A npm:playwright@1.61.1 install --with-deps chromium

@@ -12,6 +12,7 @@ APIを同じアプリの`/api/v1`へ組み込んでいます。
 
 ```bash
 deno task content:generate
+deno task fonts:generate
 deno install --frozen --allow-scripts=npm:sharp
 cp .env.example .env
 deno task dev

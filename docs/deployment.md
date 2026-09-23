@@ -8,6 +8,7 @@ DeployとCloudflareの画面に表示されたものを正として転記しま�
 
 ```bash
 deno task content:generate
+deno task fonts:generate
 deno install --frozen --allow-scripts=npm:sharp
 deno task fmt:check
 deno task lint

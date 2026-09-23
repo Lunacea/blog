@@ -51,6 +51,9 @@ jobs:
       - name: Generate content manifests
         run: deno task content:generate
 
+      - name: Generate font subsets
+        run: deno task fonts:generate
+
       - name: Install locked dependencies
         run: deno install --frozen --allow-scripts=npm:sharp
 
