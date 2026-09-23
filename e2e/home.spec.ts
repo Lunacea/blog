@@ -58,15 +58,22 @@ test("the opening runs on every document load, clears itself and skips reduced m
   await page.addInitScript(() => {
     localStorage.setItem("lunacea-motion", "full");
     sessionStorage.clear();
+    // オープニングは 1.2 秒で終わるので、読み込みが遅いと load の時点ではもう印が消えている。
+    // 描画前スクリプトが宣言した値を、文書の組み立て直後に控えておく。
+    document.addEventListener("DOMContentLoaded", () => {
+      (globalThis as typeof globalThis & { __opening?: string }).__opening =
+        document.documentElement.dataset.homeOpening ?? "";
+    }, { once: true });
   });
+  const openedAtStart = () =>
+    page.evaluate(() => (globalThis as typeof globalThis & { __opening?: string }).__opening);
   await page.goto("/");
-  // インラインスクリプトが初回描画前にオープニングを宣言するため、この時点で既に有効。
-  await expect(page.locator("html")).toHaveAttribute("data-home-opening", "active");
+  expect(await openedAtStart()).toBe("active");
   await complete(page);
   await expect(page.locator("html")).not.toHaveAttribute("data-home-opening", /.+/u, HYDRATED);
   await expect(page.locator(".home-opening")).toHaveCount(0);
   await page.reload();
-  await expect(page.locator("html")).toHaveAttribute("data-home-opening", "active");
+  expect(await openedAtStart()).toBe("active");
   await expect(page.locator("html")).not.toHaveAttribute("data-home-opening", /.+/u, HYDRATED);
   await context.close();
 

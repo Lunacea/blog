@@ -208,11 +208,13 @@ test("code and diagram blocks pair a rendered view with an editable source", {
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect.poll(() => drawing.getAttribute("id")).not.toBe(lightDrawing);
   // 先に描いておいた暗いテーマの図も、暗いテーマのトークンで塗られている。
-  const [labelInk, pageInk] = await diagram.locator(".nodeLabel").first().evaluate((label) => [
-    getComputedStyle(label).color,
-    getComputedStyle(document.documentElement).getPropertyValue("--color-foreground").trim(),
-  ]);
-  expect(labelInk).toBe(pageInk);
+  // ページの色トークンは切り替え直後に一瞬だけ補間されるので、落ち着くまで待って比べる。
+  await expect.poll(() =>
+    diagram.locator(".nodeLabel").first().evaluate((label) =>
+      getComputedStyle(label).color ===
+        getComputedStyle(document.documentElement).getPropertyValue("--color-foreground").trim()
+    )
+  ).toBe(true);
   // 戻すときは描き直さず、控えておいた図へ差し替える。
   await (await themeToggle(page)).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");

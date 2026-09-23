@@ -264,6 +264,8 @@ test("returning from an article folds the paper into its row and leaves nothing 
     );
   await page.goBack();
   await expect(page).toHaveURL(new RegExp(`${href}$`, "u"));
+  // URL は描画より先に変わる。紙面が描かれ、遷移が終わってから次の履歴移動へ進む。
+  await expect(page.locator(".article-paper")).toBeVisible();
   await settled();
   await page.goBack();
   await expect(page).toHaveURL(/\/articles$/u);
