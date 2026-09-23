@@ -110,6 +110,53 @@ html[data-paper-handoff="true"]::view-transition-new(article-paper) {
   }
 }
 
+/*
+  記事から一覧へ戻るとき、紙面は元の行へ畳まれる。行は遷移の間だけ紙面と同じ名前を持つ。
+  群の形の補間は page-transitions.ts が見えていた範囲から始める。旧紙面は行の形に切り取られ、
+  畳まれきる前に行の像へ入れ替わる。
+*/
+[data-paper-return-row="true"] {
+  view-transition-name: article-paper;
+}
+
+html[data-paper-return="true"]::view-transition-group(article-paper) {
+  overflow: clip;
+  animation-duration: var(--motion-duration-page);
+  animation-timing-function: var(--motion-ease-signature);
+}
+
+html[data-paper-return="true"]::view-transition-old(article-paper) {
+  animation: paper-fold-out var(--motion-duration-page) var(--motion-ease-standard) both;
+}
+
+/* 行の像は拡大せず実寸で左上に置く。群が行の大きさまで畳まれたとき、そのまま行に重なる。 */
+html[data-paper-return="true"]::view-transition-new(article-paper) {
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+  animation: paper-fold-in var(--motion-duration-page) var(--motion-ease-enter) both;
+}
+
+@keyframes paper-fold-out {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes paper-fold-in {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 html[data-catalog-transition="true"][data-page-enter="active"] .route-content {
   animation: catalog-enter var(--motion-duration-base) var(--motion-ease-enter) both;
 }

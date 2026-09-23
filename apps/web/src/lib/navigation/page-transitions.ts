@@ -55,6 +55,54 @@ function isPaperHandoff(from?: URL, to?: URL): boolean {
   return listing && /^\/articles\/[^/]+$/.test(to.pathname);
 }
 
+/** 記事から、その記事の行がある一覧へ戻る遷移。紙面を元の行へ畳んで返す。 */
+export function isPaperReturn(from?: URL | null, to?: URL | null): boolean {
+  if (!from || !to) return false;
+  return /^\/articles\/[^/]+$/.test(from.pathname) &&
+    (to.pathname === "/" || to.pathname === "/articles");
+}
+
+function motionToken(name: string) {
+  const style = getComputedStyle(document.documentElement);
+  const duration = Number.parseFloat(style.getPropertyValue(`--motion-duration-${name}`)) || 0;
+  return duration;
+}
+
+/**
+ * 紙面は記事全体の高さを持つため、そのまま行へ補間すると画面外の下端が一気に上がってくる。
+ * 補間の始まりを見えていた範囲に切り詰め、旧紙面の画像もその範囲が見える位置へずらす。
+ */
+function foldPaperIntoRow(paper: DOMRect, row: DOMRect) {
+  const top = Math.max(paper.top, 0);
+  const bottom = Math.min(paper.bottom, innerHeight);
+  const height = Math.max(bottom - top, row.height);
+  const offset = top - paper.top;
+  const scale = row.width / Math.max(paper.width, 1);
+  const style = getComputedStyle(document.documentElement);
+  const timing = {
+    duration: motionToken("page"),
+    easing: style.getPropertyValue("--motion-ease-signature").trim() || "ease",
+    fill: "both" as const,
+  };
+  const root = document.documentElement;
+  root.animate([
+    {
+      transform: `translate(${paper.left}px, ${top}px)`,
+      width: `${paper.width}px`,
+      height: `${height}px`,
+    },
+    {
+      transform: `translate(${row.left}px, ${row.top}px)`,
+      width: `${row.width}px`,
+      height: `${row.height}px`,
+    },
+  ], { ...timing, pseudoElement: "::view-transition-group(article-paper)" });
+  root.animate([
+    { top: `${-offset}px` },
+    { top: `${-offset * scale}px` },
+  ], { ...timing, pseudoElement: "::view-transition-old(article-paper)" });
+}
+
 export function installPageTransitions() {
   if (typeof document === "undefined") return () => {};
   let catalogPosition: { x: number; y: number } | undefined;
@@ -69,6 +117,8 @@ export function installPageTransitions() {
   });
   onNavigate((navigation) => {
     delete document.documentElement.dataset.paperHandoff;
+    delete document.documentElement.dataset.paperReturn;
+    document.querySelector("[data-paper-return-row]")?.removeAttribute("data-paper-return-row");
     delete document.documentElement.dataset.headerChange;
     delete document.documentElement.dataset.pageEnter;
     delete document.documentElement.dataset.routeExit;
@@ -104,16 +154,36 @@ export function installPageTransitions() {
       // 旧ページの本文だけを snapshot にして、その場で溶かす。新しい本文は live DOM のまま
       // fade in させるので、名前は旧状態の撮影後すぐに外す。
       document.documentElement.dataset.routeExit = "true";
+      const returning = isPaperReturn(navigation.from?.url, navigation.to?.url);
+      const paper = returning
+        ? document.querySelector(".article-paper")?.getBoundingClientRect()
+        : undefined;
+      let fold: { paper: DOMRect; row: DOMRect } | undefined;
       const transition = document.startViewTransition(async () => {
         delete document.documentElement.dataset.routeExit;
         resolve();
         await navigation.complete;
+        // 戻った先で同じ記事の行が見えているときだけ、紙面をその行へ受け渡す。
+        const from = navigation.from?.url.pathname;
+        const row = paper && from
+          ? [...document.querySelectorAll<HTMLAnchorElement>(".index-list a[href]")]
+            .find((link) => link.pathname === from)?.closest("li")
+          : undefined;
+        const bounds = row?.getBoundingClientRect();
+        if (paper && row && bounds && bounds.bottom > 0 && bounds.top < innerHeight) {
+          row.dataset.paperReturnRow = "true";
+          document.documentElement.dataset.paperReturn = "true";
+          fold = { paper, row: bounds };
+        }
         document.documentElement.dataset.pageEnter = "active";
         pageEnterFallback = globalThis.setTimeout(() => {
           delete document.documentElement.dataset.pageEnter;
           pageEnterFallback = undefined;
         }, 1200);
       });
+      void transition.ready.then(() => {
+        if (fold) foldPaperIntoRow(fold.paper, fold.row);
+      }, () => {});
       if (catalogTransition) {
         void transition.finished.finally(() => {
           delete document.documentElement.dataset.catalogTransition;
@@ -122,6 +192,10 @@ export function installPageTransitions() {
       const clearMarks = () => {
         delete document.documentElement.dataset.routeExit;
         delete document.documentElement.dataset.paperHandoff;
+        delete document.documentElement.dataset.paperReturn;
+        document.querySelector("[data-paper-return-row]")?.removeAttribute(
+          "data-paper-return-row",
+        );
         delete document.documentElement.dataset.headerChange;
       };
       const fallback = globalThis.setTimeout(clearMarks, 1200);

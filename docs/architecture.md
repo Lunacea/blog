@@ -96,7 +96,9 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
   所有する。
 - route間のView Transitionでは`root`と天候背景をsnapshotに含めない。旧page内容は旧状態だけの
   `route-content` snapshotとしてその場でfade outし、新しいpage内容はlive DOMで少し遅れてfade
-  inする。headerの出入りと記事紙面の受け渡しだけを個別のsnapshotで動かす。これによりWebGLの
+  inする。headerの出入りと記事紙面の受け渡しだけを個別のsnapshotで動かす。記事から`/`または
+  `/articles`へリンクで戻り、同じ記事の行が画面内にあるときは、遷移の間だけその行に
+  `article-paper`の名前を付けて紙面を行へ畳む。形の補間は見えていた紙面の範囲から始める。これによりWebGLの
   描画ループは遷移中も継続する。テーマ切り替えだけは`root`snapshot1枚で画面全体をcrossfadeし、
   その間WebGLは新しいテーマで1枚描いてから止まる。WebGLを使わない低メモリ・低コア端末では
   即時に切り替える。query stringだけの遷移はより速くする。Reduced/Offと履歴移動では即時切替する。

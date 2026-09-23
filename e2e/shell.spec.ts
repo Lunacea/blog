@@ -206,3 +206,41 @@ test("history navigation and page transitions keep the shell intact", {
   expect(timing.headerBackdrop).toBe("none");
   expect(pageErrors).toEqual([]);
 });
+
+test("returning from an article folds the paper into its row and leaves nothing named", {
+  tag: ["@desktop"],
+}, async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  await page.goto("/articles");
+  await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true", HYDRATED);
+  const record = page.locator(".index-list h3 a").nth(1);
+  const href = await record.getAttribute("href");
+  await record.click();
+  await expect(page).toHaveURL(new RegExp(`${href}$`, "u"), { timeout: 20_000 });
+  await expect(page.locator("html")).not.toHaveAttribute("data-page-enter", "active");
+  await page.evaluate(() => {
+    const seen = globalThis as typeof globalThis & { __foldedInto?: string };
+    new MutationObserver((records) => {
+      for (const { target } of records) {
+        const row = target as HTMLElement;
+        if (row.dataset.paperReturnRow) {
+          seen.__foldedInto = row.querySelector("a")?.getAttribute("href") ?? "";
+        }
+      }
+    }).observe(document.body, { subtree: true, attributeFilter: ["data-paper-return-row"] });
+  });
+  await page.locator(".article-back").click();
+  await expect(page).toHaveURL(/\/articles$/u);
+  await expect.poll(() =>
+    page.evaluate(() => (globalThis as typeof globalThis & { __foldedInto?: string }).__foldedInto)
+  ).toBe(href);
+  await expect(page.locator("html")).not.toHaveAttribute("data-paper-return");
+  await expect(page.locator("[data-paper-return-row]")).toHaveCount(0);
+  expect(
+    await page.locator(".index-list > li").nth(1).evaluate((row) =>
+      getComputedStyle(row).viewTransitionName
+    ),
+  ).toBe("none");
+  expect(pageErrors).toEqual([]);
+});
