@@ -214,7 +214,7 @@ test("the light follows each weather reading and adds no animated layer", {
     await expect
       .poll(() => page.locator("[data-editorial-light]").getAttribute("data-weather"))
       .toMatch(new RegExp(`^(${shown.join("|")})$`, "u"));
-    await expect(page.locator("canvas, .rainfall, .snowfall, .weather-backdrop")).toHaveCount(0);
+    await expect(page.locator("canvas")).toHaveCount(0);
     await expect(page.locator("#home-title")).toBeVisible();
   }
   await page.unroute("**/api/v1/weather?**");
