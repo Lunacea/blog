@@ -146,16 +146,24 @@ async function checkWeatherFallback(
   await context.close();
 }
 
+/** ページごとに表示中の story。同じ story への切り替えは描き直されないので飛ばす。 */
+const shown = new WeakMap<Page, string>();
+
+/**
+ * story を読み込み、描き終わるまで待つ。ネットワークが落ち着いても描画はまだのことがあり、
+ * 並行して検査を回す CI ではその隙に要素を数えてしまう。
+ */
 async function openStory(page: Page, baseUrl: string, id: string) {
   await page.goto(`${baseUrl}/iframe.html?id=${id}&viewMode=story`, { waitUntil: "networkidle" });
+  await page.locator("#storybook-root > *").first().waitFor({ state: "attached" });
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  shown.set(page, id);
 }
 
 /**
  * 読み込み直さずに story を切り替える。プレビューの JavaScript を毎回読み直すのが検査時間の
  * ほとんどを占めていたため、Storybook のチャネルで描画し直させ、描き終わりを待つ。
  */
-const shown = new WeakMap<Page, string>();
-
 async function showStory(page: Page, id: string) {
   // 表示中の story を指定しても描き直されず、描き終わりの知らせも来ない。
   if (shown.get(page) === id) return;
@@ -193,12 +201,8 @@ async function showStory(page: Page, id: string) {
 }
 
 /** 最初の1件だけ読み込み、以降はチャネルで切り替える。 */
-async function openPreview(page: Page, baseUrl: string, first: StoryEntry) {
-  await page.goto(`${baseUrl}/iframe.html?id=${first.id}&viewMode=story`, {
-    waitUntil: "networkidle",
-  });
-  shown.set(page, first.id);
-}
+const openPreview = (page: Page, baseUrl: string, first: StoryEntry) =>
+  openStory(page, baseUrl, first.id);
 
 const horizontalOverflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
