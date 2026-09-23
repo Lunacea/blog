@@ -1,0 +1,54 @@
+name: Set up the workspace
+description: Deno, locked dependencies, and the generated sources every job reads.
+
+inputs:
+  browser:
+    description: Install the headless Chromium that Playwright and the Storybook check use.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Deno
+      uses: denoland/setup-deno@v2
+      with:
+        deno-version: v2.x
+        cache: true
+
+    - name: Generate content manifests
+      shell: bash
+      run: deno task content:generate
+
+    - name: Install locked dependencies
+      shell: bash
+      run: deno install --frozen --allow-scripts=npm:sharp
+
+    # 画像の出力名は元画像のハッシュを含むので、元画像と変換手順が同じなら出力も同じ。
+    - name: Restore generated images
+      uses: actions/cache@v4
+      with:
+        path: apps/web/static/images/generated
+        key: images-${{ hashFiles('apps/web/static/images/archive/**', 'apps/web/static/images/*.png', 'apps/web/scripts/generate-images.ts') }}
+
+    - name: Prepare generated sources
+      shell: bash
+      run: deno task prepare
+
+    - name: Restore Chromium
+      if: inputs.browser == 'true'
+      id: chromium
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/ms-playwright
+        key: chromium-shell-playwright-1.61.1
+
+    # ヘッドレス専用版だけを入れる。E2E も Storybook の検査も画面を持たない。
+    - name: Install Chromium
+      if: inputs.browser == 'true'
+      shell: bash
+      run: |
+        if [ "${{ steps.chromium.outputs.cache-hit }}" = "true" ]; then
+          deno run -A npm:playwright@1.61.1 install-deps chromium
+        else
+          deno run -A npm:playwright@1.61.1 install --with-deps --only-shell chromium
+        fi

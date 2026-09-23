@@ -55,7 +55,7 @@ jobs:
         run: deno install --frozen --allow-scripts=npm:sharp
 
       - name: Install Chromium
-        run: deno run -A npm:playwright@1.61.1 install --with-deps chromium
+        run: deno run -A npm:playwright@1.61.1 install --with-deps --only-shell chromium
 
       - name: Run deployed E2E tests
         env:
