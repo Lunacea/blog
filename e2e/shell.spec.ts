@@ -159,14 +159,14 @@ test("history navigation and page transitions keep the shell intact", {
   });
   await page.getByRole("banner").getByRole("link", { name: "Home" }).click();
   await expect(page).toHaveURL(/\/$/u);
-  await expect(page.locator("html")).toHaveAttribute("data-page-enter", "active");
+  await expect(page.locator("html")).toHaveAttribute("data-route-enter", "page");
   await expect(page.locator(".route-content")).toHaveCSS("animation-name", "page-enter");
   expect(
     await light.evaluate((node) =>
       node === (globalThis as typeof globalThis & { __weatherField?: Element }).__weatherField
     ),
   ).toBe(true);
-  await expect(page.locator("html")).not.toHaveAttribute("data-page-enter", "active");
+  await expect(page.locator("html")).not.toHaveAttribute("data-route-enter");
   await page.getByRole("link", { name: /All articles/i }).click();
   await expect(page).toHaveURL(/\/articles$/u);
   expect(
@@ -218,25 +218,25 @@ test("returning from an article folds the paper into its row and leaves nothing 
   const href = await record.getAttribute("href");
   await record.click();
   await expect(page).toHaveURL(new RegExp(`${href}$`, "u"), { timeout: 20_000 });
-  await expect(page.locator("html")).not.toHaveAttribute("data-page-enter", "active");
+  await expect(page.locator("html")).not.toHaveAttribute("data-route-enter");
   await page.evaluate(() => {
     const seen = globalThis as typeof globalThis & { __foldedInto?: string };
     new MutationObserver((records) => {
       for (const { target } of records) {
         const row = target as HTMLElement;
-        if (row.dataset.paperReturnRow) {
+        if (row.dataset.routeFoldRow) {
           seen.__foldedInto = row.querySelector("a")?.getAttribute("href") ?? "";
         }
       }
-    }).observe(document.body, { subtree: true, attributeFilter: ["data-paper-return-row"] });
+    }).observe(document.body, { subtree: true, attributeFilter: ["data-route-fold-row"] });
   });
   await page.locator(".article-back").click();
   await expect(page).toHaveURL(/\/articles$/u);
   await expect.poll(() =>
     page.evaluate(() => (globalThis as typeof globalThis & { __foldedInto?: string }).__foldedInto)
   ).toBe(href);
-  await expect(page.locator("html")).not.toHaveAttribute("data-paper-return");
-  await expect(page.locator("[data-paper-return-row]")).toHaveCount(0);
+  await expect(page.locator("html")).not.toHaveAttribute("data-route-paper");
+  await expect(page.locator("[data-route-fold-row]")).toHaveCount(0);
   // 畳む動きが残ると、次に記事へ進むときの紙面がその形から始まってしまう。
   await expect.poll(() =>
     page.evaluate(() =>
@@ -250,5 +250,26 @@ test("returning from an article folds the paper into its row and leaves nothing 
       getComputedStyle(row).viewTransitionName
     ),
   ).toBe("none");
+
+  // ブラウザの戻る操作でも同じように畳む。リンクで戻った分の履歴を1つ戻って記事へ入り直し、
+  // もう1つ戻って最初の一覧へ帰る。
+  await page.evaluate(() => {
+    delete (globalThis as typeof globalThis & { __foldedInto?: string }).__foldedInto;
+  });
+  const settled = () =>
+    page.waitForFunction(() =>
+      !document.getAnimations().some((animation) =>
+        ((animation.effect as KeyframeEffect).pseudoElement ?? "").startsWith("::view-transition")
+      ) && !document.documentElement.dataset.routeEnter
+    );
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(`${href}$`, "u"));
+  await settled();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/articles$/u);
+  await expect.poll(() =>
+    page.evaluate(() => (globalThis as typeof globalThis & { __foldedInto?: string }).__foldedInto)
+  ).toBe(href);
+  await expect(page.locator("[data-route-fold-row]")).toHaveCount(0);
   expect(pageErrors).toEqual([]);
 });

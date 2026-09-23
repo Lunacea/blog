@@ -96,12 +96,15 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
   所有する。
 - route間のView Transitionでは`root`と天候背景をsnapshotに含めない。旧page内容は旧状態だけの
   `route-content` snapshotとしてその場でfade outし、新しいpage内容はlive DOMで少し遅れてfade
-  inする。headerの出入りと記事紙面の受け渡しだけを個別のsnapshotで動かす。記事から`/`または
-  `/articles`へリンクで戻り、同じ記事の行が画面内にあるときは、遷移の間だけその行に
-  `article-paper`の名前を付けて紙面を行へ畳む。形の補間は見えていた紙面の範囲から始める。これによりWebGLの
-  描画ループは遷移中も継続する。テーマ切り替えだけは`root`snapshot1枚で画面全体をcrossfadeし、
-  その間WebGLは新しいテーマで1枚描いてから止まる。WebGLを使わない低メモリ・低コア端末では
-  即時に切り替える。query stringだけの遷移はより速くする。Reduced/Offと履歴移動では即時切替する。
+  inする。headerの出入りと記事紙面の受け渡しだけを個別のsnapshotで動かす。一覧から記事へは紙面が
+  せり上がり、記事から`/`または`/articles`へ戻り、同じ記事の行が画面内にあるときは、遷移の間
+  だけその行に`article-paper`の名前を付けて紙面を行へ畳む。形の補間は見えていた紙面の範囲から
+  始める。リンクと履歴移動（戻る・進む）は同じ遷移を使う。これによりWebGLの描画ループは遷移中も
+  継続する。どの遷移を使うかは`route-transition.ts`がURLだけから決め、`page-transitions.ts`が
+  印・保険のタイマー・Web Animationsを遷移1回分の後片付けにまとめる。テーマ切り替えだけは
+  `root`snapshot1枚で画面全体をcrossfadeし、その間WebGLは新しいテーマで1枚描いてから止まる。
+  WebGLを使わない低メモリ・低コア端末では即時に切り替える。query stringだけの遷移はより速くし、
+  絞り込みでは遷移しない。Offとアンカー移動では即時切替する。
 - サイトの天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。
   `fog`は`cloudy`、`storm`は`rain`、取得fallbackは`neutral`な環境表現へ正規化する。
   時刻の光（朝夕の色づき、光の向き、夜）はAPIへ項目を足さず、WebGL側で同じ地点の緯度経度と

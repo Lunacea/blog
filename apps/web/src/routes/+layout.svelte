@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { installAnchorNavigation, installPageTransitions } from "$lib/navigation/page-transitions.ts";
+  import { installAnchorNavigation } from "$lib/navigation/anchor-navigation.ts";
+  import { installPageTransitions } from "$lib/navigation/page-transitions.ts";
   import { installScrollInertia } from "$lib/navigation/scroll-inertia.ts";
   import SettingsPanel from "$lib/preferences/SettingsPanel.svelte";
   import ThemeToggle from "$lib/preferences/ThemeToggle.svelte";
