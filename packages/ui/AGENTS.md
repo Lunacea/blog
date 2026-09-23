@@ -1,34 +1,33 @@
 # UIパッケージ
 
-ルートの指示を継承する。共通UIはSvelte 5、Tailwind CSS 4、Bits UIとローカルの
-shadcn-svelteプリミティブで構成する。共通契約は`docs/design-system.md`を参照する。
+ルートの指示を継承する。`packages/ui`はサイトから独立して再利用できるデザインシステム基盤に
+限定する。現行契約は`docs/design-system.md`を参照する。
 
-## 配置と再利用
+## 所有範囲
 
-- `foundations`：テーマ・global CSS・フォント。値の正本は`src/foundations/theme.css`。
-- `primitives`：低レベルUI、`layout`：配置、`components`：単一責務UI、`patterns`：セクション。
-- `icons`：アイコン、`motion`：遷移・アニメーション、`visuals`：アセット・WebGL。
-- URL、ルーティング、データ取得、repository、SEOはUIに持ち込まない。
-- 既存プリミティブ、shadcn-svelte、Bits
-  UIの順に再利用する。React版や重複フレームワークを追加しない。
-- ルートやpatternからBits UIを直接使わずローカルプリミティブを通す。
-- フォーカス管理やARIAを見た目のために独自実装しない。
+- `src/styles`：共通token、base CSS、少数の共通utility。公開入口は`styles/index.css`。
+- `src/primitives`：Badge、Input、Separator、Collapsibleと利用中のvariant。
+- `src/icons`：Iconifyの固定集合とローカルglyph。
+- `src/fonts.ts`：初期表示でpreloadする生成font URL。
+- `src/utils.ts`：UIで共用する小さな純粋utility。
+- 公開subpathは`primitives`、`icons`、`utils`、`fonts`、`styles.css`だけにする。任意の深い
+  importやroot barrelを追加しない。
+- 記事、Home、shell、表示設定、遷移、WebGL、Story、SVX設定は`apps/web`が所有する。
+- `$app`、site config、content schema、network、Three.js、mdsvex、KaTeX、Mermaidへ依存しない。
 
-## 表示
+## 実装
 
-- 専用utility・variantがある場合は任意property・selectorより優先する（`transform-[…]`、`**:data-asset-placeholder:*`など）。
-- 通常のスタイルは静的なTailwindクラス。差分は`cn()`、状態は`data-*`、group、peer、variant。
-- クラス名を文字列補間で組み立てない。任意値は既存トークンで表現できない一度限りの値に限定する。
-- 再利用する色、寸法、余白、文字、影、motion、easing、z-indexはthemeへ置く。
-- Iconifyは`Icon.svelte`を通す。一般UIはSolar linear、公式ブランドはSimple Icons。
-- アイコン操作にアクセシブルネームを付ける。UIの装飾やfallbackに絵文字を使わない。
-- 日本語の行長・行間・改行を維持する。カード、境界線、影、blur、pillには機能・構成上の理由を持たせる。
-- 著作素材が不足する場合は`AssetPlaceholder`でID、役割、比率、形式、代替テキスト、透過要否を示す。
-- GIFはユーザー提供のみ。reduced motionでは承認済み静止画へ置換し、なければ自動再生しない。
-- ネイティブスクロールとカーソルを維持する。スクロールバーを完全に隠さない。
+- 通常のスタイルは静的なTailwind classで表し、Svelteへ`<style>`を追加しない。
+- 共通scaleだけを`styles/tokens.css`へ置く。Home、記事、footer、天候などサイト固有のtokenは
+  `apps/web/src/styles/tokens.css`へ置く。
+- CSSに残すselectorはreset、forced colors、print、共通utilityなど、markupのclassだけでは
+  表現しにくいものに限る。
+- 既存primitive、Bits UIの順に再利用する。フォーカス管理やARIAを見た目のために独自実装しない。
+- Iconifyは`Icon.svelte`を通す。一般UIはSolar、公式brandはSimple Iconsを使う。
+- 操作子にはaccessible nameを付け、文字拡大、forced colors、reduced motionを維持する。
 
 ## 確認
 
-共通UIは変更の影響がある代表的な利用箇所を確認する。Storybook専用の部品も利用中として扱うが、
-毎回の全story build・E2Eは不要。記法のみなら生成CSSや型、動作変更なら関連操作、
-描画負荷の変更なら対象端末のスクロール・縮退・cleanupを優先する。
+変更したprimitive、icon、CSSの代表的なWeb利用箇所を確認する。共通UIのstoryは
+`apps/web/stories/ui`、Storybook設定と検査は`apps/web/.storybook`と`apps/web/scripts`に置く。
+記法だけなら生成CSSと型、操作変更なら関連unit/E2E、描画負荷の変更なら停止とcleanupを優先する。

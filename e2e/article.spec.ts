@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { ARTICLE, HYDRATED, motionOff, REACTION_ARTICLE, themeToggle } from "./support.ts";
+import {
+  ARTICLE,
+  HYDRATED,
+  motionOff,
+  REACTION_ARTICLE,
+  themeToggle,
+  weatherReading,
+} from "./support.ts";
 
 test("the article is a sheet of paper and carries its reading tools on it", {
   tag: ["@desktop"],
@@ -12,6 +19,10 @@ test("the article is a sheet of paper and carries its reading tools on it", {
       rejected.push(`${response.status()} ${response.request().method()} ${response.url()}`);
     }
   });
+  await page.route(
+    "**/api/v1/weather?**",
+    (route) => route.fulfill({ json: weatherReading("clear") }),
+  );
   await page.goto(ARTICLE);
 
   await expect(page.getByRole("heading", { level: 1, name: "ボタンの触り心地を決める4つの状態" }))
@@ -46,8 +57,8 @@ test("the article is a sheet of paper and carries its reading tools on it", {
   ).toBe(true);
 
   // 記事も外の場を持つ。ただし本文は不透明な紙なので、場が見えるのは紙の上下だけ。
-  // 自前の天候問い合わせはしない（描画前スクリプトが読んだ最後の空を引き継ぐ）。
-  expect(requests.filter((url) => /api\/v1\/weather/.test(url))).toEqual([]);
+  await expect(page.locator("[data-editorial-light]")).toHaveAttribute("data-weather", "clear");
+  await expect.poll(() => requests.filter((url) => /api\/v1\/weather/.test(url)).length).toBe(1);
   await expect(page.locator(".reading-surface")).toHaveCSS("background-color", /rgb\(/);
   await expect.poll(() => requests.some((url) => url.includes("/api/v1/impressions/"))).toBe(true);
   expect(rejected).toEqual([]);
@@ -73,12 +84,25 @@ test("the desktop table of contents tracks the reading position", {
   await link.click();
   await expect(link).toHaveAttribute("aria-current", "location");
   await expect(page.locator("#focusは消さない")).toBeInViewport();
-  const marker = await toc.locator(".toc-list").evaluate((list) => ({
-    expected: list.querySelector('a[aria-current="location"]')
-      ?.closest<HTMLElement>("li")?.offsetTop ?? -1,
-    actual: Number.parseFloat(list.style.getPropertyValue("--toc-marker-y")),
-  }));
-  expect(marker.actual).toBeCloseTo(marker.expected, 1);
+  const marker = await toc.locator(".toc-list").evaluate((list) => {
+    const row = list.querySelector('a[aria-current="location"]')
+      ?.closest<HTMLElement>("li");
+    const top = Math.max(0, (row?.offsetTop ?? 0) - 2);
+    const bottom = Math.min(
+      (list as HTMLElement).offsetHeight,
+      (row?.offsetTop ?? 0) + (row?.offsetHeight ?? 0) + 2,
+    );
+    return {
+      expectedTop: top,
+      expectedHeight: bottom - top,
+      actualTop: Number.parseFloat((list as HTMLElement).style.getPropertyValue("--toc-marker-y")),
+      actualHeight: Number.parseFloat(
+        (list as HTMLElement).style.getPropertyValue("--toc-marker-height"),
+      ),
+    };
+  });
+  expect(marker.actualTop).toBeCloseTo(marker.expectedTop, 1);
+  expect(marker.actualHeight).toBeCloseTo(marker.expectedHeight, 1);
 
   const trackColour = () =>
     toc.locator(".toc-list").evaluate((list) => getComputedStyle(list, "::after").backgroundColor);
@@ -218,6 +242,20 @@ test("anonymous praise and share stay available", { tag: ["@desktop"] }, async (
   await expect(page.getByRole("button", { name: "称賛を取り消す" }))
     .toHaveAttribute("aria-pressed", "true", HYDRATED);
   await expect(page.getByRole("button", { name: "Share" })).toBeVisible();
+  const share = page.getByRole("button", { name: "Share" });
+  const fill = await share.evaluate((button) => {
+    const style = getComputedStyle(button, "::before");
+    return {
+      originY: Number.parseFloat(style.transformOrigin.split(" ")[1]),
+      scale: style.scale,
+      height: button.getBoundingClientRect().height,
+    };
+  });
+  expect(fill.height - fill.originY).toBeLessThanOrEqual(2.1);
+  expect(fill.scale).toBe("1 0");
+  await share.hover();
+  await expect.poll(() => share.evaluate((button) => getComputedStyle(button, "::before").scale))
+    .toBe("1");
   await expect(page.getByRole("link", { name: "Post" }))
     .toHaveAttribute("href", /x\.com\/intent\/post/u);
   await expect(page.getByRole("link", { name: "Bluesky" })).toHaveCount(0);

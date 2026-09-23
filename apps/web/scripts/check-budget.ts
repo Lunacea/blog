@@ -25,11 +25,7 @@ async function nodeKeysFor(routeFile: string): Promise<string[]> {
   return keys;
 }
 
-const homeNodeKeys = await nodeKeysFor("src/routes/+page.svelte");
-const catalogNodeKeys = await nodeKeysFor("src/routes/articles/+page.svelte");
 const articleDetailNodeKeys = await nodeKeysFor("src/routes/articles/[slug]/+page.svelte");
-/** アニメーション背景を持てるルート。 */
-const fieldRoutes = new Set([...homeNodeKeys, ...catalogNodeKeys]);
 const articleDetailNodeKey = articleDetailNodeKeys[0];
 
 const roots = [
@@ -75,23 +71,14 @@ function collectKeys(key: string, keys: Set<string>): void {
 
 for (const key of Object.keys(manifest)) {
   const match = key.match(/generated\/client-optimized\/nodes\/(\d+)\.js$/u);
-  if (!match || fieldRoutes.has(key)) continue;
+  if (!match) continue;
   const routeKeys = new Set<string>();
   collectKeys(key, routeKeys);
   for (const dependency of forbiddenInitialDependencies.slice(2)) {
     const leaked = [...routeKeys].find((routeKey) => dependency.pattern.test(routeKey));
     if (leaked) {
-      throw new Error(`${dependency.label} entered non-Home route ${key} through ${leaked}.`);
+      throw new Error(`${dependency.label} entered route ${key} through ${leaked}.`);
     }
-  }
-  const heroImport = [...routeKeys].some((routeKey) =>
-    manifest[routeKey]?.dynamicImports?.some((path) => /HeroScene|editorial-light/.test(path))
-  );
-  if (heroImport) {
-    const via = [...routeKeys].filter((routeKey) =>
-      manifest[routeKey]?.dynamicImports?.some((path) => /HeroScene|editorial-light/.test(path))
-    );
-    throw new Error(`The editorial light entered reading route ${key} via ${via.join(", ")}.`);
   }
 }
 
@@ -109,11 +96,6 @@ if (gzipBytes > limit) {
   throw new Error(`Article initial JavaScript is ${gzipBytes} gzip bytes; limit is ${limit}.`);
 }
 
-const detail = manifest[articleDetailNodeKey];
-if (detail?.dynamicImports?.some((path) => /HeroScene|editorial-light/.test(path))) {
-  throw new Error("Article route must not import the WebGL hero.");
-}
-
 console.log(
   `Article initial JavaScript: ${(gzipBytes / 1024).toFixed(1)} KiB gzip (${files.size} files).`,
 );
@@ -125,9 +107,9 @@ function collectWebgl(key: string): void {
   webglFiles.add(entry.file);
   for (const imported of entry.imports ?? []) collectWebgl(imported);
 }
-const webglRoot = "../../packages/ui/src/visuals/editorial-light.ts";
+const webglRoot = "src/lib/visuals/editorial-light.ts";
 if (!manifest[webglRoot]) {
-  throw new Error("Home editorial WebGL graph is missing from the manifest.");
+  throw new Error("Weather background WebGL graph is missing from the manifest.");
 }
 collectWebgl(webglRoot);
 let webglGzipBytes = 0;
@@ -141,10 +123,12 @@ for (const file of webglFiles) {
 }
 const webglLimit = 230 * 1024;
 if (webglGzipBytes > webglLimit) {
-  throw new Error(`Home WebGL graph is ${webglGzipBytes} gzip bytes; limit is ${webglLimit}.`);
+  throw new Error(
+    `Weather background WebGL graph is ${webglGzipBytes} gzip bytes; limit is ${webglLimit}.`,
+  );
 }
 console.log(
-  `Home WebGL JavaScript: ${
+  `Weather background WebGL JavaScript: ${
     (webglGzipBytes / 1024).toFixed(1)
   } KiB gzip (${webglFiles.size} files).`,
 );

@@ -1,0 +1,59 @@
+/*
+  ホバーとフォーカスで引かれる下線。ヘッダのナビゲーションが正本で、一覧のレール
+  （Category / Sort）、タグ、カテゴリのノンブルもこれを共有する。左から伸び、
+  選択されている間（aria-current）は引かれたまま残る。色は動かさず、罫の有無で状態を示す。
+  リンクの中の一語だけに引くときはその語へ付ける。リンク全体のホバーでも伸びる。
+  --ink-underline-drop は行の中心から罫までの距離。行より高い操作子でも字の下に収まる。
+*/
+@utility ink-underline {
+  position: relative;
+
+  /*
+    伸ばすのは transform ではなく幅。変形で伸ばすと合成レイヤーの出入りで
+    終わり際に罫の太さが変わって見えるので、描画のされ方を最初から最後まで変えない。
+  */
+  &::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    bottom: calc(50% - var(--ink-underline-drop, 0.85em));
+    width: 0;
+    height: var(--border-width-rule);
+    background: var(--color-ink);
+    transition: width var(--motion-duration-base) var(--motion-ease-signature);
+  }
+
+  &:hover::after,
+  &:focus-visible::after,
+  &[aria-current]::after,
+  a:hover > &::after,
+  a:focus-visible > &::after,
+  a[aria-current] > &::after {
+    width: 100%;
+  }
+
+  /* `*` は擬似要素に届かないので、motion の停止はここで受ける。 */
+  html[data-motion="off"] &::after,
+  html[data-motion="reduced"] &::after {
+    transition-duration: var(--motion-duration-immediate);
+  }
+}
+
+/*
+  押下への応答。沈みは即時、戻りは署名イージングでゆっくり。
+  色や影は所有する操作子が明示し、共通処理は位置と縮尺だけを動かす。
+  Tailwind 4 は `translate` と `scale` を独立したプロパティとして書くため、両方を transition に挙げる。
+  ホバーで既に transform を動かす操作子は、これに頼らず自前の `active:` を宣言する。
+  即座の返事が要る操作子は `--press-duration` と `--press-ease` に response の対を入れる。
+*/
+@utility pressable {
+  transition-property: translate, scale;
+  transition-duration: var(--press-duration, var(--motion-duration-base));
+  transition-timing-function: var(--press-ease, var(--motion-ease-signature));
+
+  &:active:not(:disabled):not([aria-disabled="true"]) {
+    translate: 0 var(--press-shift);
+    scale: var(--press-scale);
+    transition-duration: var(--motion-duration-immediate);
+  }
+}

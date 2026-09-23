@@ -1,4 +1,8 @@
 import type { ApprovedIconName } from "./Icon.svelte";
+import copyIcon from "@iconify-icons/solar/copy-linear.js";
+import copiedIcon from "@iconify-icons/solar/check-circle-linear.js";
+
+export const blockToolIcons = { copy: copyIcon, copied: copiedIcon } as const;
 
 export const interfaceIcons = {
   search: "solar:magnifer-linear",

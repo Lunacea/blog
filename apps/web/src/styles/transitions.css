@@ -1,0 +1,151 @@
+html {
+  scroll-padding-top: var(--site-header-block);
+  view-transition-name: none;
+}
+
+html,
+body {
+  background: transparent;
+}
+
+@media (forced-colors: active) {
+  html,
+  body {
+    background: Canvas;
+  }
+}
+
+::view-transition-group(*) {
+  animation-duration: var(--motion-duration-page);
+  animation-timing-function: var(--motion-ease-enter);
+}
+
+html[data-page-enter="active"] .route-content {
+  animation: page-enter var(--motion-duration-base) var(--motion-ease-enter) both;
+}
+
+.site-header {
+  view-transition-name: site-header;
+}
+
+::view-transition-group(site-header) {
+  z-index: var(--z-header);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+html[data-header-change="enter"]::view-transition-new(site-header) {
+  animation: header-drop var(--motion-duration-page) var(--motion-ease-signature) both;
+}
+
+html[data-header-change="leave"]::view-transition-old(site-header) {
+  animation: header-lift var(--motion-duration-exit) var(--motion-ease-signature) both;
+}
+
+@keyframes header-drop {
+  from {
+    opacity: 0;
+    translate: 0 -100%;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes header-lift {
+  to {
+    opacity: 0;
+    translate: 0 -100%;
+  }
+}
+
+.article-paper {
+  view-transition-name: article-paper;
+}
+
+::view-transition-group(article-paper) {
+  z-index: var(--z-visual);
+}
+
+html[data-paper-handoff="true"]::view-transition-new(article-paper) {
+  animation: paper-rise var(--motion-duration-page) var(--motion-ease-signature) both;
+}
+
+@keyframes paper-rise {
+  from {
+    opacity: 0;
+    translate: 0 var(--space-16);
+    box-shadow: var(--shadow-paper-transition-clear);
+  }
+  55% {
+    opacity: 1;
+    box-shadow: var(--shadow-paper-transition-lifted);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    box-shadow: var(--shadow-paper-transition-clear);
+  }
+}
+
+html[data-catalog-transition="true"][data-page-enter="active"] .route-content {
+  animation: catalog-enter var(--motion-duration-base) var(--motion-ease-enter) both;
+}
+
+@keyframes catalog-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+html[data-catalog-transition="true"]::view-transition-group(*) {
+  animation-duration: var(--motion-duration-base);
+  animation-timing-function: var(--motion-ease-enter);
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+html[data-motion="reduced"]::view-transition-group(*),
+html[data-motion="off"]::view-transition-group(*) {
+  animation-duration: var(--motion-duration-immediate);
+}
+
+html[data-theme-transition="active"]::view-transition-group(*) {
+  animation-duration: var(--motion-duration-base);
+  animation-timing-function: var(--motion-ease-signature);
+}
+
+html[data-theme-transition="active"] {
+  view-transition-name: root;
+}
+
+html[data-theme-transition="active"]::view-transition-old(*) {
+  z-index: var(--z-content);
+  animation: theme-fade-out var(--motion-duration-base) var(--motion-ease-signature) both;
+}
+
+html[data-theme-transition="active"]::view-transition-new(*) {
+  z-index: var(--z-base);
+  animation: none;
+}
+
+@keyframes theme-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+html[data-smooth-anchor="true"] {
+  scroll-behavior: smooth;
+}
