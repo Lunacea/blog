@@ -10,6 +10,8 @@
   --color-weather-water-shadow: #152c3b;
   --color-weather-snow: #f4f7f8;
   --color-weather-light: #eedbb0;
+  --color-weather-dusk: #e8a66d;
+  --color-weather-moon: #a8bccf;
   --text-masthead: var(--type-size-masthead);
   --text-index: var(--type-size-index);
   --text-prose-h2: var(--type-size-prose-h2);

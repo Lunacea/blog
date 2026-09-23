@@ -102,6 +102,8 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
   即時に切り替える。query stringだけの遷移はより速くする。Reduced/Offと履歴移動では即時切替する。
 - サイトの天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。
   `fog`は`cloudy`、`storm`は`rain`、取得fallbackは`neutral`な環境表現へ正規化する。
+  時刻の光（朝夕の色づき、光の向き、夜）はAPIへ項目を足さず、WebGL側で同じ地点の緯度経度と
+  閲覧時刻から太陽高度を計算する。静的な陰影は時刻で変えない。
 - ロゴ、人物、植物などの著作素材は`config.visualAssets`から`MediaSlot`へ渡す。空slotは構造だけを示し、有機的な図像をコード生成しない。
 - 記事内LinkCardは`href`を安定keyとして、明示実行する`deno task links:refresh`だけが外部ページの
   title、description、site、OGP画像を取得する。生成metadataはGit管理JSON、画像は repository-local

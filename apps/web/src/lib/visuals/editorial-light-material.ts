@@ -64,6 +64,8 @@ const tokens = {
   warm: "--color-weather-light",
   cool: "--color-weather-water-shadow",
   pale: "--color-weather-snow",
+  amber: "--color-weather-dusk",
+  moon: "--color-weather-moon",
 } as const;
 
 function readToken(style: CSSStyleDeclaration, token: string, target: Vector3) {
@@ -99,9 +101,21 @@ export function createEditorialLightMaterial(coarse: boolean) {
     bloom: { value: 0 },
     veil: { value: new Vector2(-1, -1) },
     veilStrength: { value: 0 },
+    /* 雨の波紋。xy は中心、z は広がった半径。 */
+    ring: { value: new Vector3(-1, -1, 0) },
+    ringStrength: { value: 0 },
+    /* 雪の瞬き。xy は中心、z は強さ。 */
+    glint: { value: new Vector3(-1, -1, 0) },
+    /* 地点の時刻。朝夕の低い光、夜の深さ、光の来る側（-1 東、1 西）、光の低さ。 */
+    dusk: { value: 0 },
+    night: { value: 0 },
+    sunSide: { value: 0 },
+    sunLow: { value: 0 },
     warm: { value: new Vector3(0.93, 0.86, 0.69) },
     cool: { value: new Vector3(0.08, 0.17, 0.23) },
     pale: { value: new Vector3(0.96, 0.97, 0.97) },
+    amber: { value: new Vector3(0.91, 0.65, 0.43) },
+    moon: { value: new Vector3(0.66, 0.74, 0.81) },
   };
 
   const material = new ShaderMaterial({
@@ -119,9 +133,9 @@ export function createEditorialLightMaterial(coarse: boolean) {
       precision highp float;
       varying vec2 uvCoord;
       uniform vec2 light, aspect, veil;
-      uniform vec3 warm, cool, pale;
+      uniform vec3 warm, cool, pale, amber, moon, ring, glint;
       uniform float time, dark, cloud, lift, shaft, streak, sparkle, sun, ripple, frost;
-      uniform float bloom, veilStrength;
+      uniform float bloom, veilStrength, ringStrength, dusk, night, sunSide, sunLow;
 
       float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
@@ -134,6 +148,17 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float c = hash(cell + vec2(0.0, 1.0));
         float d = hash(cell + vec2(1.0, 1.0));
         return mix(mix(a, b, blend.x), mix(c, d, blend.x), blend.y);
+      }
+
+      /* 格子の各セルに一つだけ丸い点を置き、点ごとに違う周期で明滅させる。値ノイズだと格子の形が出る。 */
+      float sparkleField(vec2 p, float t){
+        vec2 cell = floor(p);
+        vec2 part = fract(p);
+        float seed = hash(cell);
+        vec2 centre = vec2(hash(cell + 3.1), hash(cell + 7.7)) * 0.6 + 0.2;
+        float point = 1.0 - smoothstep(0.02, 0.2, length(part - centre));
+        float phase = 0.5 + 0.5 * sin(t * (1.4 + seed * 2.2) + seed * 40.0);
+        return point * step(0.55, seed) * pow(phase, 3.0);
       }
 
       mat2 turn(float angle){
@@ -161,7 +186,16 @@ export function createEditorialLightMaterial(coarse: boolean) {
          * 正規化すると、中心を跨いだ瞬間に場が半回転する。
          */
         vec2 tilt = light - vec2(0.5, 0.5);
-        vec2 toward = normalize(vec2(tilt.x * 1.2, 0.7 + tilt.y * 0.5));
+        /* 朝夕は光が横から低く入る。夜は向きを持たない。 */
+        vec2 toward = normalize(vec2(
+          tilt.x * 1.2 + sunSide * sunLow * 0.9,
+          0.7 * (1.0 - sunLow * 0.6) + tilt.y * 0.5
+        ));
+        /* 夜は直射がほとんど消え、朝夕は低い光がかえって強く色づく。 */
+        /* 雲は低い太陽を最初に遮る。曇りや雨の夕方は色づきをほとんど残さない。 */
+        float duskLit = dusk * mix(1.0, 0.2, cloud);
+        float daySun = sun * (1.0 - night * 0.75) + duskLit * 0.4;
+        float dayShaft = shaft * (1.0 - night * 0.5);
         vec2 across = vec2(-toward.y, toward.x);
         /*
          * 明暗のランプは画面中央基準で測る。カーソル基準にすると端に寄せたとき全画素が同じ階調になる。
@@ -177,7 +211,7 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float pool = 1.0 - smoothstep(0.0, 0.82 + bloom * 0.22, reach);
         float near = pool * pool;
         /* 加算ではなく倍率。加算は露出を片側に寄せ、明暗どちらかのテーマでしか効かなくなる。 */
-        float focus = 1.0 + near * (0.78 + sun * 0.85) * (1.0 + bloom * 0.7);
+        float focus = 1.0 + near * (0.78 + daySun * 0.85) * (1.0 + bloom * 0.7);
 
         vec2 stretch = vec2(1.0, mix(1.0, 0.28, streak));
 
@@ -190,7 +224,7 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float billow = smoothstep(mix(0.3, 0.4, near), mix(0.74, 0.6, near), overcast);
         float occlusion = mix(1.0, 0.24 + 0.76 * billow, cloud);
 
-        float dapple = mix(1.0, mix(0.22, 1.0, gaps) * mix(0.5, 1.0, shafts), shaft);
+        float dapple = mix(1.0, mix(0.22, 1.0, gaps) * mix(0.5, 1.0, shafts), dayShaft);
         float glare = sparkle * fbm(frame * 14.0 + vec2(time * 0.02, 0.0)) * 0.34;
         float ambient = fbm(frame * vec2(1.0, 0.75) - vec2(time * 0.005, time * 0.003));
 
@@ -218,16 +252,36 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float veilReach = 1.0 - smoothstep(0.0, 0.66, length((uvCoord - veil) * aspect));
         float passing = veilStrength * veilReach * veilReach * mix(0.45, 1.0, overcast);
 
+        /* 波紋は明るい峰と暗い谷の対にする。どちらのテーマでも片側が見える。 */
+        float ringReach = length((uvCoord - ring.xy) * aspect);
+        float crest = exp(-pow((ringReach - ring.z) / 0.05, 2.0));
+        float trough = exp(-pow((ringReach - ring.z + 0.09) / 0.06, 2.0));
+        float ripplePulse = ringStrength * (crest - trough * 0.75)
+          * (1.0 - smoothstep(0.55, 1.05, ring.z));
+
+        /*
+         * 雪の瞬きは細かな点の明滅。暗い地では光として信号へ足す。明るい地では信号の両側が
+         * 飽和して点が埋もれるため、後段で小さな陰の点として直接重ねる。
+         */
+        float glintReach = 1.0 - smoothstep(0.0, 0.62, length((uvCoord - glint.xy) * aspect));
+        float twinkle = glint.z * glintReach * sparkleField(frame * 26.0, time);
+        float sparklePulse = twinkle * 2.2 * dark;
+
         float signal = (gradient * dapple * occlusion * 1.45 + ambient * 0.2 + glare
-          + water * 0.9 - 0.42 + exposure - passing * 0.36) * focus;
+          + water * 0.9 - 0.42 + exposure - passing * 0.36 + ripplePulse * 0.42
+          + sparklePulse) * focus;
 
         /* 境界の両側で連続させ、階調の縁が出ないようにする。 */
         float glow = smoothstep(0.0, 0.6, signal);
         float shade = smoothstep(0.0, 0.42, -signal);
-        vec3 lit = mix(mix(vec3(1.0), warm, sun * 0.78), pale, frost * 0.5);
+        vec3 lit = mix(mix(vec3(1.0), warm, daySun * 0.78), pale, frost * 0.5);
+        lit = mix(lit, amber, duskLit * 0.6);
+        lit = mix(lit, moon, night * 0.55);
         vec3 dim = mix(vec3(0.0), cool, clamp(ripple + frost * 0.35, 0.0, 1.0));
         /* 日向の影は無彩色にならない。透過した光の色を帯びることが日向らしさの大半を作る。 */
-        dim = mix(dim, warm * 0.48, sun * 0.62);
+        dim = mix(dim, warm * 0.48, daySun * 0.62);
+        dim = mix(dim, amber * 0.42, duskLit * 0.45);
+        dim = mix(dim, moon * 0.3, night * 0.4);
         vec3 tone = mix(dim, lit, step(0.0, signal));
         float grain = (hash(gl_FragCoord.xy) - 0.5) * 0.045;
         /* 明暗で描く側が逆になるため、この2つの重みを近づけて両テーマの強度を揃える。 */
@@ -235,6 +289,9 @@ export function createEditorialLightMaterial(coarse: boolean) {
         /* 陰として描く雪原は、明るい地では少し強めないと見えない。 */
         alpha += shade * frost * (1.0 - dark) * 0.05;
         alpha += glow * water * mix(0.26, 0.09, dark);
+        float speck = clamp(twinkle * 1.6 * (1.0 - dark), 0.0, 1.0);
+        tone = mix(tone, dim, speck);
+        alpha += speck * 0.3;
         gl_FragColor = vec4(tone, clamp(alpha, 0.0, 1.0));
       }`,
   });
@@ -269,6 +326,8 @@ export function createEditorialLightMaterial(coarse: boolean) {
       readToken(style, tokens.warm, uniforms.warm.value);
       readToken(style, tokens.cool, uniforms.cool.value);
       readToken(style, tokens.pale, uniforms.pale.value);
+      readToken(style, tokens.amber, uniforms.amber.value);
+      readToken(style, tokens.moon, uniforms.moon.value);
     },
   };
 }

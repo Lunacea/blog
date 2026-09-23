@@ -192,9 +192,15 @@ invisible, so light mode reads the pointer as a clearing in a lightly shaded fie
 same field is held back so it never swallows secondary text. Where no pointer hovers, the light
 drifts along an uneven figure instead of standing still, and a fine pointer takes it back the moment
 it moves. On touch devices scrolling carries the light down the page; once reading pauses the same
-drift grows back in over a few seconds. While nothing guides the light, irregular soft events — the
-key light briefly opening, or a cloud shadow crossing the field — come and go on their own and never
-start while the reader is interacting.
+drift grows back in over a few seconds. While nothing guides the light, irregular soft events come
+and go on their own and never start while the reader is interacting. They follow the weather: clear
+skies mostly open the key light, cloud sends shadows across the field, rain drops a single ripple on
+the water, and snow twinkles in fine points (shadow specks on paper, light points in the dark).
+
+The animated field also follows the configured location's sky. The sun's elevation and bearing are
+computed in the browser from the location and the current time; low sun warms the light and brings
+it in from the east in the morning and the west in the evening, cloud mutes that warmth, and night
+cools the light and closes the direct sun. The static composition does not change with the hour.
 
 Hovering a row in the index slides a pane of liquid glass under it: a thin saturated fill over an
 18px blur with a lit inset edge, behind the type and never touching it. It is dropped under forced

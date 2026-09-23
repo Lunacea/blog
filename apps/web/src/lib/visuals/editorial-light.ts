@@ -1,5 +1,8 @@
 import { Mesh, OrthographicCamera, PlaneGeometry, Scene, Vector2, WebGLRenderer } from "three";
+import { siteConfig } from "@lunacea/config";
 import { createEditorialLightMaterial } from "./editorial-light-material.ts";
+import { type Sunlight, sunlight } from "./sunlight.ts";
+import type { WeatherVisualCondition, WeatherVisualIntensity } from "./weather-visual.ts";
 
 /** シェーダー内の流れの速さ。1 では木漏れ日の斑が一目盛り動くのに1分以上かかり、止まって見える。 */
 const FLOW = 1.8;
@@ -123,8 +126,9 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
    * 誰も触れていない間だけ、不規則な間隔で光が差し込んだり雲影が横切ったりする。
    * 包絡線は両端がなめらかに 0 へ着くので、途中で操作が始まっても最後まで流して終える。
    */
+  type PulseKind = "bloom" | "veil" | "ripple" | "glint";
   type Pulse = {
-    kind: "bloom" | "veil";
+    kind: PulseKind;
     start: number;
     duration: number;
     strength: number;
@@ -133,18 +137,59 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     toX: number;
     toY: number;
   };
+  /* 天候に合う出来事を多めに選ぶ。晴れは光が開き、曇りは影が渡り、雨は水面が揺れ、雪は瞬く。 */
+  const moods: Record<WeatherVisualCondition, Array<[PulseKind, number]>> = {
+    clear: [["bloom", 0.65], ["veil", 0.35]],
+    neutral: [["bloom", 0.5], ["veil", 0.5]],
+    cloudy: [["veil", 0.7], ["bloom", 0.3]],
+    rain: [["ripple", 0.75], ["veil", 0.25]],
+    snow: [["glint", 0.7], ["veil", 0.3]],
+  };
+  let condition: WeatherVisualCondition = "neutral";
   let pulse: Pulse | undefined;
   let nextPulse = performance.now() + 3000 + Math.random() * 4000;
   const between = (low: number, high: number) => low + Math.random() * (high - low);
+  const pick = (): PulseKind => {
+    const choices = moods[condition] ?? moods.neutral;
+    let roll = Math.random();
+    for (const [kind, weight] of choices) {
+      roll -= weight;
+      if (roll <= 0) return kind;
+    }
+    return choices[0][0];
+  };
   const spawn = (now: number): Pulse => {
-    if (Math.random() < 0.5) {
+    const kind = pick();
+    const at = { fromX: between(0.18, 0.82), fromY: between(0.2, 0.8) };
+    if (kind === "bloom") {
       return {
-        kind: "bloom",
+        kind,
         start: now,
         duration: between(4500, 7000),
         strength: between(0.55, 1),
-        fromX: 0,
-        fromY: 0,
+        ...at,
+        toX: 0,
+        toY: 0,
+      };
+    }
+    if (kind === "ripple") {
+      return {
+        kind,
+        start: now,
+        duration: between(5000, 7000),
+        strength: between(0.6, 1),
+        ...at,
+        toX: 0,
+        toY: 0,
+      };
+    }
+    if (kind === "glint") {
+      return {
+        kind,
+        start: now,
+        duration: between(3500, 5500),
+        strength: between(0.6, 1),
+        ...at,
         toX: 0,
         toY: 0,
       };
@@ -155,7 +200,7 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     const dy = Math.sin(angle) * 0.95;
     const offset = between(-0.25, 0.25);
     return {
-      kind: "veil",
+      kind,
       start: now,
       duration: between(8000, 12000),
       strength: between(0.55, 0.9),
@@ -169,6 +214,8 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     if (!pulse && idle && now > nextPulse) pulse = spawn(now);
     uniforms.bloom.value = 0;
     uniforms.veilStrength.value = 0;
+    uniforms.ringStrength.value = 0;
+    uniforms.glint.value.z = 0;
     if (!pulse) return;
     const t = (now - pulse.start) / pulse.duration;
     if (t >= 1) {
@@ -177,15 +224,52 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
       return;
     }
     const envelope = Math.sin(Math.PI * t) ** 2 * pulse.strength;
-    if (pulse.kind === "bloom") {
-      uniforms.bloom.value = envelope;
-      return;
+    switch (pulse.kind) {
+      case "bloom":
+        uniforms.bloom.value = envelope;
+        return;
+      case "ripple":
+        // 水面の輪は落ちた瞬間に立ち、広がりながらゆっくり消える。
+        uniforms.ringStrength.value = Math.min(1, t * 8) * (1 - t) ** 1.5 * pulse.strength;
+        uniforms.ring.value.set(pulse.fromX, pulse.fromY, 0.04 + t * 0.95);
+        return;
+      case "glint":
+        uniforms.glint.value.set(pulse.fromX, pulse.fromY, envelope);
+        return;
+      case "veil":
+        uniforms.veilStrength.value = envelope;
+        uniforms.veil.value.set(
+          pulse.fromX + (pulse.toX - pulse.fromX) * t,
+          pulse.fromY + (pulse.toY - pulse.fromY) * t,
+        );
     }
-    uniforms.veilStrength.value = envelope;
-    uniforms.veil.value.set(
-      pulse.fromX + (pulse.toX - pulse.fromX) * t,
-      pulse.fromY + (pulse.toY - pulse.fromY) * t,
-    );
+  };
+
+  /*
+   * 地点の時刻による光。太陽はゆっくりしか動かないので1分ごとに求め、その間はなめらかに寄せる。
+   * 最初の1回だけは寄せずに置き、読み込み直後に夕暮れへ染まっていく動きを見せない。
+   */
+  const { latitude, longitude } = siteConfig.defaultLocation;
+  let sky: Sunlight | undefined;
+  let nextSky = 0;
+  const daylight = (now: number, delta: number) => {
+    if (now >= nextSky) {
+      nextSky = now + 60_000;
+      const first = !sky;
+      sky = sunlight(new Date(), latitude, longitude);
+      if (first) {
+        uniforms.dusk.value = sky.dusk;
+        uniforms.night.value = sky.night;
+        uniforms.sunSide.value = sky.side;
+        uniforms.sunLow.value = sky.low;
+      }
+    }
+    if (!sky) return;
+    const ease = 1 - Math.exp(-delta * 0.4);
+    uniforms.dusk.value += (sky.dusk - uniforms.dusk.value) * ease;
+    uniforms.night.value += (sky.night - uniforms.night.value) * ease;
+    uniforms.sunSide.value += (sky.side - uniforms.sunSide.value) * ease;
+    uniforms.sunLow.value += (sky.low - uniforms.sunLow.value) * ease;
   };
 
   const render = (now: number) => {
@@ -211,6 +295,7 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
       if (!pointer.matches) sweep(elapsed, now, delta);
       else if (now > guidedUntil) drift(elapsed);
       ambience(now, pointer.matches ? now > guidedUntil : calm > 0.5);
+      daylight(now, delta);
       uniforms.light.value.lerp(target, 1 - Math.exp(-delta * (pointer.matches ? 3.4 : 2.2)));
       renderer.render(scene, camera);
     } catch {
@@ -237,7 +322,10 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
   scrolled();
 
   return {
-    setCondition,
+    setCondition(next: WeatherVisualCondition, intensity?: WeatherVisualIntensity) {
+      condition = next;
+      setCondition(next, intensity);
+    },
     resume(value: boolean) {
       if (value === active || destroyed) return;
       active = value;
