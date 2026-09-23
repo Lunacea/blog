@@ -98,7 +98,7 @@
     --color-praise var(--motion-duration-base) var(--motion-ease-signature);
 }
 
-:root[data-theme-transition="active"] {
+:root[data-theme-transition] {
   transition: none;
 }
 

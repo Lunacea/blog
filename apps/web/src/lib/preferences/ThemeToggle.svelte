@@ -30,15 +30,24 @@
     const next = (activeThemeTarget ?? theme) === "dark" ? "light" : "dark";
     const root = document.documentElement;
     // 全画面の溶暗は撮影と合成が重い。背景の WebGL を諦める端末では即時に切り替える。
-    if (
-      root.dataset.motion !== "full" || !document.startViewTransition || !hasRenderingHeadroom()
-    ) {
+    const headroom = hasRenderingHeadroom();
+    if (root.dataset.motion !== "full" || !document.startViewTransition || !headroom) {
       themeTransitionId++;
       activeThemeTransition?.skipTransition();
       activeThemeTransition = undefined;
       activeThemeTarget = undefined;
-      delete root.dataset.themeTransition;
+      // 色トークンの補間も毎フレーム文書全体を再計算させるので、余裕のない端末では止める。
+      if (headroom) delete root.dataset.themeTransition;
+      else root.dataset.themeTransition = "instant";
       theme = setThemePreference(next).theme;
+      if (!headroom) {
+        const id = themeTransitionId;
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            if (id === themeTransitionId) delete root.dataset.themeTransition;
+          })
+        );
+      }
       return;
     }
 
