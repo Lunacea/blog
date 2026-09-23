@@ -141,7 +141,8 @@ pre:focus-visible,
     translate var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
-.tooltip::before {
+/* 尻尾は面より後に描く。先に描くと面の影が重なり、暗い地では尻尾だけがくすんで見える。 */
+.tooltip::after {
   position: absolute;
   top: calc(var(--tooltip-gap) - var(--space-1));
   left: 50%;
@@ -185,7 +186,7 @@ footer .tooltip {
   translate: 0 var(--space-1);
 }
 
-footer .tooltip::before {
+footer .tooltip::after {
   top: auto;
   bottom: calc(var(--tooltip-gap) - var(--space-1));
 }
@@ -215,7 +216,7 @@ footer .tooltip > span {
 }
 
 @media (forced-colors: active) {
-  .tooltip::before {
+  .tooltip::after {
     display: none;
   }
 
