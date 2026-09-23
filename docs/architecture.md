@@ -93,8 +93,9 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
   expose it. API contracts are unchanged.
 - 未使用だったreveal/parallax selectorは持たない。Home openingとWebGLだけが各機能内でmotionを
   所有する。
-- route間のView Transitionでは`root`と天候背景をsnapshotに含めない。新しいpage内容はlive DOMで fade
-  inし、headerの出入りと記事紙面の受け渡しだけを個別のsnapshotで動かす。これによりWebGLの
+- route間のView Transitionでは`root`と天候背景をsnapshotに含めない。旧page内容は旧状態だけの
+  `route-content` snapshotとしてその場でfade outし、新しいpage内容はlive DOMで少し遅れてfade
+  inする。headerの出入りと記事紙面の受け渡しだけを個別のsnapshotで動かす。これによりWebGLの
   描画ループは遷移中も継続する。テーマ切り替えだけは`root`snapshotを使って画面全体をcrossfadeする。
   query stringだけの遷移はより速くする。Reduced/Offと履歴移動では即時切替する。
 - サイトの天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。

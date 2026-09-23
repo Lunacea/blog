@@ -71,6 +71,7 @@ export function installPageTransitions() {
     delete document.documentElement.dataset.paperHandoff;
     delete document.documentElement.dataset.headerChange;
     delete document.documentElement.dataset.pageEnter;
+    delete document.documentElement.dataset.routeExit;
     if (pageEnterFallback !== undefined) {
       clearTimeout(pageEnterFallback);
       pageEnterFallback = undefined;
@@ -100,7 +101,11 @@ export function installPageTransitions() {
       if (handoff) document.documentElement.dataset.paperHandoff = "true";
       const header = headerChange(navigation.from?.url, navigation.to?.url);
       if (header) document.documentElement.dataset.headerChange = header;
+      // 旧ページの本文だけを snapshot にして、その場で溶かす。新しい本文は live DOM のまま
+      // fade in させるので、名前は旧状態の撮影後すぐに外す。
+      document.documentElement.dataset.routeExit = "true";
       const transition = document.startViewTransition(async () => {
+        delete document.documentElement.dataset.routeExit;
         resolve();
         await navigation.complete;
         document.documentElement.dataset.pageEnter = "active";
@@ -115,6 +120,7 @@ export function installPageTransitions() {
         });
       }
       const clearMarks = () => {
+        delete document.documentElement.dataset.routeExit;
         delete document.documentElement.dataset.paperHandoff;
         delete document.documentElement.dataset.headerChange;
       };
@@ -129,6 +135,7 @@ export function installPageTransitions() {
   return () => {
     if (pageEnterFallback !== undefined) clearTimeout(pageEnterFallback);
     delete document.documentElement.dataset.pageEnter;
+    delete document.documentElement.dataset.routeExit;
   };
 }
 

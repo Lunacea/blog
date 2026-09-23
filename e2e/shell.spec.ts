@@ -188,6 +188,7 @@ test("history navigation and page transitions keep the shell intact", {
       getComputedStyle(document.querySelector(selector)!).viewTransitionName;
     return {
       scroller: named("main"),
+      route: named(".route-content"),
       row: named(".index-list > li"),
       header: named("header"),
       weather: named("[data-editorial-light]"),
@@ -197,6 +198,7 @@ test("history navigation and page transitions keep the shell intact", {
     };
   });
   expect(timing.scroller).toBe("none");
+  expect(timing.route).toBe("none");
   expect(timing.row).toBe("none");
   expect(timing.header).toBe("site-header");
   expect(timing.weather).toBe("none");
