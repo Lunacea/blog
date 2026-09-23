@@ -12,6 +12,7 @@
   import type { ArticleCompositionVisual } from "./article-composition-types.ts";
   import ArticleCompositionGraph from "./ArticleCompositionGraph.svelte";
   import { createBlockShell, type BlockShell } from "./block-tools.ts";
+  import { diagramThemeVariables } from "./mermaid-palette.ts";
 
   type Heading = { id: string; text: string; level: number };
   type DiagramRecord = {
@@ -370,10 +371,16 @@
           if (!missing.length || !proceed()) return;
           const { default: mermaid } = await import("mermaid");
           if (!proceed()) return;
+          // 標準テーマの配色ではなく、サイトのトークンから組んだ色で描く。
+          const themeVariables = diagramThemeVariables(
+            theme === "dark" ? "dark" : "light",
+            prose,
+          );
           mermaid.initialize({
             startOnLoad: false,
             securityLevel: "strict",
-            theme,
+            theme: themeVariables ? "base" : theme,
+            themeVariables,
           });
           for (const record of missing) {
             const graph = record.graph;
