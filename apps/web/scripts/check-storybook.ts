@@ -72,53 +72,49 @@ async function serveStatic(request: Request): Promise<Response> {
   }
 }
 
-async function assertStory(page: Page, story: StoryEntry): Promise<void> {
-  const runtimeErrors: string[] = [];
-  const onPageError = (error: Error) => runtimeErrors.push(error.message);
-  const onConsole = (message: ConsoleMessage) => {
+/**
+ * ページの実行時エラーを集め続ける。story の切り替え中の描画で起きたエラーも拾えるよう、
+ * 切り替えより前から見張り、story ごとに空にして読む。
+ */
+function watchRuntimeErrors(page: Page): string[] {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message: ConsoleMessage) => {
     const browserDriverWarning = message.type() === "warning" &&
       /GL Driver Message.*GPU stall due to ReadPixels/.test(message.text());
     const unavailableWebgl =
       /THREE\.WebGLRenderer: (?:A WebGL context could not be created|Error creating WebGL context)/
-        .test(
-          message.text(),
-        );
+        .test(message.text());
     if (
-      ["error", "warning"].includes(message.type()) && !browserDriverWarning && !unavailableWebgl
+      !["error", "warning"].includes(message.type()) || browserDriverWarning || unavailableWebgl
     ) {
-      const location = message.location();
-      const source = location.url ? ` (${location.url}:${location.lineNumber})` : "";
-      runtimeErrors.push(`${message.text()}${source}`);
+      return;
     }
-  };
-  page.on("pageerror", onPageError);
-  page.on("console", onConsole);
+    const location = message.location();
+    const source = location.url ? ` (${location.url}:${location.lineNumber})` : "";
+    errors.push(`${message.text()}${source}`);
+  });
+  return errors;
+}
 
-  try {
-    await showStory(page, story.id);
-    if (!(await page.locator("#storybook-root > *").count())) {
-      throw new Error(`${story.id}: empty body`);
-    }
-    if (runtimeErrors.length) throw new Error(`${story.id}: ${runtimeErrors.join(" | ")}`);
-
-    const accessibility = await analyzeAccessibility(page);
-    if (accessibility.violations.length) {
-      const details = accessibility.violations.flatMap((violation) =>
-        violation.nodes.map((node) =>
-          `${violation.id} ${node.target.join(" ")}: ${node.failureSummary ?? violation.help}`
-        )
-      ).join(" | ");
-      throw new Error(
-        `${story.id}: axe violations ${details}`,
-      );
-    }
-
-    const overflow = await horizontalOverflow(page);
-    if (overflow > 1) throw new Error(`${story.id}: horizontal overflow ${overflow}px`);
-  } finally {
-    page.off("pageerror", onPageError);
-    page.off("console", onConsole);
+async function assertStory(page: Page, story: StoryEntry, errors: string[]): Promise<void> {
+  if (!(await page.locator("#storybook-root > *").count())) {
+    throw new Error(`${story.id}: empty body`);
   }
+  if (errors.length) throw new Error(`${story.id}: ${errors.join(" | ")}`);
+
+  const accessibility = await analyzeAccessibility(page);
+  if (accessibility.violations.length) {
+    const details = accessibility.violations.flatMap((violation) =>
+      violation.nodes.map((node) =>
+        `${violation.id} ${node.target.join(" ")}: ${node.failureSummary ?? violation.help}`
+      )
+    ).join(" | ");
+    throw new Error(`${story.id}: axe violations ${details}`);
+  }
+
+  const overflow = await horizontalOverflow(page);
+  if (overflow > 1) throw new Error(`${story.id}: horizontal overflow ${overflow}px`);
 }
 
 async function checkWeatherFallback(
@@ -164,6 +160,24 @@ async function openStory(page: Page, baseUrl: string, id: string) {
  * 読み込み直さずに story を切り替える。プレビューの JavaScript を毎回読み直すのが検査時間の
  * ほとんどを占めていたため、Storybook のチャネルで描画し直させ、描き終わりを待つ。
  */
+const reloaded = (error: unknown) =>
+  error instanceof Error && /Execution context was destroyed|navigation/u.test(error.message);
+
+/**
+ * story 1件分の検査。負荷の高い CI ではプレビュー自体が読み込み直されることがあり、そうなると
+ * 検査の途中の評価が失敗する。そのときは story を開き直して、検査を一度だけやり直す。
+ */
+async function checkStory(page: Page, baseUrl: string, id: string, check: () => Promise<void>) {
+  try {
+    await showStory(page, id);
+    await check();
+  } catch (error) {
+    if (!reloaded(error)) throw error;
+    await openStory(page, baseUrl, id);
+    await check();
+  }
+}
+
 async function showStory(page: Page, id: string) {
   // 表示中の story を指定しても描き直されず、描き終わりの知らせも来ない。
   if (shown.get(page) === id) return;
@@ -230,17 +244,20 @@ async function checkLayouts(
     try {
       await openPreview(page, baseUrl, stories[0]);
       for (const story of stories) {
-        await showStory(page, story.id);
-        const overflow = await horizontalOverflow(page);
-        if (overflow > 1) found.push(`${story.id} at ${layout.name}: ${overflow}px`);
-        if (!layout.enlargeText) continue;
-        await page.evaluate(() => {
-          document.documentElement.style.fontSize = "200%";
-          return new Promise(requestAnimationFrame);
+        await checkStory(page, baseUrl, story.id, async () => {
+          const overflow = await horizontalOverflow(page);
+          if (overflow > 1) found.push(`${story.id} at ${layout.name}: ${overflow}px`);
+          if (!layout.enlargeText) return;
+          await page.evaluate(() => {
+            document.documentElement.style.fontSize = "200%";
+            return new Promise(requestAnimationFrame);
+          });
+          const enlarged = await horizontalOverflow(page);
+          if (enlarged > 1) {
+            found.push(`${story.id} at ${layout.width}px/200% text: ${enlarged}px`);
+          }
+          await page.evaluate(() => document.documentElement.style.removeProperty("font-size"));
         });
-        const enlarged = await horizontalOverflow(page);
-        if (enlarged > 1) found.push(`${story.id} at ${layout.width}px/200% text: ${enlarged}px`);
-        await page.evaluate(() => document.documentElement.style.removeProperty("font-size"));
       }
     } finally {
       await context.close();
@@ -443,8 +460,13 @@ try {
     ];
     const auditing = Promise.all(lanes.map(async (lane) => {
       const lanePage = await context.newPage();
+      const errors = watchRuntimeErrors(lanePage);
       await openPreview(lanePage, baseUrl, lane[0]);
-      for (const story of lane) await assertStory(lanePage, story);
+      for (const story of lane) {
+        await checkStory(lanePage, baseUrl, story.id, () => assertStory(lanePage, story, errors));
+        // 最初の story は読み込みの時点で描かれているので、読んだ後に空にする。
+        errors.length = 0;
+      }
       await lanePage.close();
     }));
     const others = Promise.all([
