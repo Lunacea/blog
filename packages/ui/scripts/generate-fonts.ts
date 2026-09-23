@@ -163,15 +163,9 @@ export async function generateFontSubsets(): Promise<void> {
 }`;
   await Deno.writeTextFile(new URL("fonts.css", output), `${faces}\n\n${fallbacks}\n`);
 
-  const preloadFonts = generated.filter((font) => font.preload);
-  const imports = preloadFonts.map((font, index) =>
-    `import font${index} from "./${font.output}?url";`
-  ).join("\n");
-  const references = preloadFonts.map((_, index) => `font${index}`).join(", ");
-  await Deno.writeTextFile(
-    new URL("preloads.ts", output),
-    `${imports}\nexport const fontPreloads = [${references}];\n`,
-  );
+  await Deno.remove(new URL("preloads.ts", output)).catch((error) => {
+    if (!(error instanceof Deno.errors.NotFound)) throw error;
+  });
   await Deno.writeTextFile(
     new URL("manifest.json", output),
     JSON.stringify(
