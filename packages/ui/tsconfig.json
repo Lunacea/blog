@@ -13,17 +13,7 @@
     "types": [
       "vite/client"
     ],
-    "paths": {
-      "$app/navigation": [
-        "packages/ui/.storybook/mocks/app-navigation.ts"
-      ],
-      "@lunacea/config": [
-        "packages/config/mod.ts"
-      ],
-      "@lunacea/schemas": [
-        "packages/schemas/mod.ts"
-      ]
-    },
+    "paths": {},
     "verbatimModuleSyntax": true
   },
   "include": [

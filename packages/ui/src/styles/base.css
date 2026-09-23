@@ -1,0 +1,108 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-color: var(--color-muted) var(--color-background);
+  scrollbar-gutter: stable;
+  background: var(--color-background);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  html * {
+    scroll-behavior: auto;
+    animation-duration: var(--motion-duration-immediate) !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--motion-duration-immediate) !important;
+  }
+}
+
+@layer base {
+  body {
+    font-synthesis: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    color: var(--color-foreground);
+    background: var(--color-background);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-body);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    color: var(--color-background);
+    background: var(--color-primary);
+  }
+
+  a {
+    color: inherit;
+    text-decoration-color: var(--color-secondary);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.24em;
+  }
+
+  a:hover {
+    text-decoration-color: var(--color-accent);
+  }
+
+  button,
+  select,
+  input,
+  textarea {
+    color: inherit;
+    font: inherit;
+  }
+
+  button,
+  select,
+  input[type="submit"] {
+    min-height: var(--control-size);
+  }
+
+  /*
+    フォーカス表示は全体で1種類。base レイヤーで宣言するので、独自の角丸を持つ操作子はそれを保つ。
+  */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+    border-radius: var(--radius-small);
+    box-shadow: none;
+  }
+
+  /*
+    クリップやスクロールする要素の内側では、リングを操作子の内側に描く。
+    外側だと目次やコードブロックの端に接した行で右辺と下辺が欠ける。
+  */
+  img,
+  svg,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  img {
+    height: auto;
+  }
+}
+
+@media (forced-colors: active) {
+  html {
+    scrollbar-color: auto;
+  }
+
+  body {
+    background: Canvas;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+    box-shadow: none;
+  }
+}

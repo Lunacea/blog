@@ -8,12 +8,23 @@ export default defineConfig({
   resolve: {
     alias: {
       "$app/environment": fileURLToPath(
-        new URL("./src/test/mocks/app-environment.ts", import.meta.url),
+        new URL("./tests/mocks/app-environment.ts", import.meta.url),
       ),
-      "$app/state": fileURLToPath(new URL("./src/test/mocks/app-state.ts", import.meta.url)),
+      "$app/state": fileURLToPath(new URL("./tests/mocks/app-state.ts", import.meta.url)),
       "$lib": fileURLToPath(new URL("./src/lib", import.meta.url)),
       "$routes": fileURLToPath(new URL("./src/routes", import.meta.url)),
-      "$ui": fileURLToPath(new URL("../../packages/ui/src", import.meta.url)),
+      "@lunacea/ui/fonts": fileURLToPath(
+        new URL("../../packages/ui/src/fonts.ts", import.meta.url),
+      ),
+      "@lunacea/ui/icons": fileURLToPath(
+        new URL("../../packages/ui/src/icons/index.ts", import.meta.url),
+      ),
+      "@lunacea/ui/primitives": fileURLToPath(
+        new URL("../../packages/ui/src/primitives/index.ts", import.meta.url),
+      ),
+      "@lunacea/ui/utils": fileURLToPath(
+        new URL("../../packages/ui/src/utils.ts", import.meta.url),
+      ),
       "@lunacea/config": fileURLToPath(new URL("../../packages/config/mod.ts", import.meta.url)),
       "@lunacea/schemas": fileURLToPath(new URL("../../packages/schemas/mod.ts", import.meta.url)),
     },
@@ -28,7 +39,7 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    include: ["src/**/*.test.ts"],
-    setupFiles: ["./src/test/setup.ts"],
+    include: ["tests/**/*.test.ts"],
+    setupFiles: ["./tests/setup.ts"],
   },
 });

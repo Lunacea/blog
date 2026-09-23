@@ -1,16 +1,15 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import { responsiveImages } from "$lib/.generated/images.ts";
-  import PageHead from "$lib/components/PageHead.svelte";
-  import { useFixedLocationWeather } from "$lib/weather.ts";
-  import { ThemeToggle } from "$ui/components";
-  import { HomeOpening, LiquidTitle } from "$ui/motion";
-  import { IndexList, ProfileCard } from "$ui/patterns";
-  import { AllArticlesLink } from "$ui/components";
+  import PageHead from "$lib/PageHead.svelte";
+  import ThemeToggle from "$lib/preferences/ThemeToggle.svelte";
+  import HomeOpening from "$lib/home/HomeOpening.svelte";
+  import LiquidTitle from "$lib/home/LiquidTitle.svelte";
+  import IndexList from "$lib/articles/IndexList.svelte";
+  import ProfileCard from "$lib/home/ProfileCard.svelte";
+  import AllArticlesLink from "$lib/home/AllArticlesLink.svelte";
   import { siteConfig, visualAssets } from "@lunacea/config";
 
   let { data } = $props();
-  const weather = useFixedLocationWeather();
 
   /*
    * マークは常に名刺の枠の寸法で描かれるので、変種は幅ではなく解像度倍率。

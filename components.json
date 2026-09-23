@@ -3,15 +3,15 @@
   "style": "nova",
   "typescript": true,
   "tailwind": {
-    "css": "packages/ui/src/foundations/global.css",
+    "css": "apps/web/src/styles/app.css",
     "baseColor": "olive"
   },
   "aliases": {
-    "lib": "$ui",
-    "components": "$ui/components",
-    "ui": "$ui/primitives",
-    "utils": "$ui/utils",
-    "hooks": "$ui/motion"
+    "lib": "$lib",
+    "components": "@lunacea/ui/primitives",
+    "ui": "@lunacea/ui/primitives",
+    "utils": "@lunacea/ui/utils",
+    "hooks": "$lib"
   },
   "registry": "https://shadcn-svelte.com/registry"
 }

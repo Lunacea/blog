@@ -1,12 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import PageHead from "$lib/components/PageHead.svelte";
-  import { page } from "$app/state";
-  import { useFixedLocationWeather } from "$lib/weather.ts";
-  import { HeaderSearch } from "$ui/components";
-  import { DisclosureGlyph } from "$ui/icons";
-  import { IndexList } from "$ui/patterns";
-  import { cn } from "$ui/utils.ts";
+  import PageHead from "$lib/PageHead.svelte";
+  import HeaderSearch from "$lib/shell/HeaderSearch.svelte";
+  import { DisclosureGlyph } from "@lunacea/ui/icons";
+  import IndexList from "$lib/articles/IndexList.svelte";
+  import { cn } from "@lunacea/ui/utils";
   import { siteConfig } from "@lunacea/config";
 
   let { data } = $props();
@@ -26,8 +24,6 @@
     data.filters.category ?? null,
     data.filters.tag ? `#${data.filters.tag}` : null,
   ].filter((value) => value !== null));
-
-  const weather = useFixedLocationWeather();
 
   // JavaScript なしでも使えるよう初期状態は開いておき、狭い画面では拡張実行後に畳む。
   let categoryOpen = $state(true);
@@ -104,7 +100,6 @@
   path="/articles"
   robots={data.isFiltered ? "noindex,follow" : undefined}
 />
-
 
 <div class="pt-(--space-12) pb-(--section-space)">
   <!-- 見出しは常に最初に読む。レールが上に来る幅でも、題字を先頭へ置く。 -->

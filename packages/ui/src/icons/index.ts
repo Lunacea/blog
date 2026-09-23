@@ -6,6 +6,7 @@ export { default as DisclosureGlyph } from "./DisclosureGlyph.svelte";
 export { default as ForwardGlyph } from "./ForwardGlyph.svelte";
 export { default as HeartGlyph } from "./HeartGlyph.svelte";
 export { default as IndexGlyph } from "./IndexGlyph.svelte";
+export { default as MotionGlyph } from "./MotionGlyph.svelte";
 export { default as SearchGlyph } from "./SearchGlyph.svelte";
 export { glyphFrame, glyphResponse, glyphStroke, glyphTransition } from "./glyph.ts";
-export { interfaceIcons, socialIcons, tagIconName } from "./semantic.ts";
+export { blockToolIcons, interfaceIcons, socialIcons, tagIconName } from "./semantic.ts";
