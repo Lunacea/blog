@@ -56,6 +56,8 @@ export function installScrollInertia() {
 
   function wheel(event: WheelEvent) {
     if (root.dataset.motion !== "full" || event.ctrlKey || event.defaultPrevented) return;
+    // モーダルの間は背後の地を動かさない。モーダル内のスクロールはブラウザに任せる。
+    if (root.querySelector(":modal")) return;
     const delta = normalise(event);
     if (!delta || nested(event.target, delta)) return;
     event.preventDefault();

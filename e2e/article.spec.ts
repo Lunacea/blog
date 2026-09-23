@@ -217,6 +217,10 @@ test("code and diagram blocks pair a rendered view with an editable source", {
   const zoom = page.getByRole("dialog", { name: "ボタンの状態遷移" });
   await expect(zoom.locator(".mermaid-diagram svg")).toBeVisible();
   await expect(drawing).toHaveCount(0);
+  // 開いている間は背後の記事が動かない。
+  const resting = await page.evaluate(() => scrollY);
+  await page.mouse.wheel(0, 600);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(resting);
   await page.keyboard.press("Escape");
   await expect(zoom).toBeHidden();
   await expect(drawing).toBeVisible();

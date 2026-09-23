@@ -196,6 +196,41 @@
   border: 0;
 }
 
+/* 図を開いている間は、背後の記事をスクロールさせない。html は scrollbar-gutter で幅を保つ。 */
+html:has(.diagram-dialog[open]) {
+  overflow: hidden;
+}
+
+/* 背景は面と同じ長さで溶かす。::backdrop は motion 設定の一括指定（*）に含まれないので個別に止める。 */
+.diagram-dialog[data-state="open"]::backdrop {
+  animation: backdrop-in var(--motion-duration-base) var(--motion-ease-enter) both;
+}
+
+/* 退場し終えてから close() までの1フレームで面が戻らないよう、終わりの姿を保つ。 */
+.diagram-dialog[data-state="closed"] {
+  animation-fill-mode: forwards;
+}
+
+.diagram-dialog[data-state="closed"]::backdrop {
+  animation: backdrop-out var(--motion-duration-fast) var(--motion-ease-exit) both;
+}
+
+html:not([data-motion="full"]) .diagram-dialog::backdrop {
+  animation: none;
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
 /* 拡大表示では枠を外し、元の寸法を下限に、幅に余裕があれば2倍まで大きく描く。 */
 .diagram-dialog .mermaid-diagram {
   overflow: visible;
