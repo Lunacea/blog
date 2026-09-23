@@ -49,7 +49,6 @@
     <span
       class="grid origin-bottom place-items-center motion-full:data-[celebrating=true]:animate-praise-liquid"
       data-celebrating={celebrating}
-      data-praise-celebration={celebrating ? "" : undefined}
     >
       <HeartGlyph
         filled={selected}

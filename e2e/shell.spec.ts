@@ -14,7 +14,15 @@ test("the hairline bar carries the wordmark, the navigation and both controls", 
   await expect(header.locator("a button")).toHaveCount(0);
   await expect(header.locator(".header-theme button")).toBeVisible();
   await expect(header.locator(".header-display button")).toBeVisible();
-  await expect(page.getByRole("contentinfo").locator(".settings-trigger")).toHaveCount(1);
+  const footer = page.getByRole("contentinfo");
+  await expect(footer.locator(".settings-trigger")).toHaveCount(1);
+  expect(
+    await page.evaluate(() => {
+      const light = document.querySelector<HTMLElement>("[data-editorial-light]")!;
+      const footer = document.querySelector<HTMLElement>("footer")!;
+      return Number(getComputedStyle(light).zIndex) < Number(getComputedStyle(footer).zIndex);
+    }),
+  ).toBe(true);
   expect((await header.boundingBox())?.y ?? -1).toBeLessThanOrEqual(1);
   await page.evaluate(() => scrollTo(0, 600));
   expect((await header.boundingBox())?.y ?? -1).toBeLessThanOrEqual(1);

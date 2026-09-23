@@ -228,15 +228,29 @@ test("anonymous praise and share stay available", { tag: ["@desktop"] }, async (
   expect((await praise.locator(".heart-glyph").boundingBox())?.width ?? 0).toBeGreaterThan(32);
   await expect(praise.locator(".heart-glyph")).toHaveCSS("transition-property", /scale/);
 
+  const celebration = praise.locator("span[data-celebrating]");
+  const animationStarted = celebration.evaluate((element) =>
+    new Promise<string>((resolve) => {
+      const read = () => {
+        if (element.dataset.celebrating !== "true") return false;
+        resolve(getComputedStyle(element).animationName);
+        return true;
+      };
+      if (read()) return;
+      const observer = new MutationObserver(() => {
+        if (!read()) return;
+        observer.disconnect();
+      });
+      observer.observe(element, { attributes: true, attributeFilter: ["data-celebrating"] });
+    })
+  );
   await praise.click();
-  // 祝いは 900ms で消える。先に永続する状態を確かめると、測る前に居なくなる。
-  const celebration = page.locator("[data-praise-celebration]");
-  await expect(celebration).toHaveCSS("animation-name", /praise-liquid/u);
+  expect(await animationStarted).toMatch(/praise-liquid/u);
   expect((await celebration.boundingBox())?.width ?? 999).toBeLessThan(120);
   await expect(praise).toHaveAttribute("aria-pressed", "true");
   await expect(praise).toHaveCSS("background-color", idle);
   await expect(praise.locator(".heart-glyph")).toHaveAttribute("data-filled", "true");
-  await expect(celebration).toHaveCount(0, { timeout: 5_000 });
+  await expect(celebration).toHaveAttribute("data-celebrating", "false", { timeout: 5_000 });
 
   await page.reload();
   await expect(page.getByRole("button", { name: "称賛を取り消す" }))

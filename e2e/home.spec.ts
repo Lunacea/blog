@@ -130,10 +130,10 @@ test("the ambient light renders on a capable desktop and is disposed when motion
   ).toBe(true);
   await expect(light.locator("[data-rendering]")).toHaveAttribute("data-rendering", "active");
   await page.mouse.move(600, 250);
-  await page.locator(".settings-trigger").click();
+  await page.locator(".header-display").getByRole("button").click();
   await expect(light.locator("canvas")).toHaveCount(0);
   await expect(light).toBeAttached();
-  await complete(page);
+  await expect(page.getByRole("heading", { level: 1, name: "Articles" })).toBeVisible();
 });
 
 test("the mobile light keeps its drawing buffer through scroll and recovers from context loss", {
