@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect } from "@playwright/test";
 import {
   capableDevice,
   type Condition,
@@ -6,6 +6,7 @@ import {
   HOME_LATEST_LIMIT,
   HYDRATED,
   motionOff,
+  test,
   weatherReading,
 } from "./support.ts";
 
@@ -110,7 +111,7 @@ test("OS restrictions, forced colours and a failing WebGL keep Home static and c
 });
 
 test("the ambient light renders on a capable desktop and is disposed when motion turns off", {
-  tag: ["@desktop"],
+  tag: ["@desktop", "@webgl"],
 }, async ({ page }) => {
   await page.addInitScript(capableDevice);
   test.skip(!await supportsWebgl(page), "The test browser has no WebGL context");
@@ -138,7 +139,7 @@ test("the ambient light renders on a capable desktop and is disposed when motion
 });
 
 test("the mobile light keeps its drawing buffer through scroll and recovers from context loss", {
-  tag: ["@mobile"],
+  tag: ["@mobile", "@webgl"],
 }, async ({ page }) => {
   const gpuErrors: string[] = [];
   page.on("console", (message) => {

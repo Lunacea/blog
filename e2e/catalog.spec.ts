@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { ARTICLE, CATALOG, MATH_ARTICLE, SEARCH_TERM } from "./support.ts";
+import { expect } from "@playwright/test";
+import { ARTICLE, CATALOG, MATH_ARTICLE, SEARCH_TERM, test } from "./support.ts";
 
 test("the catalog filters, searches and clears through GET, and rows open by keyboard", {
   tag: ["@desktop", "@mobile"],

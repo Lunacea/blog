@@ -13,7 +13,8 @@ export default defineConfig({
   expect: { timeout: 8_000 },
   forbidOnly: Boolean(Deno.env.get("CI")),
   retries: Deno.env.get("CI") ? 2 : 0,
-  workers: 2,
+  // 背景の WebGL は @webgl のテストだけが使うので、手元では並列を上げても CPU を奪い合わない。
+  workers: Deno.env.get("CI") ? 2 : 4,
   reporter: Deno.env.get("CI") ? [["html", { open: "never" }], ["github"]] : "list",
   use: {
     baseURL: Deno.env.get("E2E_BASE_URL") ?? "http://127.0.0.1:4173",

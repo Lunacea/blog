@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { HYDRATED } from "./support.ts";
+import { expect } from "@playwright/test";
+import { HYDRATED, test } from "./support.ts";
 
 test("the hairline bar carries the wordmark, the navigation and both controls", {
   tag: ["@desktop"],

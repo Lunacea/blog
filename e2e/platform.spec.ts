@@ -1,5 +1,5 @@
-import { expect, test } from "@playwright/test";
-import { ARTICLE, SEARCH_TERM } from "./support.ts";
+import { expect } from "@playwright/test";
+import { ARTICLE, SEARCH_TERM, test } from "./support.ts";
 
 // HTTP 境界のみを見るためブラウザページを開かない。
 test("the public surface responds and filtered catalogs declare their policy", {
