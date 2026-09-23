@@ -3,11 +3,6 @@ html {
   view-transition-name: none;
 }
 
-html,
-body {
-  background: transparent;
-}
-
 @media (forced-colors: active) {
   html,
   body {

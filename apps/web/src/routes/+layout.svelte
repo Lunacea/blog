@@ -33,6 +33,7 @@
 
 <a class="fixed top-(--space-2) left-(--space-2) z-(--z-skip-link) min-h-control-size translate-y-[-150%] bg-panel px-(--space-4) py-(--space-3) transition-transform duration-(--motion-duration-fast) ease-enter focus:translate-y-0" href="#main-content">本文へ移動</a>
 <FontPreloads />
+<WeatherField />
 {#if !masthead}
   <SiteHeader navigation={primaryNavigation} pathname={page.url.pathname}>
     {#snippet theme()}<ThemeToggle />{/snippet}
@@ -40,7 +41,6 @@
   </SiteHeader>
 {/if}
 <main class="relative z-(--z-visual)" id="main-content">
-  <WeatherField />
   <div class="route-content">
     {@render children()}
   </div>

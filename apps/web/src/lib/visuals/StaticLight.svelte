@@ -21,7 +21,7 @@
   } = $props();
 </script>
 
-<div class="pointer-events-none fixed inset-x-0 top-0 h-lvh -z-1 overflow-hidden bg-canvas print:hidden forced-colors:hidden" aria-hidden="true" data-editorial-light data-webgl={webgl} data-weather={condition}>
+<div class="pointer-events-none fixed inset-x-0 top-0 z-(--z-base) h-lvh overflow-hidden bg-canvas print:hidden forced-colors:hidden" aria-hidden="true" data-editorial-light data-webgl={webgl} data-weather={condition}>
   {@render overlay?.()}
 
   <svg class="absolute inset-0 size-full opacity-(--grain-opacity) mix-blend-multiply theme-dark:mix-blend-screen">
