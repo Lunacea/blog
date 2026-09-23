@@ -46,7 +46,8 @@ covers the same ground without reading as either overcast or a settled fall. How
 follows the location's own monthly rates, so summer showers and winter flurries are common and the
 reverse never occurs; it is rarer over a clear sky than over cloud. The choice is a hash of a
 twenty-minute bucket, so a shower holds still and then passes. In dev, `?weather=` and `?intensity=`
-on Home or Articles force either.
+force either, `?pulse=bloom|veil|clearing|ripple|gust` repeats one idle event every few seconds, and
+`?time=` (an ISO 8601 date-time) fixes the hour the light is drawn for.
 
 The palette is monochrome throughout, including the theme control. The only colour on the site comes
 from the author's own identity artwork on the profile card.
@@ -212,6 +213,10 @@ thins to let dappled light through a gap; rain drops a single ripple on the wate
 pale drift of powder across on the wind. Overcast skies move in two layers at different speeds so
 the cover never slides as one sheet. Events are drawn with the field's own noise and shading, never
 as particles or points.
+
+On paper a white highlight disappears, so in light mode the lit side is drawn as colour: warm in
+sunshine, a faint paper white under cloud, and cool over snow and water, with cloud shadows set a
+little deeper than in the dark.
 
 The animated field also follows the configured location's sky. The sun's elevation and bearing are
 computed in the browser from the location and the current time; low sun warms the light and brings

@@ -1,12 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { hasRenderingHeadroom, subscribeMotionCapabilities } from "$lib/preferences/preferences.ts";
+  import type { EditorialLightOptions } from "./editorial-light.ts";
   import StaticLight from "./StaticLight.svelte";
   import type { WeatherVisualCondition, WeatherVisualIntensity } from "./weather-visual.ts";
 
-  let { condition = "neutral", intensity = "steady" }: {
+  let { condition = "neutral", intensity = "steady", options }: {
     condition?: WeatherVisualCondition;
     intensity?: WeatherVisualIntensity;
+    /** 開発時の確認用の指定。本番では渡さない。 */
+    options?: EditorialLightOptions;
   } = $props();
   let host: HTMLDivElement;
   let enabled = $state(false);
@@ -44,7 +47,7 @@
       try {
         const { mountEditorialLight } = await import("./editorial-light.ts");
         if (disposed || failed || ticket !== generation || !eligible() || !visible || document.hidden) return;
-        const scene = mountEditorialLight(host, () => { failed = true; stop(); });
+        const scene = mountEditorialLight(host, () => { failed = true; stop(); }, options);
         destroy = scene.destroy;
         resume = scene.resume;
         apply = scene.setCondition;

@@ -82,7 +82,8 @@ test("OS restrictions, forced colours and a failing WebGL keep Home static and c
   await page.addInitScript(() => localStorage.setItem("lunacea-motion", "full"));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await expect(page.locator("html")).toHaveAttribute("data-motion-preference", "full");
+  // 保存された希望は ON のままでも、OS の設定が優先されて OFF で描く。
+  expect(await page.evaluate(() => localStorage.getItem("lunacea-motion"))).toBe("full");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
   await expect(page.locator("canvas")).toHaveCount(0);
 

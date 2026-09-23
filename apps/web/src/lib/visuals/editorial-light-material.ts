@@ -1,4 +1,6 @@
 import { ShaderMaterial, Vector2, Vector3 } from "three";
+import type { PulseFrame } from "./ambient-pulses.ts";
+import type { Sunlight } from "./sunlight.ts";
 import type { WeatherVisualCondition, WeatherVisualIntensity } from "./weather-visual.ts";
 
 type Sky = {
@@ -272,13 +274,20 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float drifting = gust.z * gustReach * gustReach * smoothstep(0.35, 0.8, powder);
 
         float signal = (gradient * dapple * occlusion * 1.45 + ambient * 0.2 + glare
-          + water * 0.9 - 0.42 + exposure - passing * 0.36 + ripplePulse * 0.42
+          + water * 0.9 - 0.42 + exposure - passing * mix(0.52, 0.36, dark) + ripplePulse * 0.42
           + drifting * 0.5) * focus;
 
         /* 境界の両側で連続させ、階調の縁が出ないようにする。 */
         float glow = smoothstep(0.0, 0.6, signal);
         float shade = smoothstep(0.0, 0.42, -signal);
         vec3 lit = mix(mix(vec3(1.0), warm, daySun * 0.78), pale, clamp(frost * 0.5 + drifting, 0.0, 1.0));
+        /*
+         * 明るい地では白い光は地に溶けて見えない。光を色として描き、日差しは暖色、雲の下は
+         * 地より僅かに明るい白、雪と水面は冷たい色にする。暗い地では従来どおり明るさで描く。
+         */
+        vec3 paperLit = mix(pale * 0.97, mix(warm * 0.93, amber, 0.18), clamp(daySun * 1.4, 0.0, 1.0));
+        paperLit = mix(paperLit, mix(pale, cool, 0.4), clamp(frost + ripple * 0.8, 0.0, 1.0));
+        lit = mix(paperLit, lit, dark);
         lit = mix(lit, amber, duskLit * 0.6);
         lit = mix(lit, moon, night * 0.55);
         vec3 dim = mix(vec3(0.0), cool, clamp(ripple + frost * 0.35, 0.0, 1.0));
@@ -289,7 +298,7 @@ export function createEditorialLightMaterial(coarse: boolean) {
         vec3 tone = mix(dim, lit, step(0.0, signal));
         float grain = (hash(gl_FragCoord.xy) - 0.5) * 0.045;
         /* 明暗で描く側が逆になるため、この2つの重みを近づけて両テーマの強度を揃える。 */
-        float alpha = glow * mix(0.26, 0.3, dark) + shade * mix(0.3, 0.26, dark) + grain * glow;
+        float alpha = glow * mix(0.36, 0.3, dark) + shade * mix(0.3, 0.26, dark) + grain * glow;
         /* 陰として描く雪原は、明るい地では少し強めないと見えない。 */
         alpha += shade * frost * (1.0 - dark) * 0.05;
         alpha += glow * water * mix(0.26, 0.09, dark);
@@ -320,6 +329,24 @@ export function createEditorialLightMaterial(coarse: boolean) {
       uniforms.ripple.value = sky.ripple * weather;
       uniforms.frost.value = sky.frost * weather;
       uniforms.lift.value = sky.lift;
+    },
+    /** 待機中の出来事を渡す。 */
+    setPulses(frame: PulseFrame) {
+      uniforms.bloom.value = frame.bloom;
+      uniforms.veil.value.set(frame.veil.x, frame.veil.y);
+      uniforms.veilStrength.value = frame.veil.strength;
+      uniforms.veilSize.value = frame.veil.size;
+      uniforms.ring.value.set(frame.ring.x, frame.ring.y, frame.ring.radius);
+      uniforms.ringStrength.value = frame.ring.strength;
+      uniforms.clearing.value.set(frame.clearing.x, frame.clearing.y, frame.clearing.strength);
+      uniforms.gust.value.set(frame.gust.x, frame.gust.y, frame.gust.strength);
+    },
+    /** 地点の時刻による光を渡す。 */
+    setDaylight(sky: Sunlight) {
+      uniforms.dusk.value = sky.dusk;
+      uniforms.night.value = sky.night;
+      uniforms.sunSide.value = sky.side;
+      uniforms.sunLow.value = sky.low;
     },
     setTheme(dark: boolean) {
       uniforms.dark.value = dark ? 1 : 0;

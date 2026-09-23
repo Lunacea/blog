@@ -65,3 +65,39 @@ export function sunlight(at: Date, latitude: number, longitude: number): Sunligh
     low: 1 - smoothstep(8, 55, Math.max(elevation, 0)),
   };
 }
+
+/**
+ * 時刻の光を時間に沿って保つ。太陽はゆっくりしか動かないので1分ごとに求め、その間はなめらかに
+ * 寄せる。最初の1回だけは寄せずに置き、読み込み直後に夕暮れへ染まっていく動きを見せない。
+ */
+export function createDaylight(
+  latitude: number,
+  longitude: number,
+  clock: () => Date = () => new Date(),
+) {
+  let goal: Sunlight | undefined;
+  let current: Sunlight | undefined;
+  let next = 0;
+  return {
+    update(now: number, delta: number): Sunlight {
+      if (!goal || now >= next) {
+        next = now + 60_000;
+        goal = sunlight(clock(), latitude, longitude);
+        current ??= { ...goal };
+      }
+      const ease = 1 - Math.exp(-delta * 0.4);
+      const state = current as Sunlight;
+      for (const key of ["dusk", "night", "side", "low"] as const) {
+        state[key] += (goal[key] - state[key]) * ease;
+      }
+      return state;
+    },
+  };
+}
+
+/** 開発時の確認用。ISO 8601 の日時を受け取り、読めなければ undefined。 */
+export function parseTimeOverride(value: string | null): Date | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
