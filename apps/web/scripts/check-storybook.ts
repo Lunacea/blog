@@ -109,8 +109,13 @@ async function assertStory(
 
     const accessibility = await analyzeAccessibility(page);
     if (accessibility.violations.length) {
+      const details = accessibility.violations.flatMap((violation) =>
+        violation.nodes.map((node) =>
+          `${violation.id} ${node.target.join(" ")}: ${node.failureSummary ?? violation.help}`
+        )
+      ).join(" | ");
       throw new Error(
-        `${story.id}: axe violations ${accessibility.violations.map((item) => item.id).join(", ")}`,
+        `${story.id}: axe violations ${details}`,
       );
     }
 

@@ -6,6 +6,7 @@ body {
 
 #storybook-root {
   min-height: calc(100vh - (2 * var(--preview-pad)));
+  background: var(--color-background);
 }
 
 @media (max-width: 44rem) {
