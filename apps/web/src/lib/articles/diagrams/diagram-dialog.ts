@@ -1,30 +1,46 @@
+import { blockToolIcons } from "@lunacea/ui/icons";
+import { motionDuration, motionEasing } from "$lib/motion-tokens.ts";
+
 /**
- * 図を画面いっぱいに開くモーダル。複製すると SVG 内の id（スタイルと矢印の参照先）が重複するため、
+ * 図を大きく開くモーダル。複製すると SVG 内の id（スタイルと矢印の参照先）が重複するため、
  * 開いている間は図そのものをダイアログへ移し、閉じたら元の置き場所へ戻す。
+ *
+ * 面は拡大ボタンの位置から広がって開き、閉じるとボタンへ縮んで戻る。図がその場で大きくなった
+ * と読めるようにするため。背景の暗さは editorial.css が同じ長さで溶かす。
  */
 
-import { blockToolIcons } from "@lunacea/ui/icons";
-
-export type DiagramDialog = {
-  open(options: {
-    title: string;
-    /** 図の置き場所。閉じたときにここへ戻す。 */
-    host: HTMLElement;
-    /** その時点の図。開いている間にテーマが変わると差し替わるため、都度読む。 */
-    figure: () => HTMLElement | undefined;
-    trigger: HTMLElement;
-  }): void;
-  destroy(): void;
+type Opening = {
+  title: string;
+  /** 図の置き場所。閉じたときにここへ戻す。 */
+  host: HTMLElement;
+  /** その時点の図。開いている間にテーマが変わると差し替わるため、都度読む。 */
+  figure: () => HTMLElement | undefined;
+  trigger: HTMLElement;
 };
 
-export function createDiagramDialog(): DiagramDialog {
+const animated = () => document.documentElement.dataset.motion === "full";
+
+/** ボタンの中心を起点に、ボタンほどの大きさから面の大きさへ。縦横比は崩さない。 */
+function fromTrigger(dialog: HTMLElement, trigger: HTMLElement) {
+  const panel = dialog.getBoundingClientRect();
+  const button = trigger.getBoundingClientRect();
+  const originX = button.left + button.width / 2 - panel.left;
+  const originY = button.top + button.height / 2 - panel.top;
+  const scale = Math.max(button.width / panel.width, button.height / panel.height, 0.06);
+  return {
+    folded: { transformOrigin: `${originX}px ${originY}px`, scale: `${scale}`, opacity: 0 },
+    open: { transformOrigin: `${originX}px ${originY}px`, scale: "1", opacity: 1 },
+  };
+}
+
+export function createDiagramDialog() {
   let dialog: HTMLDialogElement | undefined;
   let heading: HTMLElement;
   let body: HTMLElement;
-  let active:
-    | { host: HTMLElement; figure: () => HTMLElement | undefined; trigger: HTMLElement }
-    | undefined;
+  let active: Opening | undefined;
+  let motion: Animation | undefined;
 
+  /** 図を元の置き場所へ戻し、フォーカスを拡大ボタンへ返す。 */
   const restore = () => {
     if (!active) return;
     const { host, figure, trigger } = active;
@@ -35,39 +51,32 @@ export function createDiagramDialog(): DiagramDialog {
     trigger.focus({ preventScroll: true });
   };
 
-  let closing: ReturnType<typeof globalThis.setTimeout> | undefined;
   /** 退場の動きが終わってから閉じる。モーションを止めている読者にはすぐ閉じる。 */
   const requestClose = () => {
-    if (!dialog?.open || closing !== undefined) return;
     const target = dialog;
-    if (document.documentElement.dataset.motion !== "full") {
+    if (!target?.open || target.dataset.state === "closed") return;
+    if (!animated() || !active) {
       target.close();
       return;
     }
     target.dataset.state = "closed";
-    const finish = () => {
-      if (closing === undefined) return;
-      clearTimeout(closing);
-      closing = undefined;
-      target.removeEventListener("animationend", onEnd);
-      if (target.open) target.close();
-    };
-    const onEnd = (event: AnimationEvent) => {
-      if (event.target === target) finish();
-    };
-    target.addEventListener("animationend", onEnd);
-    // animationend が来ない環境でも閉じられるよう、退場の長さに少し足して打ち切る。
-    closing = globalThis.setTimeout(finish, 400);
+    const frames = fromTrigger(target, active.trigger);
+    motion?.cancel();
+    motion = target.animate([frames.open, frames.folded], {
+      duration: motionDuration("exit"),
+      easing: motionEasing("exit"),
+      fill: "forwards",
+    });
+    void motion.finished.then(() => target.close(), () => {});
   };
 
   const build = () => {
-    const element = document.createElement("dialog");
-    // 開閉は検索パネルと同じ組で動かす。背景の溶け方は editorial.css が同じ速さで揃える。
     /*
      * 全画面にすると別のページへ移ったように見えるため、どの幅でも周囲に記事を残す。
      * 背景は薄く暗くぼかすだけにして、面が記事の上に載っていると読めるようにする。
+     * 高さは図に合わせ、上限を超える図だけを面の中でスクロールさせる。
      */
-    // 高さは図に合わせ、上限を超える図だけを面の中でスクロールさせる。
+    const element = document.createElement("dialog");
     element.className = "diagram-dialog m-auto max-w-none flex-col border border-rule " +
       "bg-panel p-0 text-ink shadow-ui-overlay open:flex " +
       "max-h-[min(calc(100dvh-2*var(--space-16)),46rem)] " +
@@ -75,12 +84,11 @@ export function createDiagramDialog(): DiagramDialog {
       "max-sm:max-h-[calc(100dvh-2*var(--space-12))] " +
       "max-sm:w-[calc(100vw-2*var(--layout-gutter))] " +
       "backdrop:bg-[color-mix(in_srgb,var(--color-foreground)_18%,transparent)] " +
-      "backdrop:backdrop-blur-[2px] " +
-      "data-[state=open]:animate-disclosure-in data-[state=closed]:animate-disclosure-out";
+      "backdrop:backdrop-blur-[2px]";
     element.setAttribute("aria-labelledby", "diagram-dialog-title");
 
-    const bar = document.createElement("div");
     // バーと閉じるボタンはサイトのヘッダーと同じ寸法と余白、表示設定のボタンと同じ応答にする。
+    const bar = document.createElement("div");
     bar.className = "flex shrink-0 items-center justify-between gap-(--space-4) border-b " +
       "border-rule px-(--layout-gutter) py-(--space-2)";
     heading = document.createElement("h2");
@@ -97,12 +105,11 @@ export function createDiagramDialog(): DiagramDialog {
     close.setAttribute("aria-label", "閉じる");
     close.innerHTML =
       `<svg viewBox="0 0 24 24" class="size-[1.2em]" aria-hidden="true" focusable="false">${blockToolIcons.close.body}</svg>`;
-    close.addEventListener("click", () => requestClose());
+    close.addEventListener("click", requestClose);
     bar.append(heading, close);
 
     body = document.createElement("div");
-    body.className = "diagram-dialog-body flex min-h-0 flex-1 overflow-auto overscroll-contain " +
-      "p-(--layout-gutter)";
+    body.className = "flex min-h-0 flex-1 overflow-auto overscroll-contain p-(--layout-gutter)";
     element.append(bar, body);
 
     // 図の外側（背景）を押しても閉じる。
@@ -115,6 +122,8 @@ export function createDiagramDialog(): DiagramDialog {
       requestClose();
     });
     element.addEventListener("close", () => {
+      motion?.cancel();
+      motion = undefined;
       delete element.dataset.state;
       restore();
     });
@@ -123,23 +132,28 @@ export function createDiagramDialog(): DiagramDialog {
   };
 
   return {
-    open({ title, host, figure, trigger }) {
-      const current = figure();
+    open(opening: Opening) {
+      const current = opening.figure();
       if (!current) return;
       dialog ??= build();
       if (dialog.open) return;
-      heading.textContent = title;
+      heading.textContent = opening.title;
       // 図が抜けても本文の高さが変わらないようにし、閉じたときの位置を保つ。
-      host.style.minHeight = `${host.offsetHeight}px`;
+      opening.host.style.minHeight = `${opening.host.offsetHeight}px`;
       body.append(current);
-      active = { host, figure, trigger };
+      active = opening;
       dialog.dataset.state = "open";
       dialog.showModal();
       body.scrollTo(0, 0);
+      if (!animated()) return;
+      const frames = fromTrigger(dialog, opening.trigger);
+      motion = dialog.animate([frames.folded, frames.open], {
+        duration: motionDuration("base"),
+        easing: motionEasing("enter"),
+      });
     },
     destroy() {
-      if (closing !== undefined) clearTimeout(closing);
-      closing = undefined;
+      motion?.cancel();
       if (dialog?.open) dialog.close();
       restore();
       dialog?.remove();

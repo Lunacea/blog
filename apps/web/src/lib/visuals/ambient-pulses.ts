@@ -76,6 +76,9 @@ export function createAmbientPulses({
   let condition: WeatherVisualCondition = "neutral";
   let pulse: Pulse | undefined;
   let next = 0;
+  // 毎フレーム呼ばれるので、返す値は1つを使い回してガベージを出さない。
+  const frame = quietFrame();
+  const quiet = quietFrame();
   const wait = (now: number, low: number, high: number) => {
     next = now + (forced ? 600 : between(low, high));
   };
@@ -140,8 +143,13 @@ export function createAmbientPulses({
       pulse = undefined;
       wait(now, 3000, 7000);
     },
+    /** 返す値は次の呼び出しで書き換わる。保持するなら複製すること。 */
     update(now: number, idle: boolean): PulseFrame {
-      const frame = quietFrame();
+      frame.bloom = quiet.bloom;
+      Object.assign(frame.veil, quiet.veil);
+      Object.assign(frame.ring, quiet.ring);
+      Object.assign(frame.clearing, quiet.clearing);
+      Object.assign(frame.gust, quiet.gust);
       if (!pulse && idle && now >= next) pulse = spawn(now);
       if (!pulse) return frame;
       const t = (now - pulse.start) / pulse.duration;
@@ -159,21 +167,21 @@ export function createAmbientPulses({
           break;
         case "ripple":
           // 水面の輪は落ちた瞬間に立ち、広がりながらゆっくり消える。
-          frame.ring = {
+          Object.assign(frame.ring, {
             x,
             y,
             radius: 0.04 + t * 0.95,
             strength: Math.min(1, t * 8) * (1 - t) ** 1.5 * pulse.strength,
-          };
+          });
           break;
         case "clearing":
-          frame.clearing = { x, y, strength };
+          Object.assign(frame.clearing, { x, y, strength });
           break;
         case "gust":
-          frame.gust = { x, y, strength };
+          Object.assign(frame.gust, { x, y, strength });
           break;
         case "veil":
-          frame.veil = { x, y, strength, size: pulse.size };
+          Object.assign(frame.veil, { x, y, strength, size: pulse.size });
       }
       return frame;
     },

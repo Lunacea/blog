@@ -208,13 +208,8 @@ html:has(.diagram-dialog[open]) {
   animation: backdrop-in var(--motion-duration-base) var(--motion-ease-enter) both;
 }
 
-/* 退場し終えてから close() までの1フレームで面が戻らないよう、終わりの姿を保つ。 */
-.diagram-dialog[data-state="closed"] {
-  animation-fill-mode: forwards;
-}
-
 .diagram-dialog[data-state="closed"]::backdrop {
-  animation: backdrop-out var(--motion-duration-fast) var(--motion-ease-exit) both;
+  animation: backdrop-out var(--motion-duration-exit) var(--motion-ease-exit) both;
 }
 
 html:not([data-motion="full"]) .diagram-dialog::backdrop {
