@@ -69,6 +69,8 @@
     | ReturnType<typeof globalThis.setTimeout>
     | undefined;
   const markerBleed = 2;
+  /** 分布マップの各節を行より少し内側に描き、追従バーの端と次の節との間に余白を残す。 */
+  const mapInset = 5;
 
   function activeRow(list: HTMLOListElement | null): HTMLLIElement | null {
     return list?.querySelector<HTMLAnchorElement>('a[aria-current="location"]')
@@ -86,8 +88,8 @@
         return row
           ? [{
             id: heading.id,
-            start: row.offsetTop / total,
-            end: (row.offsetTop + row.offsetHeight) / total,
+            start: (row.offsetTop + mapInset) / total,
+            end: (row.offsetTop + row.offsetHeight - mapInset) / total,
           }]
           : [];
       });
