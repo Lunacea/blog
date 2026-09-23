@@ -126,24 +126,28 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
    * 誰も触れていない間だけ、不規則な間隔で光が差し込んだり雲影が横切ったりする。
    * 包絡線は両端がなめらかに 0 へ着くので、途中で操作が始まっても最後まで流して終える。
    */
-  type PulseKind = "bloom" | "veil" | "ripple" | "glint";
+  type PulseKind = "bloom" | "veil" | "clearing" | "ripple" | "gust";
   type Pulse = {
     kind: PulseKind;
     start: number;
     duration: number;
     strength: number;
+    size: number;
     fromX: number;
     fromY: number;
     toX: number;
     toY: number;
   };
-  /* 天候に合う出来事を多めに選ぶ。晴れは光が開き、曇りは影が渡り、雨は水面が揺れ、雪は瞬く。 */
+  /*
+   * 天候に合う出来事を多めに選ぶ。晴れは光が開き、曇りは雲影が渡るか雲間から光が差し、
+   * 雨は水面が揺れ、雪は雪煙が流れる。
+   */
   const moods: Record<WeatherVisualCondition, Array<[PulseKind, number]>> = {
     clear: [["bloom", 0.65], ["veil", 0.35]],
-    neutral: [["bloom", 0.5], ["veil", 0.5]],
-    cloudy: [["veil", 0.7], ["bloom", 0.3]],
+    neutral: [["bloom", 0.4], ["veil", 0.35], ["clearing", 0.25]],
+    cloudy: [["veil", 0.45], ["clearing", 0.4], ["bloom", 0.15]],
     rain: [["ripple", 0.75], ["veil", 0.25]],
-    snow: [["glint", 0.7], ["veil", 0.3]],
+    snow: [["gust", 0.7], ["veil", 0.3]],
   };
   let condition: WeatherVisualCondition = "neutral";
   let pulse: Pulse | undefined;
@@ -160,54 +164,44 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
   };
   const spawn = (now: number): Pulse => {
     const kind = pick();
-    const at = { fromX: between(0.18, 0.82), fromY: between(0.2, 0.8) };
+    const start = { kind, start: now, size: 0.66 };
+    const at = { fromX: between(0.18, 0.82), fromY: between(0.2, 0.8), toX: 0, toY: 0 };
     if (kind === "bloom") {
-      return {
-        kind,
-        start: now,
-        duration: between(4500, 7000),
-        strength: between(0.55, 1),
-        ...at,
-        toX: 0,
-        toY: 0,
-      };
+      return { ...start, ...at, duration: between(4500, 7000), strength: between(0.55, 1) };
     }
     if (kind === "ripple") {
-      return {
-        kind,
-        start: now,
-        duration: between(5000, 7000),
-        strength: between(0.6, 1),
-        ...at,
-        toX: 0,
-        toY: 0,
-      };
+      return { ...start, ...at, duration: between(5000, 7000), strength: between(0.6, 1) };
     }
-    if (kind === "glint") {
-      return {
-        kind,
-        start: now,
-        duration: between(3500, 5500),
-        strength: between(0.6, 1),
-        ...at,
-        toX: 0,
-        toY: 0,
-      };
-    }
-    // 画面外から入り、反対側の画面外へ抜ける。
+    // 移ろう効果は向きを決め、雲間はその場からわずかに、雲影と雪煙は画面を横切って動く。
     const angle = Math.random() * Math.PI * 2;
-    const dx = Math.cos(angle) * 0.95;
-    const dy = Math.sin(angle) * 0.95;
+    const dx = Math.cos(angle);
+    const dy = Math.sin(angle);
+    if (kind === "clearing") {
+      return {
+        ...start,
+        ...at,
+        toX: at.fromX + dx * 0.22,
+        toY: at.fromY + dy * 0.16,
+        duration: between(9000, 13000),
+        strength: between(0.6, 1),
+      };
+    }
     const offset = between(-0.25, 0.25);
+    const across = {
+      fromX: 0.5 - dx * 0.95 - dy * offset,
+      fromY: 0.5 - dy * 0.95 + dx * offset,
+      toX: 0.5 + dx * 0.95 - dy * offset,
+      toY: 0.5 + dy * 0.95 + dx * offset,
+    };
+    if (kind === "gust") {
+      return { ...start, ...across, duration: between(7000, 10000), strength: between(0.6, 1) };
+    }
     return {
-      kind,
-      start: now,
+      ...start,
+      ...across,
+      size: between(0.45, 0.9),
       duration: between(8000, 12000),
       strength: between(0.55, 0.9),
-      fromX: 0.5 - dx - dy * offset,
-      fromY: 0.5 - dy + dx * offset,
-      toX: 0.5 + dx - dy * offset,
-      toY: 0.5 + dy + dx * offset,
     };
   };
   const ambience = (now: number, idle: boolean) => {
@@ -215,7 +209,8 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     uniforms.bloom.value = 0;
     uniforms.veilStrength.value = 0;
     uniforms.ringStrength.value = 0;
-    uniforms.glint.value.z = 0;
+    uniforms.clearing.value.z = 0;
+    uniforms.gust.value.z = 0;
     if (!pulse) return;
     const t = (now - pulse.start) / pulse.duration;
     if (t >= 1) {
@@ -233,11 +228,23 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
         uniforms.ringStrength.value = Math.min(1, t * 8) * (1 - t) ** 1.5 * pulse.strength;
         uniforms.ring.value.set(pulse.fromX, pulse.fromY, 0.04 + t * 0.95);
         return;
-      case "glint":
-        uniforms.glint.value.set(pulse.fromX, pulse.fromY, envelope);
+      case "clearing":
+        uniforms.clearing.value.set(
+          pulse.fromX + (pulse.toX - pulse.fromX) * t,
+          pulse.fromY + (pulse.toY - pulse.fromY) * t,
+          envelope,
+        );
+        return;
+      case "gust":
+        uniforms.gust.value.set(
+          pulse.fromX + (pulse.toX - pulse.fromX) * t,
+          pulse.fromY + (pulse.toY - pulse.fromY) * t,
+          envelope,
+        );
         return;
       case "veil":
         uniforms.veilStrength.value = envelope;
+        uniforms.veilSize.value = pulse.size;
         uniforms.veil.value.set(
           pulse.fromX + (pulse.toX - pulse.fromX) * t,
           pulse.fromY + (pulse.toY - pulse.fromY) * t,

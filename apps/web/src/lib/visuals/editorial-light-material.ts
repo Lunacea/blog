@@ -97,15 +97,19 @@ export function createEditorialLightMaterial(coarse: boolean) {
     ripple: { value: 0 },
     /* 雪原の被覆量。淡い青白さとその面積。 */
     frost: { value: 0 },
-    /* 待機中にだけ起こる一時的な効果。bloom は光だまりが一瞬開く量、veil は横切る雲影。 */
+    /*
+     * 待機中にだけ起こる一時的な効果。bloom は光だまりが一瞬開く量、veil は横切る雲影
+     * （veilSize はその大きさ）、clearing は雲間の xy と強さ、gust は雪煙の xy と強さ。
+     */
     bloom: { value: 0 },
     veil: { value: new Vector2(-1, -1) },
     veilStrength: { value: 0 },
+    veilSize: { value: 0.66 },
+    clearing: { value: new Vector3(-1, -1, 0) },
     /* 雨の波紋。xy は中心、z は広がった半径。 */
     ring: { value: new Vector3(-1, -1, 0) },
     ringStrength: { value: 0 },
-    /* 雪の瞬き。xy は中心、z は強さ。 */
-    glint: { value: new Vector3(-1, -1, 0) },
+    gust: { value: new Vector3(-1, -1, 0) },
     /* 地点の時刻。朝夕の低い光、夜の深さ、光の来る側（-1 東、1 西）、光の低さ。 */
     dusk: { value: 0 },
     night: { value: 0 },
@@ -133,9 +137,9 @@ export function createEditorialLightMaterial(coarse: boolean) {
       precision highp float;
       varying vec2 uvCoord;
       uniform vec2 light, aspect, veil;
-      uniform vec3 warm, cool, pale, amber, moon, ring, glint;
+      uniform vec3 warm, cool, pale, amber, moon, ring, clearing, gust;
       uniform float time, dark, cloud, lift, shaft, streak, sparkle, sun, ripple, frost;
-      uniform float bloom, veilStrength, ringStrength, dusk, night, sunSide, sunLow;
+      uniform float bloom, veilStrength, veilSize, ringStrength, dusk, night, sunSide, sunLow;
 
       float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
@@ -148,17 +152,6 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float c = hash(cell + vec2(0.0, 1.0));
         float d = hash(cell + vec2(1.0, 1.0));
         return mix(mix(a, b, blend.x), mix(c, d, blend.x), blend.y);
-      }
-
-      /* 格子の各セルに一つだけ丸い点を置き、点ごとに違う周期で明滅させる。値ノイズだと格子の形が出る。 */
-      float sparkleField(vec2 p, float t){
-        vec2 cell = floor(p);
-        vec2 part = fract(p);
-        float seed = hash(cell);
-        vec2 centre = vec2(hash(cell + 3.1), hash(cell + 7.7)) * 0.6 + 0.2;
-        float point = 1.0 - smoothstep(0.02, 0.2, length(part - centre));
-        float phase = 0.5 + 0.5 * sin(t * (1.4 + seed * 2.2) + seed * 40.0);
-        return point * step(0.55, seed) * pow(phase, 3.0);
       }
 
       mat2 turn(float angle){
@@ -220,11 +213,21 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float canopy = fbm(frame * vec2(4.4, 3.7) * stretch + vec2(time * 0.014, -time * 0.009));
         float gaps = smoothstep(0.34, 0.78, canopy);
 
-        float overcast = fbm(frame * vec2(1.8, 1.3) * stretch + vec2(time * 0.008, time * 0.004));
+        /*
+         * 雲は高さの違う2層を別の向きと速さで流す。1層だと全体が一枚で滑るだけに見える。
+         * 下層ほど速く、雲量が多いほど下層の比重を上げる。
+         */
+        float upper = fbm(frame * vec2(1.8, 1.3) * stretch + vec2(time * 0.008, time * 0.004));
+        float lower = fbm(frame * vec2(2.6, 1.9) * stretch + vec2(-time * 0.019, time * 0.007) + 5.3);
+        float overcast = mix(upper, lower, 0.25 + cloud * 0.25);
         float billow = smoothstep(mix(0.3, 0.4, near), mix(0.74, 0.6, near), overcast);
-        float occlusion = mix(1.0, 0.24 + 0.76 * billow, cloud);
+        /* 雲間：雲が局所的に薄れ、そこだけ光条と斑が戻る。 */
+        float clearingReach = 1.0 - smoothstep(0.0, 0.5, length((uvCoord - clearing.xy) * aspect));
+        float opening = clearing.z * clearingReach * clearingReach;
+        float occlusion = mix(1.0, 0.24 + 0.76 * billow, cloud * (1.0 - opening * 0.8));
 
-        float dapple = mix(1.0, mix(0.22, 1.0, gaps) * mix(0.5, 1.0, shafts), dayShaft);
+        float dapple = mix(1.0, mix(0.22, 1.0, gaps) * mix(0.5, 1.0, shafts),
+          clamp(dayShaft + opening * 0.7, 0.0, 1.0));
         float glare = sparkle * fbm(frame * 14.0 + vec2(time * 0.02, 0.0)) * 0.34;
         float ambient = fbm(frame * vec2(1.0, 0.75) - vec2(time * 0.005, time * 0.003));
 
@@ -249,7 +252,7 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float exposure = lift - max(lift, 0.0) * 2.4 * (1.0 - dark) - min(lift, 0.0) * 2.4 * dark;
 
         /* 雲影は円ではなく雲の濃淡で縁を崩し、形のある物体に見せない。 */
-        float veilReach = 1.0 - smoothstep(0.0, 0.66, length((uvCoord - veil) * aspect));
+        float veilReach = 1.0 - smoothstep(0.0, veilSize, length((uvCoord - veil) * aspect));
         float passing = veilStrength * veilReach * veilReach * mix(0.45, 1.0, overcast);
 
         /* 波紋は明るい峰と暗い谷の対にする。どちらのテーマでも片側が見える。 */
@@ -260,21 +263,22 @@ export function createEditorialLightMaterial(coarse: boolean) {
           * (1.0 - smoothstep(0.55, 1.05, ring.z));
 
         /*
-         * 雪の瞬きは細かな点の明滅。暗い地では光として信号へ足す。明るい地では信号の両側が
-         * 飽和して点が埋もれるため、後段で小さな陰の点として直接重ねる。
+         * 雪煙：風に巻き上げられた細かな雪が淡い明るみの帯として渡る。点ではなく、流れる
+         * ノイズの濃淡で描く。明るい地では陰が持ち上がり、暗い地では明るみとして見える。
          */
-        float glintReach = 1.0 - smoothstep(0.0, 0.62, length((uvCoord - glint.xy) * aspect));
-        float twinkle = glint.z * glintReach * sparkleField(frame * 26.0, time);
-        float sparklePulse = twinkle * 2.2 * dark;
+        vec2 gustOffset = (uvCoord - gust.xy) * aspect;
+        float gustReach = 1.0 - smoothstep(0.0, 0.62, length(gustOffset * vec2(0.7, 1.3)));
+        float powder = fbm(frame * vec2(6.5, 9.0) + vec2(-time * 0.34, time * 0.12));
+        float drifting = gust.z * gustReach * gustReach * smoothstep(0.35, 0.8, powder);
 
         float signal = (gradient * dapple * occlusion * 1.45 + ambient * 0.2 + glare
           + water * 0.9 - 0.42 + exposure - passing * 0.36 + ripplePulse * 0.42
-          + sparklePulse) * focus;
+          + drifting * 0.5) * focus;
 
         /* 境界の両側で連続させ、階調の縁が出ないようにする。 */
         float glow = smoothstep(0.0, 0.6, signal);
         float shade = smoothstep(0.0, 0.42, -signal);
-        vec3 lit = mix(mix(vec3(1.0), warm, daySun * 0.78), pale, frost * 0.5);
+        vec3 lit = mix(mix(vec3(1.0), warm, daySun * 0.78), pale, clamp(frost * 0.5 + drifting, 0.0, 1.0));
         lit = mix(lit, amber, duskLit * 0.6);
         lit = mix(lit, moon, night * 0.55);
         vec3 dim = mix(vec3(0.0), cool, clamp(ripple + frost * 0.35, 0.0, 1.0));
@@ -289,9 +293,6 @@ export function createEditorialLightMaterial(coarse: boolean) {
         /* 陰として描く雪原は、明るい地では少し強めないと見えない。 */
         alpha += shade * frost * (1.0 - dark) * 0.05;
         alpha += glow * water * mix(0.26, 0.09, dark);
-        float speck = clamp(twinkle * 1.6 * (1.0 - dark), 0.0, 1.0);
-        tone = mix(tone, dim, speck);
-        alpha += speck * 0.3;
         gl_FragColor = vec4(tone, clamp(alpha, 0.0, 1.0));
       }`,
   });

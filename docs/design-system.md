@@ -194,8 +194,11 @@ drifts along an uneven figure instead of standing still, and a fine pointer take
 it moves. On touch devices scrolling carries the light down the page; once reading pauses the same
 drift grows back in over a few seconds. While nothing guides the light, irregular soft events come
 and go on their own and never start while the reader is interacting. They follow the weather: clear
-skies mostly open the key light, cloud sends shadows across the field, rain drops a single ripple on
-the water, and snow twinkles in fine points (shadow specks on paper, light points in the dark).
+skies mostly open the key light; cloud either sends a shadow of varying size across the field or
+thins to let dappled light through a gap; rain drops a single ripple on the water; snow carries a
+pale drift of powder across on the wind. Overcast skies move in two layers at different speeds so
+the cover never slides as one sheet. Events are drawn with the field's own noise and shading, never
+as particles or points.
 
 The animated field also follows the configured location's sky. The sun's elevation and bearing are
 computed in the browser from the location and the current time; low sun warms the light and brings
