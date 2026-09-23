@@ -112,8 +112,10 @@ metrics, so both reset it. Inline code is set at 0.9em on a faint tint with room
 a run of it reads as an object in the sentence rather than a change of font. Code highlighting uses
 the `--code-token-*` tokens, emitted by Shiki as CSS variables: structure (keywords, property names)
 in blue, selectors and functions in cyan, strings in yellow, numbers and units in orange, all
-saturated enough to separate on the dark block and at least 4.9:1 against it. Text colour is never
-animated; state is carried by rules, position, width axis and reveal instead.
+saturated enough to separate on the dark block and at least 4.9:1 against it. Diagrams take the site
+palette and the shape of its parts: card-radius corners, hairline strokes, softly curved connectors
+and the interface face at small text size. Text colour is never animated; state is carried by rules,
+position, width axis and reveal instead.
 
 Home carries no header. The masthead is the identity: LUNACEA is set at 20.4vw so it bleeds past
 both gutters, centred by a flex container inside `overflow-x-clip` so the overflow is symmetric and

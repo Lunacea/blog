@@ -1,4 +1,5 @@
 import { afterNavigate, onNavigate } from "$app/navigation";
+import { motionDuration, motionEasing } from "$lib/motion-tokens.ts";
 import { findFoldRow, foldPaperIntoRow } from "./paper-fold.ts";
 import { planRouteTransition, type RouteTransitionPlan } from "./route-transition.ts";
 
@@ -22,14 +23,6 @@ export function canAnimateRoutes(): boolean {
   return typeof document.startViewTransition === "function" &&
     document.visibilityState === "visible" &&
     root().dataset.motion === "full";
-}
-
-function motionTiming(name: string) {
-  const style = getComputedStyle(root());
-  return {
-    duration: Number.parseFloat(style.getPropertyValue(`--motion-duration-${name}`)) || 0,
-    easing: style.getPropertyValue("--motion-ease-signature").trim() || "ease",
-  };
 }
 
 /** 遷移1回分の後片付け。終わり・保険のタイマー・次の遷移の始まりのどれからでも一度だけ走る。 */
@@ -143,7 +136,10 @@ export function installPageTransitions() {
       });
       void transition.ready.then(() => {
         if (!fold) return;
-        const animations = foldPaperIntoRow(fold.paper, fold.row, motionTiming("page"));
+        const animations = foldPaperIntoRow(fold.paper, fold.row, {
+          duration: motionDuration("page"),
+          easing: motionEasing("signature"),
+        });
         session.add(() => animations.forEach((animation) => animation.cancel()));
       }, () => {});
       const fallback = globalThis.setTimeout(session.finish, 1500);

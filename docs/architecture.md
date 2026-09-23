@@ -67,7 +67,9 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
   へ308転送する。旧Aboutの308転送は維持する。互換転送はprerenderせず、独立したHTTP応答とする。
 - `/api/v1`はアプリケーションの動的HTTP境界であり続ける。SSR Articlesと互換redirectは content
   delivery境界であり、別serviceや永続stateを追加しない。
-- Mermaidは該当DOMがある記事でだけ遅延importする。表示中のテーマで描いたあと、もう一方の
+- Mermaidと図の拡張（描画、両テーマの控え、配色、拡大表示）は`articles/diagrams/`にまとめ、
+  該当DOMがある記事でだけ動的importする。配色は`:root`の宣言をprobeへ写し、`color-scheme`で
+  表示していないテーマの色もブラウザに解決させる。表示中のテーマで描いたあと、もう一方の
   テーマの図を空き時間に描いて控え、テーマ切り替えでは描き直さず差し替える。
 - SVXのGFM、heading、Shiki、Mermaid source、KaTeX変換設定は
   `apps/web/mdsvex.config.js`をWebとStorybookが利用する。KaTeXはbuild時にHTML化し、client
