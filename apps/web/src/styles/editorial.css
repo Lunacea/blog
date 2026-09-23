@@ -134,11 +134,12 @@
   line-height: var(--leading-copy);
 }
 
+/* ツールチップが端のボタンから外へはみ出せるよう、ブロック自身では切り取らない。 */
 .code-block {
   --block-ink: var(--color-code-foreground);
+  --block-ground: var(--color-code-background);
   position: relative;
   z-index: calc(var(--z-controls) + 1);
-  overflow: hidden;
   margin-block: var(--space-8);
   border: var(--border-width-rule) solid var(--color-line);
   background: var(--color-code-background);
@@ -179,6 +180,7 @@
 
 .diagram-block {
   --block-ink: var(--color-foreground);
+  --block-ground: var(--color-surface);
   position: relative;
   z-index: calc(var(--z-controls) + 1);
   margin-block: var(--space-8);

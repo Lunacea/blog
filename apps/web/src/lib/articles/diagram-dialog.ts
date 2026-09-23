@@ -63,13 +63,20 @@ export function createDiagramDialog(): DiagramDialog {
   const build = () => {
     const element = document.createElement("dialog");
     // 開閉は検索パネルと同じ組で動かす。背景の溶け方は editorial.css が同じ速さで揃える。
-    element.className = "diagram-dialog m-auto max-h-none max-w-none flex-col border border-rule " +
+    /*
+     * 全画面にすると別のページへ移ったように見えるため、どの幅でも周囲に記事を残す。
+     * 背景は薄く暗くぼかすだけにして、面が記事の上に載っていると読めるようにする。
+     */
+    // 高さは図に合わせ、上限を超える図だけを面の中でスクロールさせる。
+    element.className = "diagram-dialog m-auto max-w-none flex-col border border-rule " +
       "bg-panel p-0 text-ink shadow-ui-overlay open:flex " +
-      "h-[min(calc(100dvh-2*var(--layout-gutter)),60rem)] " +
-      "w-[min(calc(100vw-2*var(--layout-gutter)),90rem)] " +
-      "backdrop:bg-(--color-glass) backdrop:backdrop-blur-glass " +
-      "data-[state=open]:animate-disclosure-in data-[state=closed]:animate-disclosure-out " +
-      "max-sm:size-full max-sm:border-0";
+      "max-h-[min(calc(100dvh-2*var(--space-16)),46rem)] " +
+      "w-[min(calc(100vw-2*var(--space-16)),76rem)] " +
+      "max-sm:max-h-[calc(100dvh-2*var(--space-12))] " +
+      "max-sm:w-[calc(100vw-2*var(--layout-gutter))] " +
+      "backdrop:bg-[color-mix(in_srgb,var(--color-foreground)_18%,transparent)] " +
+      "backdrop:backdrop-blur-[2px] " +
+      "data-[state=open]:animate-disclosure-in data-[state=closed]:animate-disclosure-out";
     element.setAttribute("aria-labelledby", "diagram-dialog-title");
 
     const bar = document.createElement("div");

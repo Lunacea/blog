@@ -184,7 +184,11 @@ the first of them. Share offers the generic action first — the platform share 
 copying the link — with a single X post beside it. Praise follows the article body under a short
 invitation, ahead of the revisions and the related index, and the acknowledgement is a
 squash-and-stretch of the heart itself; nothing covers the page. Code blocks that scroll sideways
-are focusable regions so the keyboard can reach them at enlarged text.
+are focusable regions so the keyboard can reach them at enlarged text. Copy and expand carry a small
+borderless bubble centred under the button, inverted from the block's own ink; it waits a moment
+before rising in and leaves at once. An expanded diagram opens in a modal card that always leaves
+the dimmed, slightly blurred article visible around it, so it reads as a layer over the page rather
+than a new page; its height follows the diagram.
 
 Home, the article catalog, and article details mount the animated field. The article's opaque paper
 keeps the fixed gradient out of running text. The static gradient is an even vignette rather than a
