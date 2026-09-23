@@ -9,6 +9,7 @@
   import { ThemeGlyph } from "@lunacea/ui/icons";
   import {
     applyThemePreference,
+    hasRenderingHeadroom,
     readThemePreference,
     setThemePreference,
     subscribeThemeCapability,
@@ -28,7 +29,10 @@
   function toggle() {
     const next = (activeThemeTarget ?? theme) === "dark" ? "light" : "dark";
     const root = document.documentElement;
-    if (root.dataset.motion !== "full" || !document.startViewTransition) {
+    // 全画面の溶暗は撮影と合成が重い。背景の WebGL を諦める端末では即時に切り替える。
+    if (
+      root.dataset.motion !== "full" || !document.startViewTransition || !hasRenderingHeadroom()
+    ) {
       themeTransitionId++;
       activeThemeTransition?.skipTransition();
       activeThemeTransition = undefined;

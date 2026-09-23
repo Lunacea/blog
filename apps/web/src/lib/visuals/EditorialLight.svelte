@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { subscribeMotionCapabilities } from "$lib/preferences/preferences.ts";
+  import { hasRenderingHeadroom, subscribeMotionCapabilities } from "$lib/preferences/preferences.ts";
   import StaticLight from "./StaticLight.svelte";
   import type { WeatherVisualCondition, WeatherVisualIntensity } from "./weather-visual.ts";
 
@@ -26,8 +26,7 @@
       !matchMedia("(prefers-reduced-motion: reduce)").matches &&
       !matchMedia("(forced-colors: active)").matches &&
       !(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData &&
-      ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4) > 2 &&
-      (navigator.hardwareConcurrency || 4) > 2;
+      hasRenderingHeadroom();
     const stop = () => {
       generation++;
       destroy?.();

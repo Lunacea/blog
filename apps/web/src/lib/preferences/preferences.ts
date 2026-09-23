@@ -37,6 +37,12 @@ export function resolveEffectiveMotion(preference: MotionPreference): EffectiveM
   return capabilityLimit ? "off" : "full";
 }
 
+/** 全画面の合成や WebGL を任せられる端末か。値を出さないブラウザでは余裕があるとみなす。 */
+export function hasRenderingHeadroom() {
+  return ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4) > 2 &&
+    (navigator.hardwareConcurrency || 4) > 2;
+}
+
 export function resolveEffectiveTheme(preference: ThemePreference): EffectiveTheme {
   return preference === "auto"
     ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")

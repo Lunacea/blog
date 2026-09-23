@@ -67,7 +67,8 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
   へ308転送する。旧Aboutの308転送は維持する。互換転送はprerenderせず、独立したHTTP応答とする。
 - `/api/v1`はアプリケーションの動的HTTP境界であり続ける。SSR Articlesと互換redirectは content
   delivery境界であり、別serviceや永続stateを追加しない。
-- Mermaidは該当DOMがある記事でだけ遅延importする。
+- Mermaidは該当DOMがある記事でだけ遅延importする。表示中のテーマで描いたあと、もう一方の
+  テーマの図を空き時間に描いて控え、テーマ切り替えでは描き直さず差し替える。
 - SVXのGFM、heading、Shiki、Mermaid source、KaTeX変換設定は
   `apps/web/mdsvex.config.js`をWebとStorybookが利用する。KaTeXはbuild時にHTML化し、client
   runtimeを追加しない。
@@ -96,8 +97,9 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
 - route間のView Transitionでは`root`と天候背景をsnapshotに含めない。旧page内容は旧状態だけの
   `route-content` snapshotとしてその場でfade outし、新しいpage内容はlive DOMで少し遅れてfade
   inする。headerの出入りと記事紙面の受け渡しだけを個別のsnapshotで動かす。これによりWebGLの
-  描画ループは遷移中も継続する。テーマ切り替えだけは`root`snapshotを使って画面全体をcrossfadeする。
-  query stringだけの遷移はより速くする。Reduced/Offと履歴移動では即時切替する。
+  描画ループは遷移中も継続する。テーマ切り替えだけは`root`snapshot1枚で画面全体をcrossfadeし、
+  その間WebGLは新しいテーマで1枚描いてから止まる。WebGLを使わない低メモリ・低コア端末では
+  即時に切り替える。query stringだけの遷移はより速くする。Reduced/Offと履歴移動では即時切替する。
 - サイトの天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。
   `fog`は`cloudy`、`storm`は`rain`、取得fallbackは`neutral`な環境表現へ正規化する。
 - ロゴ、人物、植物などの著作素材は`config.visualAssets`から`MediaSlot`へ渡す。空slotは構造だけを示し、有機的な図像をコード生成しない。

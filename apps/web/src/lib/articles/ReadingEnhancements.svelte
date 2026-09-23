@@ -22,7 +22,10 @@
     /** 描画された図の置き場所（シェルのプレビュー面）。 */
     host: HTMLElement;
     figure?: HTMLElement;
+    /** テーマごとの描画結果。null は描けなかった記述。`graph` が変わったら使わない。 */
+    rendered: Partial<Record<MermaidTheme, { graph: string; figure: HTMLElement | null }>>;
   };
+  type MermaidTheme = "dark" | "neutral";
 
   let {
     tools,
@@ -290,7 +293,13 @@
       source.replaceWith(block);
       block.append(source);
       source.hidden = true;
-      const record: DiagramRecord = { source, graph, title, host: block };
+      const record: DiagramRecord = {
+        source,
+        graph,
+        title,
+        host: block,
+        rendered: {},
+      };
       const shell = createBlockShell({
         block,
         id: `diagram-${index}`,
@@ -309,85 +318,147 @@
       return record;
     });
     let mermaidGeneration = 0;
-    const renderMermaid = async () => {
-      if (!diagrams.length) return;
-      const generation = ++mermaidGeneration;
-      const theme =
-        document.documentElement.dataset.theme === "dark" ? "dark" : "neutral";
-      sharedMermaidQueue = sharedMermaidQueue
+    let mermaidDisposed = false;
+    const currentMermaidTheme = (): MermaidTheme =>
+      document.documentElement.dataset.theme === "dark" ? "dark" : "neutral";
+    const cachedFigure = (record: DiagramRecord, theme: MermaidTheme) => {
+      const entry = record.rendered[theme];
+      return entry?.graph === record.graph ? entry : undefined;
+    };
+    const drawFigure = async (
+      mermaid: typeof import("mermaid").default,
+      record: DiagramRecord,
+    ) => {
+      try {
+        const { svg } = await mermaid.render(
+          `mermaid-${++mermaidRenderId}`,
+          record.graph,
+        );
+        const figure = document.createElement("figure");
+        figure.className = "mermaid-diagram";
+        figure.setAttribute("role", "img");
+        // 横スクロールするためキーボードから到達できるようにする。
+        figure.setAttribute("tabindex", "0");
+        figure.setAttribute("aria-label", record.title);
+        figure.innerHTML = svg;
+        const drawing = figure.querySelector("svg");
+        drawing?.setAttribute("aria-hidden", "true");
+        // 元幅の9割を下回るとラベルが読めなくなるため、以降は縮小せずスクロールさせる。
+        const authored = drawing?.viewBox?.baseVal?.width ?? 0;
+        if (authored) {
+          figure.style.setProperty(
+            "--mermaid-legible-width",
+            `${Math.round(authored * 0.9)}px`,
+          );
+        }
+        return figure;
+      } catch {
+        return null;
+      }
+    };
+    /** 足りない図だけを描いて控えに入れる。描いたテーマの図は DOM へは入れない。 */
+    const fillMermaidCache = (
+      theme: MermaidTheme,
+      proceed: () => boolean,
+    ) =>
+      (sharedMermaidQueue = sharedMermaidQueue
         .catch(() => undefined)
         .then(async () => {
-          if (generation !== mermaidGeneration) return;
+          const missing = diagrams.filter(
+            (record) => !cachedFigure(record, theme),
+          );
+          if (!missing.length || !proceed()) return;
           const { default: mermaid } = await import("mermaid");
-          if (generation !== mermaidGeneration) return;
+          if (!proceed()) return;
           mermaid.initialize({
             startOnLoad: false,
             securityLevel: "strict",
             theme,
           });
-          const rendered: Array<HTMLElement | null> = [];
-          for (const record of diagrams) {
-            try {
-              const { svg } = await mermaid.render(
-                `mermaid-${++mermaidRenderId}`,
-                record.graph,
-              );
-              const figure = document.createElement("figure");
-              figure.className = "mermaid-diagram";
-              figure.setAttribute("role", "img");
-              // 横スクロールするためキーボードから到達できるようにする。
-              figure.setAttribute("tabindex", "0");
-              figure.setAttribute("aria-label", record.title);
-              figure.innerHTML = svg;
-              const drawing = figure.querySelector("svg");
-              drawing?.setAttribute("aria-hidden", "true");
-              // 元幅の9割を下回るとラベルが読めなくなるため、以降は縮小せずスクロールさせる。
-              const authored = drawing?.viewBox?.baseVal?.width ?? 0;
-              if (authored) {
-                figure.style.setProperty(
-                  "--mermaid-legible-width",
-                  `${Math.round(authored * 0.9)}px`,
-                );
-              }
-              rendered.push(figure);
-            } catch {
-              rendered.push(null);
-            }
+          for (const record of missing) {
+            const graph = record.graph;
+            const figure = await drawFigure(mermaid, record);
+            if (!proceed()) return;
+            record.rendered[theme] = { graph, figure };
           }
-          if (generation !== mermaidGeneration) return;
-          diagrams.forEach((record, index) => {
-            const figure = rendered[index];
-            if (figure) {
-              if (record.figure) record.figure.replaceWith(figure);
-              else record.host.append(figure);
-              record.figure = figure;
-              record.source.hidden = true;
-              record.source.removeAttribute("aria-label");
-              return;
-            }
-            if (record.figure) {
-              record.source.hidden = true;
-              return;
-            }
-            record.source.hidden = false;
-            record.source.setAttribute(
-              "aria-label",
-              `${record.title}を表示できませんでした`,
-            );
-          });
-        })
-        .catch(() => {
-          if (generation !== mermaidGeneration) return;
-          diagrams.forEach((record) => {
-            if (record.figure) return;
-            record.source.hidden = false;
-            record.source.setAttribute(
-              "aria-label",
-              `${record.title}を表示できませんでした`,
-            );
-          });
-        });
-      await sharedMermaidQueue;
+        }));
+    const showMermaid = (theme: MermaidTheme) => {
+      diagrams.forEach((record) => {
+        const figure = cachedFigure(record, theme)?.figure;
+        if (figure) {
+          if (record.figure === figure) return;
+          if (record.figure) record.figure.replaceWith(figure);
+          else record.host.append(figure);
+          record.figure = figure;
+          record.source.hidden = true;
+          record.source.removeAttribute("aria-label");
+          return;
+        }
+        if (record.figure) {
+          record.source.hidden = true;
+          return;
+        }
+        record.source.hidden = false;
+        record.source.setAttribute(
+          "aria-label",
+          `${record.title}を表示できませんでした`,
+        );
+      });
+    };
+    const showMermaidFailure = () => {
+      diagrams.forEach((record) => {
+        if (record.figure) return;
+        record.source.hidden = false;
+        record.source.setAttribute(
+          "aria-label",
+          `${record.title}を表示できませんでした`,
+        );
+      });
+    };
+    /*
+     * テーマ切り替えのたびに描き直すと、レイアウトを何度も強制する重い処理が溶暗と重なる。
+     * 表示中の図が出たあと、もう一方のテーマの図を空き時間に描いて控え、切り替えでは差し替えるだけにする。
+     */
+    // Safari は requestIdleCallback を持たないため、少し待つだけにする。
+    const hasIdle = "requestIdleCallback" in globalThis;
+    let spareTask: unknown;
+    const idle = (task: () => void): unknown =>
+      hasIdle
+        ? requestIdleCallback(task, { timeout: 4000 })
+        : globalThis.setTimeout(task, 1200);
+    const cancelIdle = (id: unknown) =>
+      hasIdle
+        ? cancelIdleCallback(id as number)
+        : clearTimeout(id as ReturnType<typeof globalThis.setTimeout>);
+    const prepareSpareTheme = () => {
+      if (spareTask !== undefined) cancelIdle(spareTask);
+      spareTask = idle(() => {
+        spareTask = undefined;
+        const spare = currentMermaidTheme() === "dark" ? "neutral" : "dark";
+        void fillMermaidCache(spare, () => !mermaidDisposed).catch(
+          () => undefined,
+        );
+      });
+    };
+    const renderMermaid = async () => {
+      if (!diagrams.length) return;
+      const generation = ++mermaidGeneration;
+      const theme = currentMermaidTheme();
+      if (diagrams.every((record) => cachedFigure(record, theme))) {
+        showMermaid(theme);
+        prepareSpareTheme();
+        return;
+      }
+      const current = () => !mermaidDisposed && generation === mermaidGeneration;
+      try {
+        await fillMermaidCache(theme, current);
+      } catch {
+        if (current()) showMermaidFailure();
+        return;
+      }
+      if (!current()) return;
+      showMermaid(theme);
+      prepareSpareTheme();
     };
     /** 入力そのものではなく、入力が止まったことを再描画の契機にする。 */
     let diagramTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
@@ -446,6 +517,8 @@
     return () => {
       stopDisclosure();
       mermaidGeneration += 1;
+      mermaidDisposed = true;
+      if (spareTask !== undefined) cancelIdle(spareTask);
       themeObserver.disconnect();
       tocResizeObserver.disconnect();
       proseResizeObserver.disconnect();

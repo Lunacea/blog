@@ -58,7 +58,15 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
     scrollPending = true;
   };
 
-  const theme = () => setTheme(document.documentElement.dataset.theme === "dark");
+  /*
+   * テーマの溶暗中は画面全体の合成と重なるため描画を止める。止める前に新しいテーマで
+   * 1枚だけ描き、溶暗の下から現れる背景を新しい色にしておく。色の読み出しも次のフレームまで
+   * 遅らせ、切り替え処理の途中でスタイル再計算を強制しない。
+   */
+  let themePending = true;
+  const theme = () => {
+    themePending = true;
+  };
 
   /** ポインタがない場合はスクロールが光を運ぶ。 */
   let guidedUntil = 0;
@@ -191,6 +199,13 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
       }
       const delta = Math.min((now - last) / 1000, 0.05);
       last = now;
+      if (themePending) {
+        themePending = false;
+        setTheme(document.documentElement.dataset.theme === "dark");
+      } else if (document.documentElement.dataset.themeTransition === "active") {
+        frame = requestAnimationFrame(render);
+        return;
+      }
       elapsed += delta;
       uniforms.time.value = elapsed * FLOW;
       if (!pointer.matches) sweep(elapsed, now, delta);
@@ -219,7 +234,6 @@ export function mountEditorialLight(host: HTMLElement, failure: () => void) {
   document.addEventListener("pointerleave", leave);
   globalThis.addEventListener("lunacea:theme", theme);
   renderer.domElement.addEventListener("webglcontextlost", lost);
-  theme();
   scrolled();
 
   return {

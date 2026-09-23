@@ -156,6 +156,11 @@ html[data-theme-transition="active"] {
   view-transition-name: root;
 }
 
+/* 全体を同じ速さで溶かすだけなので、紙面やヘッダーを別に撮らず画面1枚にまとめる。 */
+html[data-theme-transition="active"] :is(.site-header, .article-paper) {
+  view-transition-name: none;
+}
+
 html[data-theme-transition="active"]::view-transition-old(*) {
   z-index: var(--z-content);
   animation: theme-fade-out var(--motion-duration-base) var(--motion-ease-signature) both;

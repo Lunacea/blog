@@ -206,6 +206,10 @@ test("code and diagram blocks pair a rendered view with an editable source", {
   await (await themeToggle(page)).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect.poll(() => drawing.getAttribute("id")).not.toBe(lightDrawing);
+  // 戻すときは描き直さず、控えておいた図へ差し替える。
+  await (await themeToggle(page)).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect.poll(() => drawing.getAttribute("id")).toBe(lightDrawing);
 
   await diagram.getByRole("tab", { name: "Source" }).click();
   await diagram.locator("textarea").fill("graph LR\n  A[Alpha] --> B[Beta]");
