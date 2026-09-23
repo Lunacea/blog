@@ -40,7 +40,8 @@
 :root {
   --color-card-stock: light-dark(#ffffff, #080808);
   --color-praise: light-dark(#9b3a34, #c96a61);
-  --color-code-background: #161616;
+  /* 暗いテーマでは紙面（surface）とほぼ同じ明るさになるので、一段沈めてブロックとして読ませる。 */
+  --color-code-background: light-dark(#161616, #0c0c0c);
   --color-code-foreground: #eeeeec;
   /*
     コードの配色は青と黄を主にする。構文の骨組み（キーワード・プロパティ）を青、選択子と関数を

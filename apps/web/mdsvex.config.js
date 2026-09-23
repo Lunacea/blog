@@ -16,8 +16,9 @@ const codeTheme = createCssVariablesTheme({
   variableDefaults: {},
   fontStyle: true,
 });
-// The stock mapping gives CSS property names the same colour as their values. Structure (property
-// names, selectors, tags) reads in the blue family; values and units stay yellow to amber.
+// The stock mapping gives CSS property names the same colour as their values and paints every
+// variable like a number. Structure (property names, selectors, tags) reads in the blue family,
+// values and units stay yellow to amber, and plain names fall back to the foreground.
 codeTheme.tokenColors.push(
   {
     scope: [
@@ -40,6 +41,18 @@ codeTheme.tokenColors.push(
   {
     scope: ["keyword.other.unit", "support.constant.property-value", "meta.property-value"],
     settings: { foreground: "var(--code-token-constant)" },
+  },
+  // Plain variables and object properties stay in the foreground so blue and yellow carry the code.
+  {
+    scope: [
+      "variable.other.object",
+      "variable.other.readwrite",
+      "variable.other.constant",
+      "variable.other.property",
+      "variable.other.object.property",
+      "meta.object-literal.key",
+    ],
+    settings: { foreground: "var(--code-foreground)" },
   },
 );
 
