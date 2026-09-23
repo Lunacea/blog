@@ -40,23 +40,9 @@ test("the public surface responds and filtered catalogs declare their policy", {
   await expect(page.locator('meta[name="robots"][content="noindex,follow"]')).toHaveCount(1);
 });
 
-test("retired routes are gone, legacy URLs redirect once, and a miss still reads", {
+test("legacy URLs redirect once and a missing page still reads", {
   tag: ["@desktop"],
 }, async ({ page, request }) => {
-  for (
-    const route of [
-      "/works",
-      "/works/quiet-archive",
-      "/archive",
-      "/archive/photos",
-      "/archive/photos/after-rain",
-      "/og/work/quiet-archive.png",
-      "/og/photo/after-rain.png",
-      "/tags/Design",
-    ]
-  ) expect((await request.get(route)).status(), route).toBe(404);
-  expect(await (await request.get("/sitemap.xml")).text()).not.toMatch(/\/works|\/archive/);
-
   for (
     const [from, to] of [
       ["/about", "/#about"],

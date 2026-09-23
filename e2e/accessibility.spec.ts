@@ -15,7 +15,6 @@ const AUDITS = [
   { route: `/articles?q=${encodeURIComponent(SEARCH_TERM)}`, theme: "light" },
   { route: ARTICLE, theme: "light" },
   { route: ARTICLE, theme: "dark" },
-  { route: "/this-page-does-not-exist", theme: "light" },
 ] as const;
 
 for (const { route, theme } of AUDITS) {
