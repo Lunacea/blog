@@ -28,8 +28,8 @@ const skies: Record<WeatherVisualCondition, Sky> = {
   },
   /* 曇天：光条が閉じ、画面全体が一段暗くなる。 */
   cloudy: {
-    cloud: 0.8,
-    lift: -0.07,
+    cloud: 0.7,
+    lift: -0.05,
     shaft: 0.12,
     streak: 0,
     sparkle: 0,
@@ -186,11 +186,14 @@ export function createEditorialLightMaterial(coarse: boolean) {
           tilt.x * 1.2 + sunSide * sunLow * 0.9,
           0.7 * (1.0 - sunLow * 0.6) + tilt.y * 0.5
         ));
-        /* 夜は直射がほとんど消え、朝夕は低い光がかえって強く色づく。 */
         /* 雲は低い太陽を最初に遮る。曇りや雨の夕方は色づきをほとんど残さない。 */
         float duskLit = dusk * mix(1.0, 0.2, cloud);
-        float daySun = sun * (1.0 - night * 0.75) + duskLit * 0.4;
-        float dayShaft = shaft * (1.0 - night * 0.5);
+        /*
+         * 夜も晴れは晴れらしく、木漏れ日の構造は残して月明かりの色と明るさだけを落とす。
+         * 構造まで消すと晴れの夜が曇りと見分けられなくなる。朝夕は低い光がかえって強く色づく。
+         */
+        float daySun = sun * (1.0 - night * 0.3) + duskLit * 0.4;
+        float dayShaft = shaft * (1.0 - night * 0.15);
         vec2 across = vec2(-toward.y, toward.x);
         /*
          * 明暗のランプは画面中央基準で測る。カーソル基準にすると端に寄せたとき全画素が同じ階調になる。
@@ -217,12 +220,14 @@ export function createEditorialLightMaterial(coarse: boolean) {
 
         /*
          * 雲は高さの違う2層を別の向きと速さで流す。1層だと全体が一枚で滑るだけに見える。
-         * 下層ほど速く、雲量が多いほど下層の比重を上げる。
+         * 下層は平均せずに上層の濃淡へ細部として足す。平均すると濃淡の幅が縮み、空が一様な灰色の
+         * 塊になる。
          */
         float upper = fbm(frame * vec2(1.8, 1.3) * stretch + vec2(time * 0.008, time * 0.004));
         float lower = fbm(frame * vec2(2.6, 1.9) * stretch + vec2(-time * 0.019, time * 0.007) + 5.3);
-        float overcast = mix(upper, lower, 0.25 + cloud * 0.25);
-        float billow = smoothstep(mix(0.3, 0.4, near), mix(0.74, 0.6, near), overcast);
+        float overcast = upper + (lower - 0.5) * (0.22 + cloud * 0.18);
+        /* 境界を狭めて、雲の塊と切れ間をはっきり分ける。広いと空全体が中間の灰色に均される。 */
+        float billow = smoothstep(mix(0.36, 0.44, near), mix(0.62, 0.56, near), overcast);
         /* 雲間：雲が局所的に薄れ、そこだけ光条と斑が戻る。 */
         float clearingReach = 1.0 - smoothstep(0.0, 0.5, length((uvCoord - clearing.xy) * aspect));
         float opening = clearing.z * clearingReach * clearingReach;
@@ -244,8 +249,8 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float crossD = 1.0 - abs(sin(fine.y * 2.1 + fine.x * 0.4 - time * 0.27));
         caustic = caustic * 0.78 + pow(max(crossC, crossD), 5.0) * 0.34;
         float surface = 0.5 + 0.5 * sin(span * 5.4 - time * 0.5 + fbm(swell * 0.4) * 3.2);
-        /* 暗いテーマでは網目が黒地の光になり突出するため、半分以下に落とす。 */
-        float water = ripple * (caustic * 0.72 + surface * surface * 0.12) * mix(1.0, 0.3, dark);
+        /* 網目は地の色によって強く出すぎる。明るい地では 4 割、暗い地では黒地の光になるので 3 割。 */
+        float water = ripple * (caustic * 0.72 + surface * surface * 0.12) * mix(0.4, 0.3, dark);
 
         /*
          * 各テーマは基準線の片側しか描けない（明るい地に白、暗い地に影は見えない）。
@@ -286,7 +291,7 @@ export function createEditorialLightMaterial(coarse: boolean) {
          * 地より僅かに明るい白、雪と水面は冷たい色にする。暗い地では従来どおり明るさで描く。
          */
         vec3 paperLit = mix(pale * 0.97, mix(warm * 0.93, amber, 0.18), clamp(daySun * 1.4, 0.0, 1.0));
-        paperLit = mix(paperLit, mix(pale, cool, 0.4), clamp(frost + ripple * 0.8, 0.0, 1.0));
+        paperLit = mix(paperLit, mix(pale, cool, 0.4), clamp(frost + ripple * 0.5, 0.0, 1.0));
         lit = mix(paperLit, lit, dark);
         lit = mix(lit, amber, duskLit * 0.6);
         lit = mix(lit, moon, night * 0.55);
@@ -301,7 +306,7 @@ export function createEditorialLightMaterial(coarse: boolean) {
         float alpha = glow * mix(0.36, 0.3, dark) + shade * mix(0.3, 0.26, dark) + grain * glow;
         /* 陰として描く雪原は、明るい地では少し強めないと見えない。 */
         alpha += shade * frost * (1.0 - dark) * 0.05;
-        alpha += glow * water * mix(0.26, 0.09, dark);
+        alpha += glow * water * mix(0.16, 0.09, dark);
         gl_FragColor = vec4(tone, clamp(alpha, 0.0, 1.0));
       }`,
   });
