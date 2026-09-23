@@ -1,6 +1,6 @@
 import adapter from "@deno/svelte-adapter";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
-import { createEditorialPreprocessor } from "./mdsvex.config.js";
+import { createEditorialPreprocessor } from "../../packages/ui/mdsvex.config.js";
 
 const config = {
   extensions: [".svelte", ".svx"],
@@ -11,6 +11,7 @@ const config = {
   kit: {
     adapter: adapter(),
     alias: {
+      "$ui": "../../packages/ui/src",
       "$content": "../../packages/content",
       "$core": "../../packages/core",
       "@lunacea/api": "../../packages/api/mod.ts",
@@ -19,11 +20,7 @@ const config = {
       "@lunacea/content/*": "../../packages/content/*",
       "@lunacea/core/*": "../../packages/core/*",
       "@lunacea/schemas": "../../packages/schemas/mod.ts",
-      "@lunacea/ui/fonts": "../../packages/ui/src/fonts.ts",
-      "@lunacea/ui/icons": "../../packages/ui/src/icons/index.ts",
-      "@lunacea/ui/primitives": "../../packages/ui/src/primitives/index.ts",
-      "@lunacea/ui/styles.css": "../../packages/ui/src/styles/index.css",
-      "@lunacea/ui/utils": "../../packages/ui/src/utils.ts",
+      "@lunacea/ui/*": "../../packages/ui/src/*",
     },
   },
 };

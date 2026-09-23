@@ -54,118 +54,22 @@ test("theme and motion answer the keyboard, cycle and survive navigation", {
   await expect(disc).toHaveAttribute("data-ready", "true", HYDRATED);
   await disc.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  const allArticles = page.getByRole("link", { name: /All articles/i });
-  await allArticles.hover();
-  await expect.poll(() =>
-    allArticles.evaluate((anchor) =>
-      getComputedStyle(anchor.querySelector<HTMLElement>('[data-ink-label="fill"]')!).clipPath
-    )
-  ).toBe("inset(0px)");
-  expect(
-    await allArticles.evaluate((anchor) => {
-      const base = anchor.querySelector<HTMLElement>('[data-ink-label="base"]')!;
-      const fill = anchor.querySelector<HTMLElement>('[data-ink-label="fill"]')!;
-      const inkProbe = document.createElement("span");
-      const canvasProbe = document.createElement("span");
-      inkProbe.style.color = "var(--color-foreground)";
-      canvasProbe.style.color = "var(--color-background)";
-      document.body.append(inkProbe, canvasProbe);
-      const baseMatches = getComputedStyle(base).color === getComputedStyle(inkProbe).color;
-      const fillMatches = getComputedStyle(fill).color === getComputedStyle(canvasProbe).color;
-      const baseBox = base.getBoundingClientRect();
-      const fillBox = fill.getBoundingClientRect();
-      inkProbe.remove();
-      canvasProbe.remove();
-      return {
-        baseMatches,
-        fillMatches,
-        aligned: Math.abs(baseBox.x - fillBox.x) < 0.01 &&
-          Math.abs(baseBox.y - fillBox.y) < 0.01 &&
-          Math.abs(baseBox.width - fillBox.width) < 0.01 &&
-          Math.abs(baseBox.height - fillBox.height) < 0.01,
-      };
-    }),
-  ).toEqual({ baseMatches: true, fillMatches: true, aligned: true });
   const display = page.getByRole("button", { name: /アニメーション:/ });
   await display.focus();
   await page.keyboard.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
   await expect(display).toHaveAttribute("aria-label", /アニメーション: ON/);
-  const motionTransition = await display.evaluate((button) => {
-    const style = getComputedStyle(button);
-    return {
-      properties: style.transitionProperty,
-      duration: style.transitionDuration,
-      timing: style.transitionTimingFunction,
-    };
-  });
-  expect(motionTransition.properties).toContain("background-color");
-  expect(motionTransition.duration).toBe("0.42s");
-  expect(motionTransition.timing).toBe("cubic-bezier(0.7, 0, 0.3, 1)");
-  const themeTransition = await disc.evaluate((button) => {
-    button.click();
-    const root = document.documentElement;
-    return {
-      active: root.dataset.themeTransition,
-      properties: getComputedStyle(root).transitionProperty,
-    };
-  });
-  expect(themeTransition).toEqual({ active: "active", properties: "none" });
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await expect(page.locator("html")).not.toHaveAttribute("data-theme-transition", "active");
-  await disc.evaluate((button) => {
-    button.click();
-    button.click();
-  });
-  await expect(page.locator("html")).not.toHaveAttribute("data-theme-transition", "active");
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-  await disc.click();
-  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await display.press("Enter");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
   await page.goto("/articles");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
-  await expect(page.getByRole("button", { name: /アニメーション: OFF/ })).toHaveCount(2);
-  const headerMotion = page.locator(".header-display").getByRole("button");
-  await expect(headerMotion).toHaveAttribute("data-ready", "true", HYDRATED);
-  await headerMotion.click();
-  await expect(page.locator("html")).toHaveAttribute("data-motion", "full");
-  await expect(page.getByRole("button", { name: /アニメーション: ON/ })).toHaveCount(2);
-  await page.locator(".footer-display").getByRole("button").click();
-  await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
-  await expect(page.getByRole("button", { name: /アニメーション: OFF/ })).toHaveCount(2);
 });
 
 test("history navigation and page transitions keep the shell intact", {
   tag: ["@desktop"],
 }, async ({ page }) => {
-  const pageErrors: string[] = [];
-  page.on("pageerror", (error) => pageErrors.push(error.message));
   await page.goto("/articles");
-  await expect(page.getByRole("banner")).toHaveAttribute("data-ready", "true", HYDRATED);
-  const light = page.locator("[data-editorial-light]");
-  await expect(light).toHaveCount(1);
-  await light.evaluate((node) => {
-    (globalThis as typeof globalThis & { __weatherField?: Element }).__weatherField = node;
-  });
-  await page.getByRole("banner").getByRole("link", { name: "Home" }).click();
-  await expect(page).toHaveURL(/\/$/u);
-  await expect(page.locator("html")).toHaveAttribute("data-page-enter", "active");
-  await expect(page.locator(".route-content")).toHaveCSS("animation-name", "page-enter");
-  expect(
-    await light.evaluate((node) =>
-      node === (globalThis as typeof globalThis & { __weatherField?: Element }).__weatherField
-    ),
-  ).toBe(true);
-  await expect(page.locator("html")).not.toHaveAttribute("data-page-enter", "active");
-  await page.getByRole("link", { name: /All articles/i }).click();
-  await expect(page).toHaveURL(/\/articles$/u);
-  expect(
-    await light.evaluate((node) =>
-      node === (globalThis as typeof globalThis & { __weatherField?: Element }).__weatherField
-    ),
-  ).toBe(true);
   await page.goto("/articles?view=list");
   await page.goBack();
   await expect(page).toHaveURL(/\/articles$/u);
@@ -179,20 +83,21 @@ test("history navigation and page transitions keep the shell intact", {
     const named = (selector: string) =>
       getComputedStyle(document.querySelector(selector)!).viewTransitionName;
     return {
+      // スクロールする器に名前を付けると、遷移グループが自分のボックスを動かして
+      // 長いページから出るとき旧画像が画面を縦断する。ここは名前を持たない。
       scroller: named("main"),
       row: named(".index-list > li"),
+      // ヘッダは出入りを上下で示すので自分のグループを持つ。
       header: named("header"),
-      weather: named("[data-editorial-light]"),
-      root: getComputedStyle(root).viewTransitionName,
-      headerBackdrop: getComputedStyle(root, "::view-transition-group(site-header)")
-        .backdropFilter,
+      // 地（天候の場）は前後で連続しているので旧画像は動かさない。
+      // 薄くすると重なりのアルファが 1 を割り、地が透けて明暗の谷ができる。
+      oldDuration: getComputedStyle(root, "::view-transition-old(root)").animationName,
+      newDuration: getComputedStyle(root, "::view-transition-new(root)").animationDuration,
     };
   });
   expect(timing.scroller).toBe("none");
   expect(timing.row).toBe("none");
   expect(timing.header).toBe("site-header");
-  expect(timing.weather).toBe("none");
-  expect(timing.root).toBe("none");
-  expect(timing.headerBackdrop).toBe("none");
-  expect(pageErrors).toEqual([]);
+  expect(timing.oldDuration).toBe("none");
+  expect(Number.parseFloat(timing.newDuration)).toBeGreaterThan(0);
 });

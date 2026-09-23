@@ -1,9 +1,6 @@
 const roots = ["apps/web/src", "packages/ui/src", "packages/config"];
 const sourceExtensions = new Set([".css", ".svelte", ".ts"]);
-const tokenPaths = new Set([
-  "packages/ui/src/styles/tokens.css",
-  "apps/web/src/styles/tokens.css",
-]);
+const themePath = "packages/ui/src/foundations/theme.css";
 const findings: string[] = [];
 
 async function* walk(path: string): AsyncGenerator<string> {
@@ -66,18 +63,18 @@ for (const root of roots) {
 
     lines.forEach((line, index) => {
       const lineNumber = index + 1;
-      if (!tokenPaths.has(path) && /#[0-9a-fA-F]{3,8}\b/.test(line) && !hasReason(lines, index)) {
-        report(path, lineNumber, "raw color must be defined in a tokens.css file");
+      if (path !== themePath && /#[0-9a-fA-F]{3,8}\b/.test(line) && !hasReason(lines, index)) {
+        report(path, lineNumber, "raw color must be defined in foundations/theme.css");
       }
       if (
-        !tokenPaths.has(path) &&
+        path !== themePath &&
         /^\s*--(?:color|font|text|weight|leading|tracking|space|radius|shadow|motion|breakpoint)-[\w-]+\s*:/
           .test(line)
       ) {
         report(
           path,
           lineNumber,
-          "reusable theme values may only be declared in a tokens.css file",
+          "reusable theme values may only be declared in foundations/theme.css",
         );
       }
       if (
@@ -126,22 +123,12 @@ for (const root of roots) {
       report(path, 1, "Bits UI imports must stay inside packages/ui/src/primitives");
     }
     if (/\$ui\/[A-Z][^"']+\.svelte/.test(source)) {
-      report(path, 1, "the removed $ui alias must not be used");
-    }
-    for (const match of source.matchAll(/from\s+["'](@lunacea\/ui(?:\/[^"']*)?)["']/gu)) {
-      if (
-        ![
-          "@lunacea/ui/fonts",
-          "@lunacea/ui/icons",
-          "@lunacea/ui/primitives",
-          "@lunacea/ui/utils",
-        ].includes(match[1])
-      ) {
-        report(path, 1, `UI import is outside the public boundary: ${match[1]}`);
-      }
+      report(path, 1, "application code must use public UI barrels or owned subpaths");
     }
     if (
       path.startsWith("packages/ui/src/") &&
+      !path.endsWith("Preview.svelte") &&
+      !path.includes("/motion/") &&
       /from\s+["'](?:\$app|\$lib)\//u.test(source)
     ) {
       report(

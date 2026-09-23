@@ -56,7 +56,7 @@ revisions:
   figureの表示captionとaccessible nameにも使われる。
 - `$...$`と`$$...$$`はbuild時にKaTeX HTMLへ変換する。数式表示にclient-side JavaScriptは不要。
 - blockquote、表、リスト、引用、`<aside class="annotation">`を利用できる。
-- 外部リンクカードは`$lib/articles/LinkCard.svelte`から`LinkCard`をimportし、
+- 外部リンクカードは`@lunacea/ui/components`から`LinkCard`をimportし、
   `<LinkCard href="https://example.com/article" />`と書く。追加・変更後に
   `deno task links:refresh`を明示実行し、更新された
   `packages/content/link-previews.json`と`apps/web/static/images/ogp/external/`を確認する。

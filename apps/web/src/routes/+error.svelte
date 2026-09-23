@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import HeaderSearch from "$lib/shell/HeaderSearch.svelte";
-  import LiquidDistortion from "$lib/visuals/LiquidDistortion.svelte";
-  import { actionVariants } from "@lunacea/ui/primitives";
+  import { HeaderSearch } from "$ui/components";
+  import { LiquidDistortion } from "$ui/motion";
+  import { actionVariants } from "$ui/primitives";
   import { siteConfig } from "@lunacea/config";
 
   const missing = $derived(page.status === 404);
@@ -36,7 +36,7 @@
     <h1
       class="m-0 mt-(--space-2) max-w-[24ch] font-stretch-96% text-h2 leading-heading font-strong tracking-heading text-balance"
     >{heading}</h1>
-    <p class="mt-(--space-6) mb-0 max-w-[42rem] text-body leading-relaxed text-quiet text-balance">{detail}</p>
+    <p class="lead text-balance">{detail}</p>
 
     <nav class="mt-(--space-12) flex flex-wrap justify-center gap-(--space-3)" aria-label="行き先">
       <a class={actionVariants("default")} href="/">ホームへ</a>

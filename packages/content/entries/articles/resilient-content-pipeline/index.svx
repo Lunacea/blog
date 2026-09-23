@@ -25,7 +25,7 @@ revisions:
 ---
 
 <script>
-  import LinkCard from "$lib/articles/LinkCard.svelte";
+  import { LinkCard } from "@lunacea/ui/components";
 </script>
 
 ## 正本を一つにする

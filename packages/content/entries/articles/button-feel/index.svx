@@ -25,7 +25,7 @@ revisions:
 ---
 
 <script>
-  import LinkCard from "$lib/articles/LinkCard.svelte";
+  import { LinkCard } from "@lunacea/ui/components";
 </script>
 
 ボタンは画面のなかでいちばん触られる部品です。見た目を整えるだけなら数分で終わりますが、

@@ -55,11 +55,11 @@ jobs:
       - name: Check article JavaScript budget
         run: deno task budget:check
 
+      - name: Build Storybook
+        run: deno task --cwd packages/ui build:prepared
+
       - name: Install Chromium
         run: deno run -A npm:playwright@1.61.1 install --with-deps chromium
-
-      - name: Check Storybook
-        run: deno task storybook:check
 
       - name: Run Playwright and axe
         env:

@@ -1,5 +1,7 @@
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import { createEditorialPreprocessor } from "./mdsvex.config.js";
 
 export default {
-  preprocess: [vitePreprocess()],
+  extensions: [".svelte", ".svx"],
+  preprocess: [vitePreprocess(), createEditorialPreprocessor()],
 };

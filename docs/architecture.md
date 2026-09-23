@@ -25,27 +25,26 @@ endpointがWeb標準`Request`をHonoへ渡し、レスポンスをそのまま�
 
 ## パッケージの責務
 
-| パッケージ | 責務                                    | 依存してよいもの            |
-| ---------- | --------------------------------------- | --------------------------- |
-| `schemas`  | 公開型、frontmatter/API入力検証         | Zodのみ                     |
-| `core`     | 検索・関連・変換・トグルの純粋関数      | `schemas`                   |
-| `content`  | `.svx` registry、本文索引、ビルド検証   | `schemas`, `core`           |
-| `api`      | HTTP境界、外部通信、Cookie、repository  | `schemas`, `core`, `config` |
-| `ui`       | design tokens、基本CSS、primitive、icon | Svelte、Bits UI、Iconify    |
-| `config`   | 公開可能なサイト設定                    | なし                        |
-| `web`      | ルート、SEO、composition                | すべての公開package         |
+| パッケージ | 責務                                      | 依存してよいもの            |
+| ---------- | ----------------------------------------- | --------------------------- |
+| `schemas`  | 公開型、frontmatter/API入力検証           | Zodのみ                     |
+| `core`     | 検索・関連・変換・トグルの純粋関数        | `schemas`                   |
+| `content`  | `.svx` registry、本文索引、ビルド検証     | `schemas`, `core`           |
+| `api`      | HTTP境界、外部通信、Cookie、repository    | `schemas`, `core`, `config` |
+| `ui`       | 共有表示部品、design tokens、著作素材slot | `schemas`, `config`         |
+| `config`   | 公開可能なサイト設定                      | なし                        |
+| `web`      | ルート、SEO、composition                  | すべての公開package         |
 
 `core`はDOM、KV、fetchへ依存しません。`api`のリアクション保存はinterface越しにし、Deno
 KVとメモリ実装を同じ契約で検証します。
 
-`ui`は`@lunacea/ui/primitives`、`icons`、`utils`、`fonts`、`styles.css`だけを公開します。
-記事、Home、site shell、表示設定、navigation、WebGLは`apps/web/src/lib`の機能別ディレクトリが
-所有し、具体的なファイルからimportします。`ui`は`$app`、site config、content schema、network、
-Three.js、mdsvex、KaTeX、Mermaidへ依存しません。
-
-Webの`src/styles/app.css`が唯一のTailwind入口です。UIの公開CSSとWeb固有のtokens、記事DOM、 View
-Transitionを静的にimportします。Storybookもこの入口を使いますが、Storyとfixtureは
-`apps/web/stories`に分離し、本番のTailwind scanへ含めません。
+`ui`は`LinkSelector`、semantic `Badge`、action variant、`CatalogControls`、
+`ContentDetailView`、`ResponsivePicture`、controlled `ReactionControl`、`ShareActions`を所有します。
+これらはroute
+state、network、repository、SEOを読みません。`web`はSEO/JSON-LD、URLとquery、画像registry 解決、API
+fetchとZod検証、Home固有controller、およびUIへデータを渡す薄いadapterだけを所有します。
+WebとStorybookは同じ`packages/ui/src/foundations/global.css`を直接読み込み、アプリ固有の第二のglobal
+themeを持ちません。
 
 ## レンダリング境界
 
@@ -53,51 +52,57 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
 - `/articles`はGET検索をJavaScriptなしで処理するSSRを維持する。公開情報だけを返し、full queryをcache
   keyとする `public, max-age=0, s-maxage=3600, stale-while-revalidate=86400`
   を維持する。絞り込みURLは `noindex,follow`、canonicalは `/articles`。
-- Articlesは同じ番号付きindexを常に使う。categoryは右のrail、sortはindex直前、searchとtagは
-  下部に置く。選択中のcategory、sort、tagは同じ下線で示し、検索・filter中は条件と解除操作を
-  indexの前に表示する。すべてGET link/formであり、JavaScriptなしでも利用できる。
+- Articlesは `view=grid|list` をURLで管理する。初期状態と `grid` は新聞表示、`view=list`
+  だけがlistである。category、tag、sort、検索語は表示形式を変更せず、絞り込みは新聞のままでも成立する。categoryは常時表示のstrip、検索はHeaderにあり、tagとsortは両表示の折りたたみ領域に配置し、結果件数は常時表示する。viewのみの変更はFull
+  motion時にitem-level View Transitionを使用できる。
+- 新聞の「本日のPick
+  Up」は、front記事を除いた残りからUTC日付をseedとする決定的な抽選で選び、SSRとshared
+  cacheで同じHTMLになる。抽選された記事は同じページの一覧から除き、記事の重複表示を作らない。絞り込み中とlistでは表示しない。
 - インプレッションは記事単位の公開カウンタであり、Deno KVに `impression/count` と有効期限付きの
   `impression/seen`
   だけを保存する。IP、User-Agent、参照元、閲覧時刻は保存しない。記録は記事詳細からのsame-origin POST
   `/api/v1/impressions/:type/:slug` で、既存の匿名署名Cookieのactorとsessionごとに一度だけ行う。
-- Header検索は全ルートで利用できるGETフォームであり、`q`を`/articles`へ送る。JavaScriptが
-  ない場合はHeader内の静的フォームが同じ役割を果たす。既存の`view=list` queryは互換のため
-  保持するが、現在のindex表示を分岐しない。
+  カタログ右のランキングはSSRでKVを読み、KVが読めない場合もカタログは完全に機能する。
+- Header検索は全ルートで利用できるGETフォームであり、`q` と `view=list` を `/articles`
+  へ送る。JavaScriptがない場合はHeader内の静的フォームが同じ役割を果たす。
 - `/search`は検索条件と `view=list` を保持して `/articles`
   へ308転送する。旧Aboutの308転送は維持する。互換転送はprerenderせず、独立したHTTP応答とする。
 - `/api/v1`はアプリケーションの動的HTTP境界であり続ける。SSR Articlesと互換redirectは content
   delivery境界であり、別serviceや永続stateを追加しない。
 - Mermaidは該当DOMがある記事でだけ遅延importする。
-- SVXのGFM、heading、Shiki、Mermaid source、KaTeX変換設定は
-  `apps/web/mdsvex.config.js`をWebとStorybookが利用する。KaTeXはbuild時にHTML化し、client
-  runtimeを追加しない。
+- SVXのGFM、heading、Shiki、Mermaid source、KaTeX変換設定はUI packageの共通build設定を
+  WebとStorybookが利用する。KaTeXはbuild時にHTML化し、client runtimeを追加しない。
 - Home is prerendered as an uppercase LUNACEA masthead that bleeds past both gutters, a
-  business-card introduction and six latest public articles in the shared numbered index. It carries
-  no header; every other route gets one hairline sticky bar, and a site-wide footer closes all
-  routes. Scrolling is native and continuous; there is no snap controller or draggable profile.
-- `StaticLight` draws the light and grain in SVG with no JavaScript. The root layout mounts one
-  site-wide field and dynamically imports `editorial-light.ts` when motion is Full and device
-  capabilities permit it. Text and the C theme control remain HTML and usable before fonts/WebGL
-  resolve. No point-cloud hero or custom cursor is mounted. DPR is capped at 1.2/1.5.
-  Offscreen/hidden rendering pauses; unmount, Off and context loss dispose the renderer and leave
-  the static composition.
+  business-card introduction, category links and six latest public articles in the shared numbered
+  index. It carries no header; every other route gets one hairline sticky bar, and a site-wide
+  footer closes all routes. Scrolling is native and continuous; there is no snap controller or
+  draggable profile.
+- `StaticLight` draws the light, shadow and grain in SVG with no JavaScript. Home renders the full
+  field; reading routes keep the grain alone. Home and the article catalog dynamically import
+  `editorial-light.ts` when motion is Full and device capabilities permit it, layering one animated
+  full-bleed field of key light, cloud cover and grain between the static light and the static
+  grain. Text and the C theme control remain HTML and usable before fonts/WebGL resolve. No
+  point-cloud hero or custom cursor is mounted. DPR is capped at 1.2/1.5. Offscreen/hidden rendering
+  pauses; unmount, Off and context loss dispose the renderer and leave the static composition.
 - Theme and motion controls both live in the site footer; Home additionally exposes the theme as the
   masthead C. Motion UI exposes ON/OFF. Persisted `full` maps to ON, `reduced` and `off` map to OFF;
   the existing storage key is retained. OS reduced motion, save-data and forced colors force static
   behavior. The initial Home opening is a nonblocking 1.2-second grain clearing plus masthead
   sharpening, once per tab, never an overlay or content gate.
-- Fixed-location weather is fetched by the root layout and is expressed solely as how much light
-  gets through: clear opens the key light, cloudy/rain/snow close it down. No falling particles,
-  labels or location UI. Unavailable weather is neutral. Static shading works without WebGL. On
-  article details the paper-colored `ReadingSurface` covers the field while the header and tail
-  expose it. API contracts are unchanged.
-- 未使用だったreveal/parallax selectorは持たない。Home openingとWebGLだけが各機能内でmotionを
-  所有する。
-- route間のView Transitionでは`root`と天候背景をsnapshotに含めない。新しいpage内容はlive DOMで fade
-  inし、headerの出入りと記事紙面の受け渡しだけを個別のsnapshotで動かす。これによりWebGLの
-  描画ループは遷移中も継続する。テーマ切り替えだけは`root`snapshotを使って画面全体をcrossfadeする。
-  query stringだけの遷移はより速くする。Reduced/Offと履歴移動では即時切替する。
-- サイトの天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。
+- Fixed-location weather is fetched only while visiting Home and is expressed solely as how much
+  light gets through: clear opens the key light, cloudy/rain/snow close it down. No falling
+  particles, labels or location UI. Unavailable weather is neutral. Static shading works without
+  WebGL; articles have no weather layer or request. API contracts are unchanged.
+- Reveal/parallax remains a reusable UI capability but is not installed by the redesigned global
+  layout. Home opening and WebGL own their scoped motion.
+- route間のView Transitionは`root`snapshotだけを対象とし、旧pageと新pageを重ねてdissolveする。
+  `main`にnameを与えるとgroupが自身のboxをanimateし、長いpageをscrollしてから離脱したときに旧
+  snapshotがviewportを縦に流れてしまうため、page内のどのelementにも`view-transition-name`を与えない。
+  重ねる理由はHeaderとFooterが両側で同一pixelになりdissolveでは静止して見える一方、順番に切り替えると
+  1frameだけ画面全体が空くこと。query
+  stringだけの遷移はより速く、記事の前後移動は全面slideとして扱う。
+  Reduced/Offと履歴移動では即時切替する。
+- Homeの天候は`config.defaultLocation`の固定地点だけをclientから取得し、地点名、文章、気温、設定UIを表示しない。
   `fog`は`cloudy`、`storm`は`rain`、取得fallbackは`neutral`な環境表現へ正規化する。
 - ロゴ、人物、植物などの著作素材は`config.visualAssets`から`MediaSlot`へ渡す。空slotは構造だけを示し、有機的な図像をコード生成しない。
 - 記事内LinkCardは`href`を安定keyとして、明示実行する`deno task links:refresh`だけが外部ページの
@@ -108,11 +113,11 @@ Transitionを静的にimportします。Storybookもこの入口を使います�
   既存cacheを破壊しない。
 
 ビルド後のbudget checkは記事詳細の初期JavaScript依存を再帰集計し、gzip 150
-KiBを超えたら失敗します。MermaidとThree.js本体のdynamic importはこの集計へ入りません。天候表現の
-再帰WebGL graphはgzip 230 KiBを上限とします。
+KiBを超えたら失敗します。MermaidとWebGLのdynamic importはこの集計へ入りません。Homeの再帰WebGL
+graphはgzip 230 KiBを上限とします。
 
 Articles SSRを戻す場合はquery parserを残したまま一覧をprerenderへ戻し、`/search`のGET実装を
-復元します。互換routeは独立して戻せます。天候背景のWebGLはdynamic lighting
+復元します。互換routeは独立して戻せます。Home WebGLはdynamic lighting
 moduleを外すだけでHTML誌名と静止陰影へ戻せます。
 
 ## コンテンツと検索

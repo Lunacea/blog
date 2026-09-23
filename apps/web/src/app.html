@@ -12,17 +12,16 @@
         document.documentElement.dataset.js = "true";
         try {
           const themePreference = localStorage.getItem("lunacea-theme") || "auto";
-          const storedMotion = localStorage.getItem("lunacea-motion");
-          const motionPreference = storedMotion === "off" || storedMotion === "reduced"
-            ? "off"
-            : "full";
+          const motionPreference = localStorage.getItem("lunacea-motion") || "full";
           const theme = themePreference === "auto"
             ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
             : themePreference;
           const connection = navigator.connection;
           const limited = matchMedia("(prefers-reduced-motion: reduce)").matches ||
             matchMedia("(forced-colors: active)").matches || connection?.saveData;
-          const motion = motionPreference === "off" || limited ? "off" : "full";
+          const motion = motionPreference === "off"
+            ? "off"
+            : (motionPreference === "reduced" || limited ? "off" : "full");
           const root = document.documentElement;
           root.dataset.themePreference = themePreference;
           root.dataset.theme = theme;

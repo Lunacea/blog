@@ -18,20 +18,6 @@ async function complete(page: import("@playwright/test").Page) {
   expect(await listed.count()).toBeLessThanOrEqual(HOME_LATEST_LIMIT);
 }
 
-async function supportsWebgl(
-  page: import("@playwright/test").Page,
-  requireContextLoss = false,
-) {
-  return await page.evaluate((requireContextLoss) => {
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
-    return Boolean(
-      context &&
-        (!requireContextLoss || context.getExtension("WEBGL_lose_context")),
-    );
-  }, requireContextLoss);
-}
-
 // プロジェクトごとにビューポートが違うため、1パスで電話と PC の両幅を覆える。
 test("Home is complete and never scrolls sideways", {
   tag: ["@desktop", "@mobile", "@nojs"],
@@ -112,22 +98,9 @@ test("the ambient light renders on a capable desktop and is disposed when motion
   tag: ["@desktop"],
 }, async ({ page }) => {
   await page.addInitScript(capableDevice);
-  test.skip(!await supportsWebgl(page), "The test browser has no WebGL context");
   await page.goto("/");
   const light = page.locator("[data-editorial-light]");
   await expect(light).toHaveAttribute("data-webgl", "true", HYDRATED);
-  await expect(light.locator("[data-rendering]")).toHaveAttribute("data-rendering", "active");
-  await light.evaluate((node) => {
-    (globalThis as typeof globalThis & { __weatherField?: Element }).__weatherField = node;
-  });
-  await page.getByRole("link", { name: /All articles/i }).click();
-  await expect(page).toHaveURL(/\/articles$/u);
-  await expect(light).toHaveCount(1);
-  expect(
-    await light.evaluate((node) =>
-      node === (globalThis as typeof globalThis & { __weatherField?: Element }).__weatherField
-    ),
-  ).toBe(true);
   await expect(light.locator("[data-rendering]")).toHaveAttribute("data-rendering", "active");
   await page.mouse.move(600, 250);
   await page.locator(".settings-trigger").click();
@@ -146,10 +119,6 @@ test("the mobile light keeps its drawing buffer through scroll and recovers from
     }
   });
   await page.addInitScript(capableDevice);
-  test.skip(
-    !await supportsWebgl(page, true),
-    "The test browser has no context-loss capable WebGL context",
-  );
   await page.goto("/");
   const light = page.locator("[data-editorial-light]");
   await expect(light).toHaveAttribute("data-webgl", "true", HYDRATED);

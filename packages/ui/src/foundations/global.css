@@ -1,0 +1,357 @@
+@import "tailwindcss";
+@source "../";
+@source "../../../../apps/web/src";
+@import "./theme.css";
+@import "./editorial.css";
+@import "../motion/transitions.css";
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scrollbar-color: var(--color-muted) var(--color-background);
+  scrollbar-gutter: stable;
+  background: var(--color-background);
+}
+
+html[data-motion="off"],
+html[data-motion="off"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *),
+html[data-motion="reduced"] *:not([id^="dmermaid-"], [id^="dmermaid-"] *) {
+  scroll-behavior: auto !important;
+  animation-duration: var(--motion-duration-immediate) !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: var(--motion-duration-immediate) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  html * {
+    scroll-behavior: auto;
+    animation-duration: var(--motion-duration-immediate) !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--motion-duration-immediate) !important;
+  }
+}
+
+@layer base {
+  html {
+    scroll-padding-top: var(--site-header-block);
+  }
+
+  body {
+    font-synthesis: none;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    color: var(--color-foreground);
+    background: var(--color-background);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    font-weight: var(--weight-regular);
+    line-height: var(--leading-body);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    color: var(--color-background);
+    background: var(--color-primary);
+  }
+
+  a {
+    color: inherit;
+    text-decoration-color: var(--color-secondary);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.24em;
+  }
+
+  a:hover {
+    text-decoration-color: var(--color-accent);
+  }
+
+  button,
+  select,
+  input,
+  textarea {
+    color: inherit;
+    font: inherit;
+  }
+
+  button,
+  select,
+  input[type="submit"] {
+    min-height: var(--control-size);
+  }
+
+  /*
+    フォーカス表示は全体で1種類。base レイヤーで宣言するので、独自の角丸を持つ操作子はそれを保つ。
+  */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+    border-radius: var(--radius-small);
+    box-shadow: none;
+  }
+
+  /*
+    クリップやスクロールする要素の内側では、リングを操作子の内側に描く。
+    外側だと目次やコードブロックの端に接した行で右辺と下辺が欠ける。
+  */
+  .desktop-toc :focus-visible,
+  .mobile-toc-content :focus-visible,
+  .rail-disclosure :focus-visible,
+  .code-block :focus-visible,
+  .diagram-block :focus-visible,
+  pre:focus-visible,
+  .mermaid-diagram:focus-visible {
+    outline-offset: -2px;
+  }
+
+  img,
+  svg,
+  canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  img {
+    height: auto;
+  }
+}
+
+@utility rail-disclosure {
+  interpolate-size: allow-keywords;
+
+  &::details-content {
+    overflow: hidden;
+    block-size: 0;
+    transition:
+      block-size var(--motion-duration-micro) var(--motion-ease-enter),
+      content-visibility var(--motion-duration-micro) allow-discrete;
+  }
+
+  &[open]::details-content {
+    block-size: auto;
+  }
+
+  html[data-motion="off"] &::details-content,
+  html[data-motion="reduced"] &::details-content {
+    transition-duration: var(--motion-duration-immediate);
+  }
+}
+
+/*
+  押下への応答。沈みは即時、戻りは署名イージングでゆっくり。
+  ホバーや色の変化もここを通るので、サイト中の操作子が同じ立ち上がり方をする。
+  Tailwind 4 は `translate` と `scale` を独立したプロパティとして書くため、両方を transition に挙げる。
+  ホバーで既に transform を動かす操作子は、これに頼らず自前の `active:` を宣言する。
+*/
+@utility pressable {
+  transition-property: translate, scale, color, background-color, border-color, box-shadow, opacity;
+  transition-duration: var(--motion-duration-base);
+  transition-timing-function: var(--motion-ease-signature);
+
+  &:active:not(:disabled):not([aria-disabled="true"]) {
+    translate: 0 var(--press-shift);
+    scale: var(--press-scale);
+    transition-duration: var(--motion-duration-immediate);
+  }
+}
+
+/*
+  記事の内容が乗る箱。ヘッダ・カバー・本文グリッド・末尾がすべてこれを使うので、
+  幅の決め方をここ一箇所に持たせておけば、縦のラインが互いにずれない。
+  横にレールが立たない幅（--breakpoint-read 未満）では、余りを片側に落とさず
+  読み幅そのものに絞って中央に置く。
+*/
+/*
+  シェアの文言は一字ずつの箱に入れ、ホバーで上へ送って同じ字に入れ替える。
+  遅延を字ごとにずらすので、左から順に送られていくように見える。
+  高さは1文字ぶんに固定し、はみ出しを隠すことで送りが成立する。
+*/
+.share-slot {
+  display: inline-flex;
+}
+
+.share-slot-cell {
+  display: grid;
+  overflow: hidden;
+  height: 1em;
+  grid-template-rows: 1fr;
+}
+
+.share-slot-cell > span {
+  grid-area: 1 / 1;
+  transition: translate var(--motion-duration-base) var(--motion-ease-signature);
+  transition-delay: calc(var(--slot-index) * 28ms);
+}
+
+.share-slot-cell > span:last-child {
+  translate: 0 100%;
+}
+
+:is(a, button):is(:hover, :focus-visible) .share-slot-cell > span {
+  translate: 0 -100%;
+}
+
+:is(a, button):is(:hover, :focus-visible) .share-slot-cell > span:last-child {
+  translate: 0 0;
+}
+
+html[data-motion="off"] .share-slot-cell > span {
+  transition: none;
+}
+
+/*
+  記事一覧への導線の文字。インクは面を左から満たすので、差分で抜けば塗られた画素だけが
+  反転し、うねる縁にもそのまま追従する。色を時間で切り替えると面の満ち引きと別々に動く。
+
+  ただし差分はモーションを切った環境では意味を持たない（インクが満ちないので、
+  白い文字が明るい地の上に残る）。そこでは素の色で対比を取る。
+*/
+.all-articles-label {
+  color: var(--color-ink);
+}
+
+:is(a, button):is(:hover, :focus-visible) .all-articles-label {
+  color: var(--color-canvas);
+}
+
+html[data-motion="full"] .all-articles-label {
+  color: var(--color-light-source);
+  mix-blend-mode: difference;
+}
+
+/*
+  レールのシェアは「文言が二つとも入らないときだけ」アイコンだけにする。
+  判断はビューポートではなくレール自身の幅に対して行う（.reading-tools が問い合わせ対象）。
+
+  コンテナクエリの条件式に var() は書けないので閾値は数値で持つしかない。根拠をここに残す:
+  実測（--text-folio / font-stretch-84%）で Share 95.7px・Post 86.8px、横並びは gap 込み 190.5px。
+  縦積みか横並びかは目次の有無で決める（目次の下に来るときだけ横並び）。
+  文言を出すかどうかだけは、決め打ちの幅ではなくレールの実幅で判断する。
+  境は、縦積みで広いほうの Share が収まる 96px。
+  条件式は px で書く（コンテナクエリ内の rem は解決先が紛らわしい）。
+  ボタンの字面や余白を変えたらここも測り直すこと。
+*/
+@container (width < 96px) {
+  .share-rail :is(a, button) {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .share-rail .share-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@utility shell {
+  width: min(
+    calc(100% - (2 * var(--layout-gutter))),
+    calc(var(--content-width) - (2 * var(--layout-gutter)))
+  );
+  margin-inline: auto;
+
+  @media (width < 53rem) {
+    width: min(calc(100% - (2 * var(--layout-gutter))), var(--prose-width));
+  }
+}
+
+@utility mermaid-diagram {
+  position: relative;
+  z-index: calc(var(--z-controls) + 1);
+  overflow-x: auto;
+  margin: var(--space-8) 0;
+  border: var(--border-width-rule) solid var(--color-line);
+  padding: var(--space-6);
+  background: var(--color-surface);
+
+  & figcaption {
+    margin-top: var(--space-3);
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+  }
+
+  & svg {
+    width: 100%;
+    /* 可読な倍率までは縮小し、それ以下は横スクロールに切り替える。 */
+    min-width: var(--mermaid-legible-width, 0);
+    height: auto;
+  }
+
+  html[data-motion="reduced"] &,
+  html[data-motion="reduced"] & *,
+  html[data-motion="off"] &,
+  html[data-motion="off"] & * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@utility page {
+  min-height: 65vh;
+  padding-block: var(--page-start-clearance) var(--section-space);
+
+  @media print {
+    padding: 0;
+  }
+}
+
+@utility lead {
+  max-width: 42rem;
+  margin: var(--space-6) 0 0;
+  color: var(--color-muted);
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+}
+
+@utility tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+@media (forced-colors: active) {
+  html {
+    scrollbar-color: auto;
+  }
+
+  body {
+    background: Canvas;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
+    box-shadow: none;
+  }
+
+  [data-webgl="true"] canvas {
+    display: none;
+  }
+}
+
+@media print {
+  body {
+    color: var(--color-print-foreground);
+    background: var(--color-print-background);
+  }
+
+  header,
+  .settings,
+  .reactions,
+  .share-actions,
+  .reading-progress {
+    display: none !important;
+  }
+}

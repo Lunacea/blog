@@ -1,15 +1,16 @@
 <script lang="ts">
+  import { page } from "$app/state";
   import { responsiveImages } from "$lib/.generated/images.ts";
-  import PageHead from "$lib/PageHead.svelte";
-  import ThemeToggle from "$lib/preferences/ThemeToggle.svelte";
-  import HomeOpening from "$lib/home/HomeOpening.svelte";
-  import LiquidTitle from "$lib/home/LiquidTitle.svelte";
-  import IndexList from "$lib/articles/IndexList.svelte";
-  import ProfileCard from "$lib/home/ProfileCard.svelte";
-  import AllArticlesLink from "$lib/home/AllArticlesLink.svelte";
+  import PageHead from "$lib/components/PageHead.svelte";
+  import { useFixedLocationWeather } from "$lib/weather.ts";
+  import { ThemeToggle } from "$ui/components";
+  import { HomeOpening, LiquidTitle } from "$ui/motion";
+  import { IndexList, ProfileCard } from "$ui/patterns";
+  import { AllArticlesLink } from "$ui/components";
   import { siteConfig, visualAssets } from "@lunacea/config";
 
   let { data } = $props();
+  const weather = useFixedLocationWeather();
 
   /*
    * マークは常に名刺の枠の寸法で描かれるので、変種は幅ではなく解像度倍率。
@@ -67,7 +68,7 @@
   <section id="about" class="scroll-mt-(--space-16) pt-(--space-16) pb-(--home-section-space)" aria-label="プロフィール">
     <div class="mx-auto flex w-full max-w-content justify-center px-(--layout-gutter)">
       <ProfileCard
-        class="max-w-(--profile-card-print) max-sm:w-[calc(100%_-_var(--space-4))]"
+        class="max-w-(--profile-card-print)"
         name={siteConfig.name}
         role="UI / UX Design — Web Engineering"
         bio={siteConfig.author.bio}
@@ -81,6 +82,14 @@
 
   <section class="pb-(--home-section-space)" aria-labelledby="latest-heading">
     <h2 class="sr-only" id="latest-heading">最新の記事</h2>
+
+    <nav class="mx-auto mb-(--space-8) flex w-full max-w-content flex-wrap items-baseline gap-x-(--space-8) gap-y-(--space-2) px-(--layout-gutter) home-opening:animate-opening-rise" aria-label="カテゴリ">
+      {#each data.categories as category}
+        <a class="group/category inline-flex min-h-control items-center font-stretch-88% text-h3 leading-none font-strong tracking-heading uppercase no-underline pressable [--press-scale:0.97] hover:no-underline" href={`/articles?${new URLSearchParams({ category })}`}>
+          <span class="border-b-2 border-transparent pb-[.12em] transition-colors duration-(--motion-duration-base) ease-signature group-hover/category:border-ink group-focus-visible/category:border-ink group-active/category:border-ink">{category}</span>
+        </a>
+      {/each}
+    </nav>
 
     <IndexList entries={data.latest} label="最新の記事" bleed />
 

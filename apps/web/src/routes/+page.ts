@@ -14,5 +14,7 @@ export function load() {
       href: hrefForContent(article),
       tags: article.tags,
     })),
+    categories: [...new Set(articles.map((article) => article.category))].sort(),
+    total: articles.length,
   };
 }
