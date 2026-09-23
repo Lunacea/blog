@@ -95,6 +95,10 @@ export function createEditorialLightMaterial(coarse: boolean) {
     ripple: { value: 0 },
     /* 雪原の被覆量。淡い青白さとその面積。 */
     frost: { value: 0 },
+    /* 待機中にだけ起こる一時的な効果。bloom は光だまりが一瞬開く量、veil は横切る雲影。 */
+    bloom: { value: 0 },
+    veil: { value: new Vector2(-1, -1) },
+    veilStrength: { value: 0 },
     warm: { value: new Vector3(0.93, 0.86, 0.69) },
     cool: { value: new Vector3(0.08, 0.17, 0.23) },
     pale: { value: new Vector3(0.96, 0.97, 0.97) },
@@ -114,9 +118,10 @@ export function createEditorialLightMaterial(coarse: boolean) {
     fragmentShader: `
       precision highp float;
       varying vec2 uvCoord;
-      uniform vec2 light, aspect;
+      uniform vec2 light, aspect, veil;
       uniform vec3 warm, cool, pale;
       uniform float time, dark, cloud, lift, shaft, streak, sparkle, sun, ripple, frost;
+      uniform float bloom, veilStrength;
 
       float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
@@ -169,10 +174,10 @@ export function createEditorialLightMaterial(coarse: boolean) {
         /* カーソルは座標も時間も動かさない。天候が最も強く出る位置を示すだけ。 */
         vec2 frame = uvCoord * aspect;
         float reach = length((uvCoord - light) * aspect);
-        float pool = 1.0 - smoothstep(0.0, 0.82, reach);
+        float pool = 1.0 - smoothstep(0.0, 0.82 + bloom * 0.22, reach);
         float near = pool * pool;
         /* 加算ではなく倍率。加算は露出を片側に寄せ、明暗どちらかのテーマでしか効かなくなる。 */
-        float focus = 1.0 + near * (0.78 + sun * 0.85);
+        float focus = 1.0 + near * (0.78 + sun * 0.85) * (1.0 + bloom * 0.7);
 
         vec2 stretch = vec2(1.0, mix(1.0, 0.28, streak));
 
@@ -209,8 +214,12 @@ export function createEditorialLightMaterial(coarse: boolean) {
          */
         float exposure = lift - max(lift, 0.0) * 2.4 * (1.0 - dark) - min(lift, 0.0) * 2.4 * dark;
 
+        /* 雲影は円ではなく雲の濃淡で縁を崩し、形のある物体に見せない。 */
+        float veilReach = 1.0 - smoothstep(0.0, 0.66, length((uvCoord - veil) * aspect));
+        float passing = veilStrength * veilReach * veilReach * mix(0.45, 1.0, overcast);
+
         float signal = (gradient * dapple * occlusion * 1.45 + ambient * 0.2 + glare
-          + water * 0.9 - 0.42 + exposure) * focus;
+          + water * 0.9 - 0.42 + exposure - passing * 0.36) * focus;
 
         /* 境界の両側で連続させ、階調の縁が出ないようにする。 */
         float glow = smoothstep(0.0, 0.6, signal);

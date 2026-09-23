@@ -189,9 +189,12 @@ keeps the fixed gradient out of running text. The static gradient is an even vig
 spotlight, and it steps back once the animated field is running. `opacity` takes no `light-dark()`,
 so the field's light and dark values are set per theme instead. On paper a white highlight is
 invisible, so light mode reads the pointer as a clearing in a lightly shaded field; in the dark the
-same field is held back so it never swallows secondary text. Where no pointer hovers — every touch
-device — the light drifts along a slow, uneven figure instead of standing still, and a fine pointer
-takes it back the moment it moves.
+same field is held back so it never swallows secondary text. Where no pointer hovers, the light
+drifts along an uneven figure instead of standing still, and a fine pointer takes it back the moment
+it moves. On touch devices scrolling carries the light down the page; once reading pauses the same
+drift grows back in over a few seconds. While nothing guides the light, irregular soft events — the
+key light briefly opening, or a cloud shadow crossing the field — come and go on their own and never
+start while the reader is interacting.
 
 Hovering a row in the index slides a pane of liquid glass under it: a thin saturated fill over an
 18px blur with a lit inset edge, behind the type and never touching it. It is dropped under forced
