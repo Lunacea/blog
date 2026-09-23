@@ -211,6 +211,17 @@ test("code and diagram blocks pair a rendered view with an editable source", {
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   await expect.poll(() => drawing.getAttribute("id")).toBe(lightDrawing);
 
+  // 拡大は図そのものをモーダルへ移し、閉じると元の場所とフォーカスへ戻す。
+  const expand = diagram.getByRole("button", { name: /を拡大$/u });
+  await expand.click();
+  const zoom = page.getByRole("dialog", { name: "ボタンの状態遷移" });
+  await expect(zoom.locator(".mermaid-diagram svg")).toBeVisible();
+  await expect(drawing).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  await expect(zoom).toBeHidden();
+  await expect(drawing).toBeVisible();
+  await expect(expand).toBeFocused();
+
   await diagram.getByRole("tab", { name: "Source" }).click();
   await diagram.locator("textarea").fill("graph LR\n  A[Alpha] --> B[Beta]");
   await diagram.getByRole("tab", { name: "Diagram" }).click();

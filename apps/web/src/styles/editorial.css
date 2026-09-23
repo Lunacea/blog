@@ -196,6 +196,30 @@
   border: 0;
 }
 
+/* 拡大表示では枠を外し、元の寸法を下限に、幅に余裕があれば2倍まで大きく描く。 */
+.diagram-dialog .mermaid-diagram {
+  overflow: visible;
+  /* 幅は面いっぱいに取り、縦は余白があれば中央に置く。はみ出すと auto margin が 0 になる。 */
+  width: 100%;
+  margin: auto 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.diagram-dialog .mermaid-diagram svg {
+  display: block;
+  width: clamp(
+    var(--mermaid-natural-width, 100%),
+    100%,
+    calc(var(--mermaid-natural-width, 100%) * 2)
+  );
+  min-width: var(--mermaid-natural-width, 0);
+  margin-inline: auto;
+  /* Mermaid が SVG に書く max-width の style 属性を、拡大表示の中でだけ外す。 */
+  max-width: none !important;
+}
+
 .code-block .highlighted {
   display: inline-block;
   width: calc(100% + (2 * var(--space-5)));

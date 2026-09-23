@@ -12,6 +12,7 @@
   import type { ArticleCompositionVisual } from "./article-composition-types.ts";
   import ArticleCompositionGraph from "./ArticleCompositionGraph.svelte";
   import { createBlockShell, type BlockShell } from "./block-tools.ts";
+  import { createDiagramDialog } from "./diagram-dialog.ts";
   import { diagramThemeVariables } from "./mermaid-palette.ts";
 
   type Heading = { id: string; text: string; level: number };
@@ -283,6 +284,7 @@
       shells.push(shell);
     });
 
+    const diagramDialog = createDiagramDialog();
     const diagrams: DiagramRecord[] = [
       ...prose.querySelectorAll<HTMLElement>(".mermaid-source"),
     ].map((source, index) => {
@@ -313,6 +315,13 @@
           record.graph = value;
           scheduleDiagram();
         },
+        onExpand: (trigger) =>
+          diagramDialog.open({
+            title,
+            host: record.host,
+            figure: () => record.figure,
+            trigger,
+          }),
       });
       record.host = shell.preview;
       shells.push(shell);
@@ -350,6 +359,10 @@
           figure.style.setProperty(
             "--mermaid-legible-width",
             `${Math.round(authored * 0.9)}px`,
+          );
+          figure.style.setProperty(
+            "--mermaid-natural-width",
+            `${Math.round(authored)}px`,
           );
         }
         return figure;
@@ -534,6 +547,7 @@
       clearTimeout(diagramTimer);
       clearTimeout(statusTimer);
       diagrams.forEach((record) => record.figure?.remove());
+      diagramDialog.destroy();
       shells.forEach((shell) => shell.destroy());
       removeEventListener("scroll", scheduleReadingState);
       removeEventListener("resize", scheduleReadingState);

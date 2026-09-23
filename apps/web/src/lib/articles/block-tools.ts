@@ -37,6 +37,7 @@ export function createBlockShell({
   previewName = "Preview",
   onEdit,
   onStatus,
+  onExpand,
 }: {
   /** ブロック要素。既存の子要素がそのまま描画ビューになる。 */
   block: HTMLElement;
@@ -50,6 +51,8 @@ export function createBlockShell({
   /** 読者が編集またはリセットしたときに現在のテキストで呼ばれる。 */
   onEdit?: (value: string) => void;
   onStatus?: (message: string) => void;
+  /** 渡すと描画ビューを大きく開くボタンを置く。押したボタンを受け取る。 */
+  onExpand?: (trigger: HTMLButtonElement) => void;
 }): BlockShell {
   const existing = [...block.childNodes];
 
@@ -118,7 +121,7 @@ export function createBlockShell({
   const previewTab = tabFor("preview", previewName);
   const sourceTab = tabFor("source", "Source");
 
-  const glyph = (icon: { body: string }, state: "copy" | "copied") =>
+  const glyph = (icon: { body: string }, state: "copy" | "copied" | "expand") =>
     `<svg viewBox="0 0 24 24" class="size-(--space-4)" data-glyph="${state}" aria-hidden="true" focusable="false">${icon.body}</svg>`;
   const copy = document.createElement("button");
   copy.type = "button";
@@ -131,7 +134,18 @@ export function createBlockShell({
   reset.className = `${label} border-l ${rule}`;
   reset.textContent = "Reset";
   reset.hidden = true;
-  actions.append(reset, copy);
+  actions.append(reset);
+  if (onExpand) {
+    const expand = document.createElement("button");
+    expand.type = "button";
+    expand.className = `${label} border-l ${rule}`;
+    expand.setAttribute("aria-label", `${name}を拡大`);
+    expand.setAttribute("aria-haspopup", "dialog");
+    expand.innerHTML = glyph(blockToolIcons.expand, "expand");
+    expand.addEventListener("click", () => onExpand(expand));
+    actions.append(expand);
+  }
+  actions.append(copy);
 
   block.append(bar, preview, editorPanel);
 
