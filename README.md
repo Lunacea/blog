@@ -80,14 +80,18 @@ DNSの具体的な手順と復旧方法は[公開runbook](docs/deployment.md)を
 ## CI/CD
 
 Quality gateはformat・lint・型・テスト・本番build・JS budget・Storybook・E2Eを検証します。
-同じPRまたはbranchの古い実行は取り消します。生成は`check`で済ませ、CIでは
-`apps/web`の`build:prepared`がその成果物を再利用します。通常の開発・公開には、
-生成とコンテンツ検証を含む`deno task build`を使ってください。
+静的検査と単体テスト、buildとE2E、Storybookの3ジョブを並行させ、準備は
+`.github/actions/setup`にまとめます。各ジョブは`prepare`で生成を済ませ、`build:prepared`は
+その成果物を再利用します。画像の生成物とChromium（ヘッドレス専用版）はキャッシュします。同じPRまたは
+branchの古い実行は取り消します。通常の開発・公開には、生成とコンテンツ検証を含む
+`deno task build`を使ってください。
+
+E2Eは背景をWebGLなしで描き、背景そのものを確かめる`@webgl`のテストだけがWebGLを使います。
 
 E2Eの初回準備と、本番ビルドに対する実行:
 
 ```bash
-deno run -A npm:playwright@1.61.1 install chromium
+deno run -A npm:playwright@1.61.1 install --only-shell chromium
 deno task build
 E2E_PREVIEW=true deno task test:e2e
 ```
