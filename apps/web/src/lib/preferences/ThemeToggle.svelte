@@ -5,17 +5,17 @@
 </script>
 
 <script lang="ts">
-  import { onMount, tick } from "svelte";
   import { ThemeGlyph } from "@lunacea/ui/icons";
-  import {
-    applyThemePreference,
-    hasRenderingHeadroom,
-    readThemePreference,
-    setThemePreference,
-    subscribeThemeCapability,
-    type EffectiveTheme,
-  } from "./preferences.ts";
   import { cn } from "@lunacea/ui/utils";
+  import { onMount, tick } from "svelte";
+  import {
+      applyThemePreference,
+      hasRenderingHeadroom,
+      readThemePreference,
+      setThemePreference,
+      subscribeThemeCapability,
+      type EffectiveTheme,
+  } from "./preferences.ts";
 
   let { placement = "header" }: { placement?: "header" | "masthead" } = $props();
   let theme = $state<EffectiveTheme>("light");
@@ -103,6 +103,6 @@
   <span class="sr-only">{theme === "dark" ? "Dark theme" : "Light theme"}</span>
   {#if placement === "header"}
     <!-- 題字の C は題字の一部なので吹き出しを付けない。ボタンが同じ名前を持つので読ませない。 -->
-    <span class="tooltip" aria-hidden="true"><span>{theme === "dark" ? "ライトにする" : "ダークにする"}</span></span>
+    <span class="tooltip" aria-hidden="true"><span>{theme === "dark" ? "明るくする" : "暗くする"}</span></span>
   {/if}
 </button>
