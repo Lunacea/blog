@@ -13,6 +13,7 @@ status: stable
 featured: true
 draft: false
 sample: true
+aiWritten: true
 targetVersions: []
 related: []
 revisions: []

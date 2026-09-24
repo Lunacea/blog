@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { ContentStatus } from "@lunacea/schemas";
-  import { contentStatusLabel } from "./content-labels.ts";
+  import { aiWrittenLabel, contentStatusLabel } from "./content-labels.ts";
   import { Badge } from "@lunacea/ui/primitives";
-  let { status }: { status: ContentStatus } = $props();
+  let { status, aiWritten = false }: { status: ContentStatus; aiWritten?: boolean } = $props();
 
-  const variant = $derived(status === "growing" ? "accent" : status === "deprecated" ? "negative" : "outline");
+  const variant = $derived(
+    aiWritten ? "outline" : status === "growing" ? "accent" : status === "deprecated" ? "negative" : "outline",
+  );
 </script>
 
-<Badge {variant} class="status-badge">{contentStatusLabel(status)}</Badge>
+<Badge {variant} class="status-badge">{aiWritten ? aiWrittenLabel : contentStatusLabel(status)}</Badge>

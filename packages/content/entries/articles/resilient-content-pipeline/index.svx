@@ -14,6 +14,7 @@ status: growing
 featured: true
 draft: false
 sample: true
+aiWritten: true
 targetVersions:
   - Svelte 5
   - Deno 2

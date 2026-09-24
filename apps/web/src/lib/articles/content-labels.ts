@@ -7,6 +7,9 @@ const statusLabels: Record<ContentStatus, string> = {
   deprecated: "旧版",
 };
 
+/** AIが書いた記事は、執筆の状態より先にそのことを示す。 */
+export const aiWrittenLabel = "AI執筆";
+
 export function contentStatusLabel(status: ContentStatus): string {
   return statusLabels[status];
 }

@@ -13,6 +13,7 @@ status: stable
 featured: true
 draft: false
 sample: true
+aiWritten: true
 event:
   name: Sample Design Meetup
   heldAt: 2026-06-01
