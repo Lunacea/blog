@@ -13,6 +13,7 @@
   --color-weather-dusk: #e8a66d;
   --color-weather-moon: #a8bccf;
   --text-masthead: var(--type-size-masthead);
+  --text-masthead-upright: var(--type-size-masthead-upright);
   --text-index: var(--type-size-index);
   --text-prose-h2: var(--type-size-prose-h2);
   --tracking-masthead: var(--type-tracking-masthead);
@@ -66,6 +67,17 @@
   --color-print-foreground: #000;
 
   --type-size-masthead: clamp(3.5rem, 20.4vw, 21rem);
+  /* 電話幅で90°回して立てる題字。字送りが画面の高さの8割ほどに収まり、記事一覧の頭が覗く大きさ。 */
+  --type-size-masthead-upright: clamp(6rem, min(17svh, 40vw), 11rem);
+  /*
+    回した題字の寸法。横組みでの実測（字送り 5.348em、行の下端からベースラインまで 0.16em）から決める。
+    下がりの字がないので、ベースライン側の空きを詰めて字面を本文の左端に揃える。上端は 0.3em はみ出させ、
+    下端も最後の A を 0.3em ほど記事一覧の罫で断つ。
+  */
+  --masthead-upright-bleed: calc(var(--type-size-masthead-upright) * 0.3);
+  --masthead-upright-shift: calc(var(--layout-gutter) + var(--type-size-masthead-upright) * 0.84);
+  --masthead-upright-thickness: var(--masthead-upright-shift);
+  --masthead-upright-block: calc(var(--type-size-masthead-upright) * (5.348 - 0.3 - 0.3));
   --type-size-index: clamp(1.375rem, 3.2vw, 2.75rem);
   --type-size-prose-h2: clamp(1.5rem, 2.5vw, 2.25rem);
   --type-size-article-title: min(calc(var(--type-size-prose-h2) * 1.44), 3.25rem);
@@ -73,6 +85,16 @@
   --type-tracking-masthead: -0.055em;
 
   --profile-card-print: 24rem;
+  /*
+    縦の題字の右に置く名刺。中身は画面幅で段を切り替えるので、幅も横組みのときと同じ式で決めて
+    中身と釣り合わせる。題字に重ねたぶん右端からはみ出す。
+  */
+  --profile-card-upright: min(100vw - 2 * var(--layout-gutter) - var(--space-4), var(--profile-card-print));
+  /* 月（2.99em から）の手前で名刺が終わる高さ。はみ出しを引いた月の位置から名刺の丈（91:55と傾き）を引く。 */
+  --profile-card-upright-top: calc(
+    var(--type-size-masthead-upright) * 2.6 - var(--profile-card-upright) * 0.66
+  );
+  --profile-card-upright-overlap: var(--space-16);
   --profile-card-media: 3.5rem;
   --site-header-block: calc(var(--control-size) + (2 * var(--space-2)) + var(--border-width-rule));
   --page-start-clearance: calc(env(safe-area-inset-top) + var(--layout-gutter));
@@ -133,7 +155,6 @@
 
 @media (max-width: 34rem) {
   :root {
-    --masthead-disc-size: 0.86em;
     --card-tilt: 6deg;
   }
 }
