@@ -92,7 +92,7 @@
       </a>
       <div class="article-flags">
         <CategoryLabel category={metadata.category} href={`/articles?category=${encodeURIComponent(metadata.category)}`} />
-        <StatusBadge status={metadata.status} />
+        <StatusBadge status={metadata.status} aiWritten={metadata.aiWritten} />
       </div>
       <h1>{metadata.title}</h1>
       <p class="lead">{metadata.summary}</p>

@@ -13,6 +13,7 @@ status: growing
 featured: true
 draft: false
 sample: false
+aiWritten: true
 targetVersions: []
 legacyIds: []
 legacyPaths: []

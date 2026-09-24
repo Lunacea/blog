@@ -13,6 +13,7 @@ status: growing
 featured: false
 draft: false
 sample: true
+aiWritten: true
 event:
   name: Sample Engineering Session
   heldAt: 2026-04-22

@@ -13,6 +13,7 @@ status: fragment
 featured: false
 draft: false
 sample: true
+aiWritten: true
 targetVersions: []
 related: []
 revisions: []

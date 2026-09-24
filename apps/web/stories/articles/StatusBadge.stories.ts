@@ -14,3 +14,4 @@ export const Stable: Story = { args: { status: "stable" } };
 export const Growing: Story = { args: { status: "growing" } };
 export const Fragment: Story = { args: { status: "fragment" } };
 export const Deprecated: Story = { args: { status: "deprecated" } };
+export const AiWritten: Story = { args: { status: "growing", aiWritten: true } };

@@ -31,6 +31,7 @@ const article = {
   revisions: [],
   category: "engineering",
   targetVersions: [],
+  aiWritten: false,
 } satisfies Content;
 
 describe("display preferences", () => {

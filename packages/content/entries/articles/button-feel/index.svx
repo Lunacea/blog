@@ -14,6 +14,7 @@ status: growing
 featured: false
 draft: false
 sample: false
+aiWritten: true
 targetVersions: []
 legacyIds: []
 legacyPaths: []

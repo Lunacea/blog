@@ -43,10 +43,12 @@ test("Home is complete and never scrolls sideways", {
   await page.evaluate(() => document.fonts.ready);
   await complete(page);
   await expect(page.getByRole("banner")).toHaveCount(0);
-  const masthead = await page.locator("#home-title").evaluate((element) =>
-    element.getBoundingClientRect().width
-  );
-  expect(masthead).toBeGreaterThan(page.viewportSize()?.width ?? 0);
+  // 題字は画面の端を越えて切れる。横組みでは左右の端、電話幅で90°回したときは上端で切れる。
+  const bleeds = await page.locator("#home-title").evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return box.height > box.width ? box.top < 0 : box.width > innerWidth;
+  });
+  expect(bleeds).toBe(true);
   await expect(page.locator("canvas")).toHaveCount(0);
 });
 

@@ -24,6 +24,10 @@ content ID and do not migrate the retired multi-kind reaction state.
   case study. `stack` remains the canonical technology field; `fields` owns broader practice areas.
 - Diary, Photo, Place, Wine, Moment: Archive records with type-specific optional metadata.
 
+Articles may set `aiWritten: true` (default `false`) when the text was written by AI rather than the
+author. The article header then shows 「AI執筆」 in place of the status badge; `status` keeps its
+meaning and is unchanged.
+
 Talk event data contains name, held date, in-person/online/hybrid mode, optional venue, presentation
 type, and optional slide/event URLs. A venue is required for in-person and hybrid events.
 

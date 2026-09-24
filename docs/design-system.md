@@ -123,9 +123,14 @@ both gutters, centred by a flex container inside `overflow-x-clip` so the overfl
 the document never scrolls sideways. The C is replaced by the theme control at
 `--masthead-disc-size`, which draws the shared sun and moon glyph at display scale in the accent
 gold. Below it sit a business-card introduction at the printed 91×55 proportion (slightly narrower
-on phones), six latest articles in the shared numbered index, and a full-index link. Every other
-route gets one hairline sticky bar holding the wordmark, two navigation links and the theme control.
-A site-wide footer closes every page with a contact block, social marks, the copyright line and the
+on phones), six latest articles in the shared numbered index, and a full-index link. Below 34rem the
+masthead is stood upright instead: the same horizontal setting, disc included, is rotated 90° as one
+piece at `--type-size-masthead-upright`, so every browser draws the disc where the wide setting
+draws it. It bleeds off the top edge, stops short enough for the first index row to show, and its
+ink edge sits on the left gutter. The card keeps its print width beside it, above the disc, and runs
+off the right edge inside the same clip; it can be dragged back into view. Every other route gets
+one hairline sticky bar holding the wordmark, two navigation links and the theme control. A
+site-wide footer closes every page with a contact block, social marks, the copyright line and the
 motion control. There is no fullscreen noise, glass profile, point-cloud centerpiece, custom cursor,
 scroll snap or mobile menu disclosure.
 

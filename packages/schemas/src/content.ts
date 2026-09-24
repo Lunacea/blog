@@ -104,6 +104,7 @@ export const articleSchema = z.object({
   targetVersions: z.array(nonEmpty).default([]),
   testedAt: isoDate.optional(),
   readingMinutes: z.number().positive().optional(),
+  aiWritten: z.boolean().default(false),
 });
 
 export const workSchema = z.object({

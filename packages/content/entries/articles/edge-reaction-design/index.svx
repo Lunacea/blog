@@ -13,6 +13,7 @@ status: growing
 featured: false
 draft: false
 sample: true
+aiWritten: true
 targetVersions:
   - Deno KV
 testedAt: 2026-07-08

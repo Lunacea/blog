@@ -39,8 +39,13 @@
 
   const centres: number[] = [];
   const wetted: boolean[] = [];
-  let rowLeft = 0;
-  let rowWidth = 0;
+  /*
+   * 題字は電話幅で90°回して立てられる。字の並ぶ軸に沿って測り、ポインタもその軸で読む。
+   * 歪みのフィルタは回す前の座標で掛かるので、向きはデスクトップと同じまま回る。
+   */
+  let vertical = false;
+  let rowStart = 0;
+  let rowLength = 0;
 
   /*
    * 共通のバネより強く減衰させる。見えるのは解放時の行き過ぎ1回だけ。
@@ -57,12 +62,18 @@
 
   function measure() {
     const box = row?.getBoundingClientRect();
-    if (!box?.width) return;
-    rowLeft = box.left;
-    rowWidth = box.width;
+    if (!row || !box?.width) return;
+    vertical = box.height > box.width;
+    // 縦の軸はスクロールで動くので、ページ基準で持つ。
+    rowStart = vertical ? box.top + scrollY : box.left;
+    rowLength = vertical ? box.height : box.width;
     for (let index = 0; index < cells.length; index++) {
       const cellBox = cells[index]?.getBoundingClientRect();
-      centres[index] = cellBox ? (cellBox.left + cellBox.width / 2 - box.left) / box.width : 0.5;
+      centres[index] = cellBox
+        ? vertical
+          ? (cellBox.top + cellBox.height / 2 - box.top) / box.height
+          : (cellBox.left + cellBox.width / 2 - box.left) / box.width
+        : 0.5;
     }
   }
 
@@ -122,7 +133,7 @@
 
   function start() {
     if (frame || !onscreen || !liquidAllowed()) return;
-    if (!rowWidth) measure();
+    if (!rowLength) measure();
     last = 0;
     settled = 0;
     frame = requestAnimationFrame(step);
@@ -140,8 +151,8 @@
 
   function track(event: PointerEvent) {
     // 波はホバーへの応答。タッチはページを動かしている操作なので反応しない。
-    if (event.pointerType === "touch" || !rowWidth || !onscreen || !liquidAllowed()) return;
-    touch = (event.clientX - rowLeft) / rowWidth;
+    if (event.pointerType === "touch" || !rowLength || !onscreen || !liquidAllowed()) return;
+    touch = ((vertical ? event.clientY + scrollY : event.clientX) - rowStart) / rowLength;
     intent = 1;
     start();
   }
