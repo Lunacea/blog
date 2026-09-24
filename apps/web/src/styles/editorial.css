@@ -74,6 +74,46 @@
   margin-block: var(--space-6);
 }
 
+/*
+  本文中のリンク。配色が単色なので、色ではなく罫で地の文と見分ける。
+  罫は字より薄く置いて行の読みを妨げず、触れたときだけインクの濃さと太さまで上げる。
+*/
+.prose :where(p, li, dd, td, blockquote, figcaption, .annotation) a:not(.link-card) {
+  text-decoration-line: underline;
+  text-decoration-thickness: max(1px, 0.07em);
+  text-decoration-color: color-mix(in srgb, var(--color-foreground) 45%, transparent);
+  text-underline-offset: 0.3em;
+  transition: text-decoration-color var(--motion-duration-base) var(--motion-ease-signature);
+}
+
+.prose :where(p, li, dd, td, blockquote, figcaption, .annotation) a:not(.link-card):is(:hover, :focus-visible) {
+  text-decoration-color: var(--color-foreground);
+  text-decoration-thickness: max(2px, 0.12em);
+}
+
+/*
+  要点に引くマーカー。配色が単色なので、インクを薄く敷いた帯を字の下半分にだけ置く。
+  折り返した行ごとに帯を描き直し、行末で途切れないようにする。
+*/
+.prose mark {
+  padding-inline: 0.1em;
+  background: linear-gradient(
+    transparent 58%,
+    color-mix(in srgb, var(--color-foreground) 16%, transparent) 58%
+  );
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+@media (forced-colors: active) {
+  .prose mark {
+    forced-color-adjust: none;
+    background: Mark;
+    color: MarkText;
+  }
+}
+
 .prose blockquote {
   margin: var(--space-6) 0;
   border-left: 2px solid var(--color-accent);
