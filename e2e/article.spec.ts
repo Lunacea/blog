@@ -31,9 +31,9 @@ test("the article is a sheet of paper and carries its reading tools on it", {
   await expect(page.getByRole("progressbar", { name: "読了進捗" })).toBeVisible();
   await expect(page.getByRole("complementary", { name: "目次" })).toBeVisible();
   await expect(page.locator(".article-header .category-label")).toContainText("design");
-  await expect(page.locator(".article-flags")).toContainText("更新中");
+  await expect(page.locator(".article-flags")).toContainText("AI執筆");
   await expect(page.locator(".article-dates")).toContainText("更新");
-  await expect(page.locator(".status-badge")).toContainText("更新中");
+  await expect(page.locator(".status-badge")).toContainText("AI執筆");
   await expect(page.getByRole("heading", { name: "Related" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Revisions" })).toBeVisible();
   await expect(page.locator('.related ol[aria-label="関連記事"] > li h3 a').first()).toBeVisible();
