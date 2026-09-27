@@ -27,6 +27,19 @@ export function installAnchorNavigation() {
     if (
       anchor.pathname !== location.pathname || anchor.search !== location.search || !anchor.hash
     ) return;
+    // 畳まれた参考文献の行などへ飛ぶときは、先に開く。閉じたままだと行に位置がない。
+    // 開閉の動きも止める。高さが伸びている途中では、ブラウザが行までスクロールできない。
+    const destination = document.getElementById(decodeURIComponent(anchor.hash.slice(1)));
+    for (
+      let folded = destination?.closest<HTMLDetailsElement>("details:not([open])");
+      folded;
+      folded = folded.parentElement?.closest<HTMLDetailsElement>("details:not([open])")
+    ) {
+      const opened = folded;
+      opened.dataset.instant = "true";
+      opened.open = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => delete opened.dataset.instant));
+    }
     // 内容がカーソルの下を通り過ぎることで起きるホバーの誤爆を、移動の間だけ抑える。
     // モーション設定に関わらず起きるので、滑らかな移動とは別の印にする。
     document.documentElement.dataset.anchorJump = "true";

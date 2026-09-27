@@ -56,6 +56,17 @@ revisions:
   figureの表示captionとaccessible nameにも使われる。
 - `$...$`と`$$...$$`はbuild時にKaTeX HTMLへ変換する。数式表示にclient-side JavaScriptは不要。
 - blockquote、表、リスト、引用、`<aside class="annotation">`を利用できる。
+- 段落内の改行は、前後どちらかが和文の字なら描画時に取り除かれ、空白にならない。
+  欧文どうしの改行は空白として残る。改行を見せたいときは行末に空白2つを置く。
+- コールアウトは`$lib/articles/Callout.svelte`から`Callout`をimportし、
+  `<Callout kind="column" title="見出し">`と書く。`kind`は`column | note | tip | warning`
+  （既定は`note`）で、種類ごとの図像と語が付く。本文をMarkdownで書くときは、開始・終了タグとの間に
+  空行を置く。
+- 参考文献は`$lib/articles/References.svelte`の`References`を記事の末尾に置き、
+  `<References items={references} />`と書く。`references`は`<script>`に引用順の配列で定義する
+  （`author`、`title`、`site`、`url`、`accessed`、日本語の資料は`lang: "ja"`）。書式は情報処理学会の
+  Webページの形式で、既定では折り畳まれる。本文の該当箇所には`$lib/articles/Cite.svelte`の
+  `<Cite n={1} />`を置き、右肩に`[1]`を付ける。番号から飛ぶと折り畳みが開く。
 - 外部リンクカードは`$lib/articles/LinkCard.svelte`から`LinkCard`をimportし、
   `<LinkCard href="https://example.com/article" />`と書く。追加・変更後に
   `deno task links:refresh`を明示実行し、更新された

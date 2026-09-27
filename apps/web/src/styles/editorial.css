@@ -75,10 +75,126 @@
 }
 
 /*
+  箇条書き。印は丸をひと欠けさせた三日月で、題字の月と同じ形の言葉で話す。
+  色はテーマ操作子の天体（明るいテーマは太陽の褪せた赤、暗いテーマは月の褪せた黄）に揃え、
+  紙面の低い彩度から外れないようにする。番号も同じ色の2桁の数字にする。
+  リストは前の文から続けて読むものなので、前後の段落とのアキは段落どうしより詰める。
+  Markdown が書く素のリストだけが対象。見本の中に組んだ ul（class を持つ）には触れない。
+*/
+.prose :is(ul, ol):not([class]),
+.prose .contains-task-list {
+  margin-block: var(--space-3);
+  padding-inline-start: 1.6em;
+  list-style: none;
+}
+
+.prose p:has(+ :is(ul, ol):not([class])) {
+  margin-block-end: var(--space-3);
+}
+
+.prose :is(ul, ol):not([class]) + p {
+  margin-block-start: var(--space-3);
+}
+
+.prose :is(ul, ol):not([class]) > li {
+  position: relative;
+}
+
+.prose :is(ul, ol):not([class]) > li + li,
+.prose .contains-task-list > li + li {
+  margin-block-start: var(--space-1);
+}
+
+/*
+  1行目の字の芯（行の中央）を基準に置く。行送りが変わっても印が字から外れない。
+  欠けは右上に寄せた透明の円で抜く。円の外周は clip-path で丸める。
+*/
+.prose ul:not([class]) > li::before {
+  position: absolute;
+  inset-inline-start: -1.1em;
+  top: calc(var(--leading-copy) * 0.5em - 0.28em);
+  width: 0.56em;
+  height: 0.56em;
+  background: radial-gradient(
+    circle at 80% 22%,
+    transparent 0.23em,
+    var(--color-list-mark) calc(0.23em + 0.5px)
+  );
+  clip-path: circle(50%);
+  content: "";
+}
+
+.prose ol:not([class]) {
+  padding-inline-start: 2em;
+  counter-reset: prose-list;
+}
+
+.prose ol:not([class]) > li {
+  counter-increment: prose-list;
+}
+
+.prose ol:not([class]) > li::before {
+  position: absolute;
+  inset-inline-end: calc(100% + 0.7em);
+  color: var(--color-list-mark);
+  content: counter(prose-list, decimal-leading-zero);
+  font-family: var(--font-sans);
+  /* design-literal: 本文に対する比。下の line-height で同じ比を割り戻し、行の高さを項目と揃える。 */
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-component);
+  letter-spacing: var(--tracking-ui);
+  line-height: calc(var(--leading-copy) / 0.8);
+}
+
+/* 入れ子は一段軽く。色を抜き、インクの短い横罫だけにする。 */
+.prose li > :is(ul, ol):not([class]) {
+  margin-block: var(--space-1) 0;
+}
+
+.prose li > ul:not([class]) > li::before {
+  top: calc(var(--leading-copy) * 0.5em);
+  width: 0.55em;
+  height: var(--list-mark-stroke);
+  background: color-mix(in srgb, var(--color-foreground) 60%, transparent);
+  clip-path: none;
+}
+
+/* 項目の間に空行を置いた（段落を持つ）リスト。段落のアキは項目のアキに合わせる。 */
+.prose li > p {
+  margin-block: 0;
+}
+
+.prose li > p + p {
+  margin-block-start: var(--space-2);
+}
+
+.prose .task-list-item input {
+  margin: 0 0.5em 0 -1.5em;
+  accent-color: var(--color-list-mark);
+}
+
+@media (forced-colors: active) {
+  .prose :is(ul, ol):not([class]) > li::before {
+    forced-color-adjust: none;
+    color: CanvasText;
+  }
+
+  .prose ul:not([class]) > li::before {
+    background: radial-gradient(circle at 80% 22%, transparent 0.23em, CanvasText calc(0.19em +
+      0.5px));
+  }
+
+  .prose li > ul:not([class]) > li::before {
+    background: CanvasText;
+  }
+}
+
+/*
   本文中のリンク。配色が単色なので、色ではなく罫で地の文と見分ける。
   罫は字より薄く置いて行の読みを妨げず、触れたときだけインクの濃さと太さまで上げる。
 */
-.prose :where(p, li, dd, td, blockquote, figcaption, .annotation) a:not(.link-card) {
+.prose :where(p, li, dd, td, blockquote, figcaption, .annotation, .callout) a:not(.link-card, .cite-link) {
   text-decoration-line: underline;
   text-decoration-thickness: max(1px, 0.07em);
   text-decoration-color: color-mix(in srgb, var(--color-foreground) 45%, transparent);
@@ -86,7 +202,7 @@
   transition: text-decoration-color var(--motion-duration-base) var(--motion-ease-signature);
 }
 
-.prose :where(p, li, dd, td, blockquote, figcaption, .annotation) a:not(.link-card):is(:hover, :focus-visible) {
+.prose :where(p, li, dd, td, blockquote, figcaption, .annotation, .callout) a:not(.link-card, .cite-link):is(:hover, :focus-visible) {
   text-decoration-color: var(--color-foreground);
   text-decoration-thickness: max(2px, 0.12em);
 }
@@ -132,20 +248,46 @@
   margin-block-end: 0;
 }
 
+/*
+  囲み。Callout（$lib/articles/Callout.svelte）が見た目を持ち、ここは中身の段落のアキだけを受ける。
+  素の HTML で書かれた注釈（.annotation）も同じ地と角に揃える。
+*/
+.prose .callout-content > * {
+  margin-block: 0;
+}
+
+.prose .callout-content > * + * {
+  margin-block-start: var(--space-2);
+}
+
 .prose .annotation {
   position: relative;
   z-index: calc(var(--z-controls) + 1);
   margin-block: var(--space-8);
-  border: var(--border-width-rule) solid var(--color-line);
-  border-left: 3px solid var(--color-secondary);
-  padding: var(--space-4) var(--space-5);
-  background: var(--color-surface);
+  border-radius: var(--radius-prose-heading);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  background: color-mix(in srgb, var(--color-foreground) 5%, transparent);
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  line-height: var(--leading-relaxed);
 }
 
 .prose .annotation p {
   margin: var(--space-2) 0 0;
   color: var(--color-muted);
-  font-size: var(--text-small);
+}
+
+@media (width < 40.25rem) {
+  .prose .annotation {
+    margin-left: calc(var(--layout-gutter) * -1);
+    padding-left: var(--layout-gutter);
+  }
+}
+
+@media (forced-colors: active) {
+  .prose .annotation {
+    border: var(--border-width-rule) solid CanvasText;
+  }
 }
 
 .prose .source-note {
@@ -312,7 +454,7 @@ html:not([data-motion="full"]) .diagram-dialog::backdrop {
   text-shadow: none;
 }
 
-.prose :where(.annotation, .code-block, .mermaid-source, .mermaid-diagram, .link-card) {
+.prose :where(.annotation, .callout, .code-block, .mermaid-source, .mermaid-diagram, .link-card) {
   text-shadow: none;
 }
 

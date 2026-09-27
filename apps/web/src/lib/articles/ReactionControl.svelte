@@ -34,8 +34,14 @@
   });
 </script>
 
-<section class="reactions grid justify-items-center gap-(--space-3)" aria-label="称賛">
-  <p class="m-0 font-stretch-84% text-folio leading-none tracking-folio text-quiet uppercase">Enjoyed this?</p>
+<!--
+  本文を読み終えた場所に置く問いかけ。上に短い罫を引いて本文と区切り、問いは節見出しと同じ
+  書体と重さで大きく立てる。ハートはその答えとして真下に置く。
+-->
+<section class="reactions grid w-full justify-items-center gap-(--space-2) text-center" aria-label="称賛">
+  <span class="mb-(--space-4) block w-(--space-16) border-t border-ink" aria-hidden="true"></span>
+  <p class="m-0 font-interface font-stretch-88% text-(length:--text-h3) leading-none font-strong text-ink">Enjoyed this?</p>
+  <p class="m-0 mb-(--space-2) text-small leading-ui text-quiet">よければハートで知らせてください</p>
   <button
     class="praise group grid cursor-pointer place-items-center gap-(--space-2) border-0 bg-transparent p-(--space-2) text-(--color-praise) pressable [--press-scale:0.95] disabled:cursor-default disabled:opacity-60 motion-off:duration-(--motion-duration-immediate)"
     type="button"
