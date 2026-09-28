@@ -41,6 +41,8 @@
 :root {
   --color-card-stock: light-dark(#ffffff, #080808);
   --color-praise: light-dark(#9b3a34, #c96a61);
+  /* 箇条書きの印と番号。テーマ操作子の天体と同じ褪せた色で、紙面の低い彩度に揃える。 */
+  --color-list-mark: light-dark(var(--color-sun-ember), var(--color-moon-glow));
   /* 暗いテーマでは紙面（surface）とほぼ同じ明るさになるので、一段沈めてブロックとして読ませる。 */
   --color-code-background: light-dark(#161616, #0c0c0c);
   --color-code-foreground: #eeeeec;
@@ -111,6 +113,7 @@
     0 8px 14px light-dark(rgb(16 47 35 / 13%), rgb(0 0 0 / 36%)),
     0 24px 48px light-dark(rgb(16 47 35 / 13%), rgb(0 0 0 / 38%));
   --shadow-accent-rule: inset 3px 0 var(--color-accent);
+  --list-mark-stroke: calc(var(--border-width-rule) * 1.5);
   --shadow-text-mask: 0 0 0.18em var(--color-background);
   --radius-prose-heading: 0 0 var(--radius-large) 0;
   --shadow-paper-transition-clear: 0 -1rem 2.5rem

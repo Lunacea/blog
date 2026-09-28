@@ -13,11 +13,15 @@
   import checkCircle from "@iconify-icons/solar/check-circle-linear.js";
   import code from "@iconify-icons/solar/code-linear.js";
   import copy from "@iconify-icons/solar/copy-linear.js";
+  import dangerTriangle from "@iconify-icons/solar/danger-triangle-linear.js";
   import documentText from "@iconify-icons/solar/document-text-linear.js";
+  import infoCircle from "@iconify-icons/solar/info-circle-linear.js";
   import letter from "@iconify-icons/solar/letter-linear.js";
   import magnifer from "@iconify-icons/solar/magnifer-linear.js";
   import list from "@iconify-icons/solar/list-outline.js";
+  import lightbulb from "@iconify-icons/solar/lightbulb-linear.js";
   import linkRound from "@iconify-icons/solar/link-round-linear.js";
+  import notebook from "@iconify-icons/solar/notebook-minimalistic-linear.js";
   import palette from "@iconify-icons/solar/palette-linear.js";
   import restart from "@iconify-icons/solar/restart-linear.js";
   import tag from "@iconify-icons/solar/tag-linear.js";
@@ -30,11 +34,15 @@
     | "solar:check-circle-linear"
     | "solar:code-linear"
     | "solar:copy-linear"
+    | "solar:danger-triangle-linear"
     | "solar:document-text-linear"
+    | "solar:info-circle-linear"
     | "solar:letter-linear"
     | "solar:magnifer-linear"
     | "solar:list-outline"
+    | "solar:lightbulb-linear"
     | "solar:link-round-linear"
+    | "solar:notebook-minimalistic-linear"
     | "solar:palette-linear"
     | "solar:restart-linear"
     | "solar:tag-linear"
@@ -54,11 +62,15 @@
     "solar:check-circle-linear": checkCircle,
     "solar:code-linear": code,
     "solar:copy-linear": copy,
+    "solar:danger-triangle-linear": dangerTriangle,
     "solar:document-text-linear": documentText,
+    "solar:info-circle-linear": infoCircle,
     "solar:letter-linear": letter,
     "solar:magnifer-linear": magnifer,
     "solar:list-outline": list,
+    "solar:lightbulb-linear": lightbulb,
     "solar:link-round-linear": linkRound,
+    "solar:notebook-minimalistic-linear": notebook,
     "solar:palette-linear": palette,
     "solar:restart-linear": restart,
     "solar:tag-linear": tag,

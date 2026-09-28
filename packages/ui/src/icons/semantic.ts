@@ -23,6 +23,14 @@ export const interfaceIcons = {
   motion: "solar:bolt-linear",
 } as const satisfies Record<string, ApprovedIconName>;
 
+/** 本文のコールアウト。種類は図像と見出しの語で伝え、色は使わない。 */
+export const calloutIcons = {
+  column: "solar:notebook-minimalistic-linear",
+  note: "solar:info-circle-linear",
+  tip: "solar:lightbulb-linear",
+  warning: "solar:danger-triangle-linear",
+} as const satisfies Record<string, ApprovedIconName>;
+
 export const socialIcons = {
   github: "simple-icons:github",
   x: "simple-icons:x",

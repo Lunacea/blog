@@ -219,6 +219,27 @@ html[data-theme-transition="active"]::view-transition-new(*) {
   animation: none;
 }
 
+/*
+  テーマ操作子の天体は溶暗に混ぜず、その場で形を変えて見せる。画面の像に含めると旧い太陽の像が
+  変形の上に重なって溶けるので、天体だけを別に撮り、旧い像は出さずに生きた要素をそのまま映す。
+  ページに天体は複数あるので名前は要素ごとに振る。match-element を持たないブラウザでは
+  宣言ごと無視され、画面と一緒に溶ける（従来どおり）。
+*/
+html[data-theme-transition="active"] .theme-glyph {
+  view-transition-name: match-element;
+  view-transition-class: theme-glyph;
+}
+
+html[data-theme-transition="active"]::view-transition-group(*.theme-glyph),
+html[data-theme-transition="active"]::view-transition-new(*.theme-glyph) {
+  animation: none;
+}
+
+html[data-theme-transition="active"]::view-transition-old(*.theme-glyph) {
+  animation: none;
+  opacity: 0;
+}
+
 @keyframes theme-fade-out {
   to {
     opacity: 0;

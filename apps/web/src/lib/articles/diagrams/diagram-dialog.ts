@@ -108,8 +108,13 @@ export function createDiagramDialog() {
     close.addEventListener("click", requestClose);
     bar.append(heading, close);
 
+    /*
+     * 面の高さは中身で決まるので、本文の基準寸法は 0 ではなく中身（flex-auto）にする。
+     * flex-1 の 0% を WebKit は確定した 0 として解決し、min-h-0 と重なって本文が潰れる
+     * （iPhone で拡大しても帯しか開かない）。上限を超えたときだけ縮んでスクロールする。
+     */
     body = document.createElement("div");
-    body.className = "flex min-h-0 flex-1 overflow-auto overscroll-contain p-(--layout-gutter)";
+    body.className = "flex min-h-0 flex-auto overflow-auto overscroll-contain p-(--layout-gutter)";
     element.append(bar, body);
 
     // 図の外側（背景）を押しても閉じる。

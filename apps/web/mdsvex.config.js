@@ -126,11 +126,75 @@ function rehypeDollarMath() {
   };
 }
 
+// 和文の字（漢字・かな・全角記号）。原稿を読みやすく改行した箇所が、描画で空白にならないようにする。
+const wideCharacter = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}　-〿＀-￯]/u;
+const softBreak = /[ \t]*\n[ \t]*/gu;
+
+/** 生の HTML（`<mark>` など）はタグを除いた字だけを見る。 */
+function edgeText(node, side) {
+  if (node.type === "text") return node.value;
+  if (node.type === "raw") return node.value.replace(/<[^>]*>/gu, "");
+  if (node.type !== "element" || !node.children?.length) return "";
+  const children = side === "end" ? [...node.children].reverse() : node.children;
+  for (const child of children) {
+    const text = edgeText(child, side);
+    if (text) return text;
+  }
+  return "";
+}
+
+/** 兄弟をたどり、改行の手前（または先）にある最初の字を返す。 */
+function neighbourCharacter(siblings, index, direction) {
+  for (
+    let cursor = index + direction;
+    cursor >= 0 && cursor < siblings.length;
+    cursor += direction
+  ) {
+    const text = edgeText(siblings[cursor], direction < 0 ? "end" : "start");
+    const trimmed = direction < 0 ? text.trimEnd() : text.trimStart();
+    if (trimmed) return direction < 0 ? trimmed.at(-1) : trimmed[0];
+  }
+  return "";
+}
+
+/**
+ * 段落内の改行は HTML では空白として描かれる。和文では語の間に空白を置かないので、
+ * 改行の前後どちらかが和文の字なら改行ごと取り除く。欧文どうしの改行は空白のまま残す。
+ */
+function rehypeJoinWideLines() {
+  return (tree) => {
+    function visit(node) {
+      if (!node.children) return;
+      if (node.type === "element") {
+        if (["code", "pre", "script", "style"].includes(node.tagName)) return;
+        const classes = node.properties?.className ?? [];
+        if (classes.some((name) => String(name).startsWith("math") || name === "katex")) return;
+      }
+      // ルート直下の改行はブロック間の区切りなので触らない。
+      node.children.forEach((child, index) => {
+        if (node.type !== "element" || child.type !== "text" || !child.value.includes("\n")) {
+          visit(child);
+          return;
+        }
+        child.value = child.value.replace(softBreak, (match, offset, value) => {
+          const before = value.slice(0, offset).trimEnd().at(-1) ??
+            neighbourCharacter(node.children, index, -1);
+          const after = value.slice(offset + match.length).trimStart()[0] ??
+            neighbourCharacter(node.children, index, 1);
+          return wideCharacter.test(before ?? "") || wideCharacter.test(after ?? "") ? "" : match;
+        });
+      });
+    }
+    visit(tree);
+  };
+}
+
 export function createEditorialPreprocessor() {
   const processor = mdsvex({
     extensions: [".svx"],
     remarkPlugins: [remarkGfm, remarkMath],
     rehypePlugins: [
+      rehypeJoinWideLines,
       rehypeSlug,
       [rehypeAutolinkHeadings, { behavior: "wrap" }],
       rehypeDollarMath,
